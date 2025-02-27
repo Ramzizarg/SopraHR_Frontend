@@ -13,6 +13,7 @@ import { TeletravailComponent } from './teletravail/teletravail.component';
 import { ReservationComponent } from './reservation/reservation.component';
 import { CommonModule } from '@angular/common';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ResetPasswordComponent } from './reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     HomeComponent,
     ForgetpasswordComponent,
     TeletravailComponent,
-    ReservationComponent
+    ReservationComponent,
+    ResetPasswordComponent,
   ],
   imports: [
     BrowserModule,
@@ -32,7 +34,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     ReactiveFormsModule,
     HttpClientModule,
     CommonModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    
     ],
   providers: [],
   bootstrap: [AppComponent]
