@@ -68,7 +68,7 @@ export class TeletravailComponent implements OnInit {
     this.startOfCurrentWeek = this.formatDate(startCurrent);
 
     const endCurrent = new Date(startCurrent);
-    endCurrent.setDate(startCurrent.getDate() + 6);
+    endCurrent.setDate(startCurrent.getDate() + 6); // End of current week
     endCurrent.setHours(23, 59, 59, 999);
     this.endOfCurrentWeek = this.formatDate(endCurrent);
 
@@ -78,16 +78,38 @@ export class TeletravailComponent implements OnInit {
     friday.setHours(0, 0, 0, 0);
     this.fridayCutoff = this.formatDate(friday);
 
-    // Next week
+    // Next week (Monday to Sunday)
     const startNext = new Date(startCurrent);
     startNext.setDate(startCurrent.getDate() + 7);
     startNext.setHours(0, 0, 0, 0);
     this.startOfNextWeek = this.formatDate(startNext);
 
     const endNext = new Date(startNext);
-    endNext.setDate(startNext.getDate() + 6);
+    endNext.setDate(startNext.getDate() + 13);
     endNext.setHours(23, 59, 59, 999);
     this.endOfNextWeek = this.formatDate(endNext);
+
+    // Week after next (Monday to Sunday)
+    const startWeekAfterNext = new Date(startNext);
+    startWeekAfterNext.setDate(startNext.getDate() + 7);
+    startWeekAfterNext.setHours(0, 0, 0, 0);
+    const startOfWeekAfterNext = this.formatDate(startWeekAfterNext);
+
+    const endWeekAfterNext = new Date(startWeekAfterNext);
+    endWeekAfterNext.setDate(startWeekAfterNext.getDate() + 6);
+    endWeekAfterNext.setHours(23, 59, 59, 999);
+    const endOfWeekAfterNext = this.formatDate(endWeekAfterNext);
+
+    // Next Friday cutoff at 00:00
+    const nextFriday = new Date(startNext);
+    nextFriday.setDate(startNext.getDate() + 4); // Friday is 4 days after next Monday
+    nextFriday.setHours(0, 0, 0, 0);
+    const nextFridayCutoff = this.formatDate(nextFriday);
+
+    console.log(`Current Week: ${this.startOfCurrentWeek} to ${this.endOfCurrentWeek}`);
+    console.log(`Next Week: ${this.startOfNextWeek} to ${this.endOfNextWeek}`);
+    console.log(`Week After Next: ${startOfWeekAfterNext} to ${endOfWeekAfterNext}`);
+    console.log(`Next Friday Cutoff: ${nextFridayCutoff}`);
   }
 
   /**
