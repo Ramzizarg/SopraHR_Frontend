@@ -1,0 +1,40 @@
+.header-notification {
+  position: relative;
+  margin-left: 50px;
+}
+
+.notification {
+  font-size: 24px;
+  color: #333;
+  text-decoration: none;
+  position: relative;
+}
+
+.notification:hover {
+  color: #f39c12;
+}
+
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 50%;
+}
+body {
+  font-family: Arial, sans-serif;
+}
+
+.carousel-item {
+  text-align: center;
+  color: white;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: bold;
+}

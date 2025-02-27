@@ -1,0 +1,225 @@
+/* Main Content */
+.main-content {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  min-height: 90vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+/* Form Container */
+.form-container {
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  max-width: 720px;
+  width: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-container:hover {
+  transform: translateY(-0.5rem);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.15);
+}
+
+/* Form Title */
+.form-title {
+  font: bold 2rem 'Poppins', sans-serif;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.form-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: #e64f4f;
+  margin: 1rem auto 0;
+  animation: underline 0.5s ease-in-out;
+}
+
+/* Underline Animation */
+@keyframes underline {
+  from { width: 0; }
+  to { width: 60px; }
+}
+
+/* Form Row */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Form Group */
+.form-group {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* Form Label */
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font: 500 0.9rem 'Poppins';
+  margin-bottom: 0.75rem;
+}
+
+/* Icon in Label */
+.form-label i {
+  color: #2A5C82;
+  font-size: 1.1rem;
+}
+
+/* Form Input */
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.75rem;
+  font: 500 1rem 'Poppins';
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2A5C82;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(42, 92, 130, 0.1);
+}
+
+/* Travail à domicile Section */
+.radio-group-container {
+  text-align: center;
+  width: 100%;
+}
+
+.radio-group-container .form-label {
+  justify-content: center;
+
+}
+
+.radio-group {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+/* Radio Label */
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Custom Radio Button */
+.radio-custom {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #ced4da;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+input[type="radio"]:checked + .radio-custom {
+  border-color: #2A5C82;
+  background: radial-gradient(circle, #2A5C82 40%, transparent 50%);
+}
+
+input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+/* Submit Button */
+.submit-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #e64f4f;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font: 700 1rem 'Poppins';
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1.5rem rgba(42, 92, 130, 0.3);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-container {
+    padding: 0.5rem;
+  }
+
+  .form-title {
+    font-size: 1.75rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-input {
+    padding: 0.75rem 1rem;
+  }
+
+  .submit-btn {
+    padding: 0.875rem 1.5rem;
+  }
+}
+.header-notification {
+  position: relative;
+  margin-left: 50px;
+}
+
+.notification {
+  font-size: 24px;
+  color: #333;
+  text-decoration: none;
+  position: relative;
+}
+
+.notification:hover {
+  color: #f39c12;
+}
+
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 50%;
+}

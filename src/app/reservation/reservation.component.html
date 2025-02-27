@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Réservation de Poste de Travail</title>
+  <meta name="description" content="Réservation de poste de travail chez Sopra HR">
+  <meta name="keywords" content="Poste de travail, Réservation, Sopra HR">
+
+  <!-- Favicons -->
+  <link href="../../assets/img/Sopra.png" rel="icon">
+  <link href="../../assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+</head>
+
+<body class="reservation-page">
+
+  <!-- Header -->
+  <header id="header" class="header d-flex align-items-center sticky-top">
+    <div class="container position-relative d-flex align-items-center">
+      <a href="/reservation" class="logo d-flex align-items-center me-auto">
+        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Company Logo"
+          style="transform: scale(1.5); max-width: 150px; height: auto;">
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="/home">Page d'accueil</a></li>
+          <li><a href="/teletravail">Télétravail</a></li>
+          <li><a href="/reservation" class="active">Réservations de Postes</a></li>
+          <li><a href="portfolio.html">Planning</a></li>
+          <li><a href="contact.html">Déconnexion</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <div class="header-notification">
+        <a href="#" class="notification">
+          <i class="bi bi-bell"></i>
+          <span class="badge">3</span> <!-- Example notification count -->
+        </a>
+      </div>
+        </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="reservation-content">
+    <div class="container">
+      <h1>Bienvenue sur la page des Réservations de Postes de Travail</h1>
+      <p>Découvrez toutes les options de réservation de postes de travail chez Sopra HR.</p>
+
+      <!-- Reservation Form for Poste de Travail -->
+      <section id="reservation-form">
+        <h2>Réservez votre Poste de Travail</h2>
+        <form action="/submit-poste-travail-reservation" method="POST">
+          <div class="form-group">
+            <label for="fullName">Nom Complet</label>
+            <input type="text" id="fullName" name="fullName" required placeholder="Votre nom complet">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required placeholder="Votre adresse email">
+          </div>
+
+          <div class="form-group">
+            <label for="reservationDate">Date de Réservation</label>
+            <input type="date" id="reservationDate" name="reservationDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="timeSlot">Plage Horaire</label>
+            <select id="timeSlot" name="timeSlot" required>
+              <option value="morning">Matinée (9h - 12h)</option>
+              <option value="afternoon">Après-midi (14h - 18h)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="poste">Poste à Réserver</label>
+            <select id="poste" name="poste" required>
+              <option value="poste_1">Poste 1</option>
+              <option value="poste_2">Poste 2</option>
+              <option value="poste_3">Poste 3</option>
+              <option value="poste_4">Poste 4</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Réserver</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer id="footer" class="footer dark-background">
+    <div class="container footer-top">
+      <div class="row gy-4">
+        <div class="col-lg-4 col-md-6 footer-about">
+          <a href="/home" class="logo d-flex align-items-center">
+            <span class="sitename">Sopra HR</span>
+          </a>
+          <div class="social-links d-flex mt-4">
+            <a href="https://x.com/sopraHR" class="twitter"><i class="bi bi-twitter-x"></i></a>
+            <a href="https://www.facebook.com/SopraHR/?ref=br_rs" class="facebook"><i class="bi bi-facebook"></i></a>
+            <a href="https://www.instagram.com/soprahr/" class="instagram"><i class="bi bi-instagram"></i></a>
+            <a href="https://www.linkedin.com/company/soprahr/" class="linkedin"><i class="bi bi-linkedin"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6 footer-links text-center">
+          <h4>Useful Links</h4>
+          <ul>
+            <li><a href="/home">Page d'accueil</a></li>
+            <li><a href="/teletravail">Télétravail</a></li>
+            <li><a href="/reservation">Réservations de Postes</a></li>
+            <li><a href="portfolio.html">Planning</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-4 col-md-6 footer-logo text-end">
+          <img src="../../assets/img/Sopra.png" alt="Company Logo" style="max-width: 100%; height: auto; transform: scale(0.5); margin-bottom: 0;">
+          <p style="margin-top: -60px;">© <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
+          <div class="credits">
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+</body>
+
+</html>

@@ -1,0 +1,244 @@
+/* Global Styles */
+body {
+  background: #f9f9f9;
+  font-family: "Raleway", sans-serif;
+  color: #151515;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: black;
+  font-weight: 600;
+  font-size: 1em;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #7F00FF;
+}
+
+/* Layout */
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  margin: 15px;
+  padding: 40px;
+  border-radius: 25px;
+  box-shadow: 0px 10px 25px 5px #0000000f;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 20px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Sign-in Section */
+.sign-in-section h1 {
+  text-align: center;
+  font-weight: 700;
+  font-size: 2rem;
+  position: relative;
+}
+
+.sign-in-section h1:after {
+  position: absolute;
+  content: "";
+  height: 5px;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  background: linear-gradient(to right, #E100FF, #7F00FF);
+  transition: width 0.25s;
+}
+
+.sign-in-section h1:hover:after {
+  width: 100px;
+}
+
+.sign-in-section p {
+  text-align: center;
+  font-size: 0.85em;
+}
+
+/* Form Fields */
+.form-field {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: black;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #e8e8e8;
+  font-size: 1em;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-field input::placeholder {
+  color: #aaa;
+}
+
+.form-field input:focus {
+  border: 1px solid #AE00FF;
+  box-shadow: 0px 0px 8px rgba(127, 0, 255, 0.3);
+  outline: none;
+}
+
+/* Checkbox Field */
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #7F00FF;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  background-color: #fff;
+}
+
+.checkbox-field input[type="checkbox"]::before {
+  content: '✔';
+  font-size: 14px;
+  color: white;
+  display: none;
+  position: absolute;
+}
+
+.checkbox-field input[type="checkbox"]:hover {
+  background-color: #f0e6ff;
+}
+
+.checkbox-field input[type="checkbox"]:checked {
+  background-color: #7F00FF;
+  border-color: #000000;
+}
+
+.checkbox-field input[type="checkbox"]:checked::before {
+  display: block;
+}
+
+.checkbox-field label {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.3s ease;
+}
+
+.checkbox-field label:hover {
+  color: #7F00FF;
+}
+
+/* Form Options */
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.form-options a {
+  color: #7F00FF;
+  font-size: 0.9em;
+}
+
+.form-options a:hover {
+  color: #E100FF;
+}
+
+/* Submit Button */
+.btn {
+  padding: 15px;
+  font-size: 1.1em;
+  width: 100%;
+  border-radius: 25px;
+  border: none;
+  margin: 20px 0;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-signin {
+  background: linear-gradient(to right, #E100FF, #7F00FF);
+  box-shadow: 0px 5px 15px rgba(127, 0, 255, 0.2);
+  color: #fff;
+}
+
+.btn-signin:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 15px 30px rgba(127, 0, 255, 0.3);
+}
+
+/* Links Section */
+.links {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.links a {
+  color: #7F00FF;
+  font-size: 1em;
+}
+
+.links a:hover {
+  color: #E100FF;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .form {
+    max-width: 100%;
+    padding: 30px;
+  }
+
+  .form-field input {
+    padding: 12px;
+    font-size: 1.1em;
+  }
+
+  .btn {
+    padding: 12px;
+    font-size: 1em;
+  }
+
+  .sign-in-section h1 {
+    font-size: 1.8rem;
+  }
+
+  .form-options a {
+    font-size: 0.8em;
+  }
+}
