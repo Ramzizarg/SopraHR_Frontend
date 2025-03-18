@@ -49,54 +49,20 @@
         </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="reservation-content">
-    <div class="container">
-      <h1>Bienvenue sur la page des Réservations de Postes de Travail</h1>
-      <p>Découvrez toutes les options de réservation de postes de travail chez Sopra HR.</p>
-
-      <!-- Reservation Form for Poste de Travail -->
-      <section id="reservation-form">
-        <h2>Réservez votre Poste de Travail</h2>
-        <form action="/submit-poste-travail-reservation" method="POST">
-          <div class="form-group">
-            <label for="fullName">Nom Complet</label>
-            <input type="text" id="fullName" name="fullName" required placeholder="Votre nom complet">
-          </div>
-
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required placeholder="Votre adresse email">
-          </div>
-
-          <div class="form-group">
-            <label for="reservationDate">Date de Réservation</label>
-            <input type="date" id="reservationDate" name="reservationDate" required>
-          </div>
-
-          <div class="form-group">
-            <label for="timeSlot">Plage Horaire</label>
-            <select id="timeSlot" name="timeSlot" required>
-              <option value="morning">Matinée (9h - 12h)</option>
-              <option value="afternoon">Après-midi (14h - 18h)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="poste">Poste à Réserver</label>
-            <select id="poste" name="poste" required>
-              <option value="poste_1">Poste 1</option>
-              <option value="poste_2">Poste 2</option>
-              <option value="poste_3">Poste 3</option>
-              <option value="poste_4">Poste 4</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn btn-primary">Réserver</button>
-        </form>
-      </section>
+  <div class="sidebar" [class.hidden]="sidebarHidden">
+    <div class="title">Plan Work</div>
+    <div class="button-container">
+      <button id="createPlanButton" (click)="createPlan(0, 0)" [disabled]="planCounter >= 1">Create New Plan</button>
+      <button id="createWallButton" (click)="currentPlan && createWall(currentPlan, 10, 35)" [disabled]="!currentPlan || isPlanConfirmed">Create Wall</button>
+      <button id="deletePlanButton" (click)="deletePlan()" [disabled]="!currentPlan">Delete Plan</button>
+      <button id="confirmDesignButton" (click)="confirmDesign()" [disabled]="!currentPlan || isPlanConfirmed">Confirm Design</button>
+      <button id="modifyButton" (click)="modifyDesign()" [disabled]="!currentPlan || !isPlanConfirmed">Modify</button>
+      <button id="closeSidebarButton" (click)="toggleSidebar()">Close Sidebar</button>
     </div>
-  </main>
+  </div>
+  <button id="openSidebarButton" (click)="toggleSidebar()" [style.display]="sidebarHidden ? 'block' : 'none'">Open Sidebar</button>
+  <div id="designContainer" #designContainer [class.shifted]="sidebarHidden"></div>
+  <div id="statusBar" #statusBar [class.shifted]="sidebarHidden">Plan: 0x0 | Desks: 0 | Walls: 0</div>
 
   <!-- Footer -->
   <footer id="footer" class="footer dark-background">
