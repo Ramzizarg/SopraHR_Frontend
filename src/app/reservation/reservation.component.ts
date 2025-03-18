@@ -1,3 +1,4 @@
+import { Xliff } from '@angular/compiler';
 import { Component, ElementRef, HostListener, Renderer2, ViewChild } from '@angular/core';
 
 @Component({
@@ -5,10 +6,10 @@ import { Component, ElementRef, HostListener, Renderer2, ViewChild } from '@angu
   templateUrl: './reservation.component.html',
   styleUrls: ['./reservation.component.scss']
 })
-export class ReservationComponent {
+export class ReservationComponent { /*
   @ViewChild('designContainer', { static: false }) designContainer!: ElementRef;
   @ViewChild('statusBar', { static: false }) statusBar!: ElementRef;
-
+ 
   planCounter = 0;
   currentPlan: HTMLElement | null = null;
   selectedDesk: HTMLElement | null = null;
@@ -881,4 +882,6 @@ export class ReservationComponent {
   toggleSidebar() {
     this.sidebarHidden = !this.sidebarHidden;
   }
+}
+  */
 }
