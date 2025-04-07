@@ -1,24 +1,4 @@
-/* Global Styles */
-body {
-  background: #f9f9f9;
-  font-family: "Raleway", sans-serif;
-  color: #151515;
-  margin: 0;
-  padding: 0;
-}
-
-a {
-  color: black;
-  font-weight: 600;
-  font-size: 1em;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-a:hover {
-  color: #7F00FF;
-}
-
+/* login.component.css */
 /* Layout */
 .container {
   display: flex;
@@ -61,7 +41,7 @@ a:hover {
   left: 50%;
   transform: translateX(-50%);
   width: 40px;
-  background: linear-gradient(to right, #E100FF, #7F00FF);
+  background: linear-gradient(to right, #f67200, #de1823);
   transition: width 0.25s;
 }
 
@@ -72,6 +52,18 @@ a:hover {
 .sign-in-section p {
   text-align: center;
   font-size: 0.85em;
+}
+
+/* Error Message */
+.error-message {
+  color: #de1823;
+  font-size: 1em;
+  text-align: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #de1823;
+  border-radius: 8px;
+  background-color: #f8d7da;  /* Soft red background for error */
 }
 
 /* Form Fields */
@@ -101,9 +93,20 @@ a:hover {
 }
 
 .form-field input:focus {
-  border: 1px solid #AE00FF;
-  box-shadow: 0px 0px 8px rgba(127, 0, 255, 0.3);
+  border: 1px solid #f67200;
+  box-shadow: 0px 0px 8px rgba(255, 0, 0, 0.3);
   outline: none;
+}
+
+.form-field input.invalid {
+  border: 1px solid #de1823;
+}
+
+/* Error Text */
+.form-field p.error {
+  color: #de1823;
+  font-size: 0.8em;
+  margin-top: 5px;
 }
 
 /* Checkbox Field */
@@ -120,7 +123,7 @@ a:hover {
   appearance: none;
   width: 18px;
   height: 18px;
-  border: 2px solid #7F00FF;
+  border: 2px solid #f67200;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -144,7 +147,7 @@ a:hover {
 }
 
 .checkbox-field input[type="checkbox"]:checked {
-  background-color: #7F00FF;
+  background-color: #f67200;
   border-color: #000000;
 }
 
@@ -159,7 +162,7 @@ a:hover {
 }
 
 .checkbox-field label:hover {
-  color: #7F00FF;
+  color: #ff6e6e;
 }
 
 /* Form Options */
@@ -176,30 +179,40 @@ a:hover {
 }
 
 .form-options a:hover {
-  color: #E100FF;
+  color: #ffbf00;
 }
 
 /* Submit Button */
 .btn {
-  padding: 15px;
+  padding: 14px;
   font-size: 1.1em;
   width: 100%;
   border-radius: 25px;
   border: none;
   margin: 20px 0;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
 .btn-signin {
-  background: linear-gradient(to right, #E100FF, #7F00FF);
-  box-shadow: 0px 5px 15px rgba(127, 0, 255, 0.2);
+  background: linear-gradient(to right, #ff9191, #e52c2c);
   color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+  box-shadow: 0px 4px 12px rgba(204, 0, 0, 0.2);
 }
 
 .btn-signin:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 15px 30px rgba(127, 0, 255, 0.3);
+  transform: translateY(-3px);
+  background: linear-gradient(to right, #ff9191, #e52c2c);
+  box-shadow: 0px 8px 20px rgba(204, 0, 0, 0.3);
+}
+
+.btn-signin:disabled {
+  background: #d9d9d9;
+  color: #666;
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 /* Links Section */
@@ -209,12 +222,12 @@ a:hover {
 }
 
 .links a {
-  color: #7F00FF;
+  color: #fcad46;
   font-size: 1em;
 }
 
 .links a:hover {
-  color: #E100FF;
+  color: #ff0000;
 }
 
 /* Responsive Design */
@@ -242,3 +255,4 @@ a:hover {
     font-size: 0.8em;
   }
 }
+

@@ -1,30 +1,67 @@
+<!-- login.component.html -->
 <div class="container">
   <div class="form">
     <div class="sign-in-section">
       <img src="../../assets/img/images (1).png" alt="Logo" class="logo" style="display: block; margin: 0 auto; width: 40%;" />
       <h1>Login</h1>
-      <form>
+
+      <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <div class="form-field">
           <label for="email">Email</label>
-          <input id="email" name="email" type="email" placeholder="Email" required />
+          <input 
+            id="email" 
+            name="email" 
+            type="email" 
+            placeholder="Email" 
+            formControlName="email" 
+            [class.invalid]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid" />
+          <p class="error" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.errors">
+            <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required.</span>
+            <span *ngIf="loginForm.get('email')?.errors?.['email']">Invalid email format.</span>
+          </p>
         </div>
+
         <div class="form-field">
           <label for="password">Password</label>
-          <input id="password" name="password" type="password" placeholder="Password" required />
-          
+          <input 
+            id="password" 
+            name="password" 
+            type="password" 
+            placeholder="Password" 
+            formControlName="password" 
+            [class.invalid]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" />
+          <p class="error" *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.errors">
+            <span *ngIf="loginForm.get('password')?.errors?.['required']">Password is required.</span>
+            <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters.</span>
+          </p>
         </div>
+
+        
+
         <div class="form-options">
           <div class="checkbox-field">
-            <input id="rememberMe" type="checkbox" class="checkbox" />
+            <input 
+              id="rememberMe" 
+              type="checkbox" 
+              formControlName="rememberMe" />
             <label for="rememberMe">Remember Me</label>
           </div>
         </div>
+
         <div class="form-field">
-          <input type="submit" class="btn btn-signin" value="Submit" />
+          <button 
+            type="submit" 
+            class="btn btn-signin" 
+            [disabled]="loginForm.invalid || loading">
+            {{ loading ? 'Logging in...' : 'Login' }}
+          </button>
         </div>
       </form>
+
       <div class="links">
-        <a href="/forgot-password">Forget password?</a>
+        <a href="#" (click)="navigateToForgetPassword(); $event.preventDefault()">Forget password?</a>
       </div>
     </div>
   </div>

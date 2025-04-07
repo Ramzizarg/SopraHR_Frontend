@@ -7,11 +7,12 @@ import { TeletravailComponent } from './teletravail/teletravail.component';
 import { ReservationComponent } from './reservation/reservation.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { PlanningComponent } from './planning/planning.component';
+import { AuthGuard } from './login/AuthGuard';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { path: 'home', component: HomeComponent},
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+    { path: 'login', component: LoginComponent },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard]},
   { path: 'forgot-password', component: ForgetpasswordComponent },
   { path: 'teletravail', component: TeletravailComponent},
   { path: 'reservation', component: ReservationComponent},

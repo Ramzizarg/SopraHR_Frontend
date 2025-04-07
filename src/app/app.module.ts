@@ -15,6 +15,9 @@ import { CommonModule } from '@angular/common';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { PlanningComponent } from './planning/planning.component';
+import { AuthService } from './login/AuthService';
+import { AuthGuard } from './login/AuthGuard';
+
 
 @NgModule({
   declarations: [
@@ -39,7 +42,7 @@ import { PlanningComponent } from './planning/planning.component';
     BrowserAnimationsModule,
     
     ],
-  providers: [],
-  bootstrap: [AppComponent]
+    providers: [AuthService, AuthGuard],
+      bootstrap: [AppComponent]
 })
 export class AppModule { }

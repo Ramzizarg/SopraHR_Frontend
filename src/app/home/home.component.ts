@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import * as XLSX from 'xlsx';
+import { AuthService } from '../login/AuthService';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -10,7 +12,7 @@ export class HomeComponent implements OnInit {
   carouselData: { heading: string, strong: string }[] = [];
   isLoading: boolean = true;
 
-  constructor() {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
     this.loadExcelData(); // Load Excel data on component init
@@ -52,5 +54,10 @@ export class HomeComponent implements OnInit {
       { heading: 'Dépassement de soi', strong: 'Chaque défi est une opportunité' },
       { heading: 'Victoire assurée', strong: 'Votre succès commence ici' }
     ];
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
