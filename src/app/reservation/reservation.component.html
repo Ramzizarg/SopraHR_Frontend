@@ -21,87 +21,57 @@
 
 <body class="reservation-page">
 
-  <!-- Header -->
-  <header id="header" class="header d-flex align-items-center sticky-top">
-    <div class="container position-relative d-flex align-items-center">
-      <a href="/reservation" class="logo d-flex align-items-center me-auto">
-        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Company Logo"
-          style="transform: scale(1.5); max-width: 150px; height: auto;">
+<!-- Header -->
+<header id="header" class="header d-flex align-items-center sticky-top">
+  <div class="container position-relative d-flex align-items-center">
+    <a href="/home" class="logo d-flex align-items-center me-auto">
+      <img src="assets/img/Sopra_Steria_logo.svg.png" alt="Company Logo" style="transform: scale(1.5); max-width: 150px; height: auto;">
+    </a>
+
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="/home">Page d'accueil</a></li>
+        <li><a href="/teletravail">Télétravail</a></li>
+        <li><a href="/reservation" class="active">Réservations de Postes</a></li>
+        <li><a href="/planning">Planning</a></li>
+        <li><a href="/contact">Déconnexion</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+
+    <div class="header-notification">
+      <a href="#" class="notification">
+        <i class="bi bi-bell"></i>
+        <span class="badge">3</span>
       </a>
+    </div>
+  </div>
+</header>
 
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="/home">Page d'accueil</a></li>
-          <li><a href="/teletravail">Télétravail</a></li>
-          <li><a href="/reservation" class="active">Réservations de Postes</a></li>
-          <li><a href="portfolio.html">Planning</a></li>
-          <li><a href="contact.html">Déconnexion</a></li>
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
-
-      <div class="header-notification">
-        <a href="#" class="notification">
-          <i class="bi bi-bell"></i>
-          <span class="badge">3</span> <!-- Example notification count -->
-        </a>
-      </div>
-        </div>
-  </header>
-<!--  
-  <div class="sidebar" [class.hidden]="sidebarHidden">
+<!-- Main Content -->
+<main class="main-content">
+  <div class="sidebar">
     <div class="title">Plan Work</div>
     <div class="button-container">
-      <button id="createPlanButton" (click)="createPlan(0, 0)" [disabled]="planCounter >= 1">Create New Plan</button>
+      <button id="createPlanButton" (click)="createPlan()">Create New Plan</button>
       <button id="createWallButton" (click)="currentPlan && createWall(currentPlan, 10, 35)" [disabled]="!currentPlan || isPlanConfirmed">Create Wall</button>
       <button id="deletePlanButton" (click)="deletePlan()" [disabled]="!currentPlan">Delete Plan</button>
       <button id="confirmDesignButton" (click)="confirmDesign()" [disabled]="!currentPlan || isPlanConfirmed">Confirm Design</button>
       <button id="modifyButton" (click)="modifyDesign()" [disabled]="!currentPlan || !isPlanConfirmed">Modify</button>
-      <button id="closeSidebarButton" (click)="toggleSidebar()">Close Sidebar</button>
+      <button id="closeSidebarButton" (click)="toggleSidebar(false)">Close Sidebar</button>
     </div>
   </div>
-  <button id="openSidebarButton" (click)="toggleSidebar()" [style.display]="sidebarHidden ? 'block' : 'none'">Open Sidebar</button>
-  <div id="designContainer" #designContainer [class.shifted]="sidebarHidden"></div>
-  <div id="statusBar" #statusBar [class.shifted]="sidebarHidden">Plan: 0x0 | Desks: 0 | Walls: 0</div>
-   -->
-  <!-- Footer -->
-  <footer id="footer" class="footer dark-background">
-    <div class="container footer-top">
-      <div class="row gy-4">
-        <div class="col-lg-4 col-md-6 footer-about">
-          <a href="/home" class="logo d-flex align-items-center">
-            <span class="sitename">Sopra HR</span>
-          </a>
-          <div class="social-links d-flex mt-4">
-            <a href="https://x.com/sopraHR" class="twitter"><i class="bi bi-twitter-x"></i></a>
-            <a href="https://www.facebook.com/SopraHR/?ref=br_rs" class="facebook"><i class="bi bi-facebook"></i></a>
-            <a href="https://www.instagram.com/soprahr/" class="instagram"><i class="bi bi-instagram"></i></a>
-            <a href="https://www.linkedin.com/company/soprahr/" class="linkedin"><i class="bi bi-linkedin"></i></a>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6 footer-links text-center">
-          <h4>Useful Links</h4>
-          <ul>
-            <li><a href="/home">Page d'accueil</a></li>
-            <li><a href="/teletravail">Télétravail</a></li>
-            <li><a href="/reservation">Réservations de Postes</a></li>
-            <li><a href="portfolio.html">Planning</a></li>
-            <li><a href="contact.html">Contact</a></li>
-          </ul>
-        </div>
-        <div class="col-lg-4 col-md-6 footer-logo text-end">
-          <img src="../../assets/img/Sopra.png" alt="Company Logo" style="max-width: 100%; height: auto; transform: scale(0.5); margin-bottom: 0;">
-          <p style="margin-top: -60px;">© <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
-          <div class="credits">
-          </div>
-        </div>
-      </div>
-    </div>
-  </footer>
 
-  <!-- Scroll Top -->
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  <button id="openSidebarButton" (click)="toggleSidebar(true)">
+    <span class="hamburger-icon">&#9776;</span>
+  </button>
+
+  <div id="designContainer" #designContainer></div>
+  <div id="statusBar">Plan: 0x0 | Desks: 0 | Walls: 0</div>
+</main>
+
+<!-- Scroll Top -->
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
 </body>
-
 </html>

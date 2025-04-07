@@ -1,36 +1,37 @@
-import { Xliff } from '@angular/compiler';
-import { Component, ElementRef, HostListener, Renderer2, ViewChild } from '@angular/core';
+import { Component, ElementRef, Renderer2, OnInit, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-reservation',
   templateUrl: './reservation.component.html',
-  styleUrls: ['./reservation.component.scss']
+  styleUrls: ['./reservation.component.css']
 })
-export class ReservationComponent { /*
-  @ViewChild('designContainer', { static: false }) designContainer!: ElementRef;
-  @ViewChild('statusBar', { static: false }) statusBar!: ElementRef;
- 
+export class ReservationComponent implements OnInit {
+  @ViewChild('designContainer') designContainer!: ElementRef;
+
   planCounter = 0;
   currentPlan: HTMLElement | null = null;
   selectedDesk: HTMLElement | null = null;
   selectedPlan: HTMLElement | null = null;
   selectedWall: HTMLElement | null = null;
   isPlanConfirmed = false;
-  DESK_SIZE = 50;
-  WALL_MIN_SIZE = 20;
-  MIN_PLAN_SIZE = this.DESK_SIZE;
-  GRID_SIZE = 10;
-  INITIAL_WIDTH = 400;
-  INITIAL_HEIGHT = 300;
-  CONTAINER_WIDTH = 1200;
-  CONTAINER_HEIGHT = 650;
-  LERP_FACTOR = 0.2;
+
+  readonly DESK_SIZE = 50;
+  readonly WALL_MIN_SIZE = 20;
+  readonly WALL_MAX_SIZE = 500;
+  readonly WALL_CONNECTION_DISTANCE = 15;
+  readonly MIN_PLAN_SIZE = this.DESK_SIZE;
+  readonly GRID_SIZE = 10;
+  readonly INITIAL_WIDTH = 400;
+  readonly INITIAL_HEIGHT = 300;
+  readonly CONTAINER_WIDTH = 1200;
+  readonly CONTAINER_HEIGHT = 650;
+  readonly LERP_FACTOR = 0.2;
+  readonly SNAP_TOLERANCE = 10;
   useGridSnapping = false;
-  sidebarHidden = false;
 
   constructor(private renderer: Renderer2) {}
 
-  ngAfterViewInit() {
+  ngOnInit() {
     this.updateStatusBar();
   }
 
@@ -40,16 +41,16 @@ export class ReservationComponent { /*
     const deskCount = this.currentPlan?.querySelectorAll('.desk').length || 0;
     const wallCount = this.currentPlan?.querySelectorAll('.wall').length || 0;
     const status = this.isPlanConfirmed ? ' (Confirmed)' : '';
-    this.renderer.setProperty(
-      this.statusBar.nativeElement,
-      'textContent',
-      `Plan: ${Math.round(width)}x${Math.round(height)}${status} | Desks: ${deskCount} | Walls: ${wallCount}`
-    );
+    const statusBar = document.getElementById('statusBar');
+    if (statusBar) {
+      statusBar.textContent = `Plan: ${Math.round(width)}x${Math.round(height)}${status} | Desks: ${deskCount} | Walls: ${wallCount}`;
+    }
   }
 
   createPlan(x = 0, y = 0) {
     if (this.planCounter >= 1) return;
     this.planCounter++;
+    const container = this.designContainer.nativeElement;
     const plan = this.renderer.createElement('div');
     this.renderer.addClass(plan, 'plan');
     this.renderer.setAttribute(plan, 'id', `plan-${this.planCounter}`);
@@ -62,15 +63,17 @@ export class ReservationComponent { /*
     handles.forEach(pos => {
       const handle = this.renderer.createElement('div');
       this.renderer.addClass(handle, 'plan-resize-handle');
-      pos.split(' ').forEach(p => this.renderer.addClass(handle, p));
+      pos.split(' ').forEach(cls => this.renderer.addClass(handle, cls));
       this.renderer.appendChild(plan, handle);
       this.addPlanResizeListener(plan, handle, pos);
     });
 
-    this.renderer.appendChild(this.designContainer.nativeElement, plan);
+    this.renderer.appendChild(container, plan);
     this.addPlanEventListeners(plan);
     this.currentPlan = plan;
     this.isPlanConfirmed = false;
+
+    this.toggleButtonStates(true, false, false, false, true);
     this.updateStatusBar();
   }
 
@@ -78,11 +81,8 @@ export class ReservationComponent { /*
     let isDragging = false;
     let currentX: number, currentY: number;
 
-    this.renderer.listen(plan, 'dblclick', (e: MouseEvent) => {
-      if (this.isPlanConfirmed || e.target instanceof HTMLElement && (
-          e.target.classList.contains('desk') || 
-          e.target.classList.contains('wall') || 
-          e.target.classList.contains('plan-resize-handle'))) return;
+    this.renderer.listen(plan, 'dblclick', (e: Event) => {
+      if (this.isPlanConfirmed || e.target !== plan) return;
       if (this.selectedPlan !== plan) {
         if (this.selectedPlan) this.renderer.removeClass(this.selectedPlan, 'selected');
         this.renderer.addClass(plan, 'selected');
@@ -95,37 +95,23 @@ export class ReservationComponent { /*
     });
 
     this.renderer.listen(plan, 'mousedown', (e: MouseEvent) => {
-      if (this.isPlanConfirmed || this.selectedPlan !== plan || 
-          (e.target instanceof HTMLElement && (
-          e.target.classList.contains('desk') || 
-          e.target.classList.contains('wall') || 
-          e.target.classList.contains('plan-resize-handle') ||
-          e.target.classList.contains('wall-resize-handle')))) return;
+      if (this.isPlanConfirmed || this.selectedPlan !== plan || e.target !== plan) return;
       isDragging = true;
       currentX = e.clientX - parseFloat(plan.style.left || '0');
       currentY = e.clientY - parseFloat(plan.style.top || '0');
-    });
-
-    this.renderer.listen(document, 'mousemove', (e: MouseEvent) => {
-      if (isDragging) {
-        e.preventDefault();
-        const planWidth = parseFloat(plan.style.width);
-        const planHeight = parseFloat(plan.style.height);
-        const x = Math.max(0, Math.min(e.clientX - currentX, this.CONTAINER_WIDTH - planWidth));
-        const y = Math.max(0, Math.min(e.clientY - currentY, this.CONTAINER_HEIGHT - planHeight));
-        this.renderer.setStyle(plan, 'left', `${x}px`);
-        this.renderer.setStyle(plan, 'top', `${y}px`);
-      }
-    });
-
-    this.renderer.listen(document, 'mouseup', () => {
-      isDragging = false;
+      const moveListener = this.renderer.listen('document', 'mousemove', (moveEvent: MouseEvent) =>
+        this.dragPlan(plan, currentX, currentY, moveEvent)
+      );
+      const upListener = this.renderer.listen('document', 'mouseup', () => {
+        isDragging = false;
+        moveListener();
+        upListener();
+      });
     });
 
     this.renderer.listen(plan, 'contextmenu', (e: MouseEvent) => {
       e.preventDefault();
-      if (!this.isPlanConfirmed && (e.target === plan || 
-          (e.target instanceof HTMLElement && e.target.classList.contains('plan-resize-handle')))) {
+      if (!this.isPlanConfirmed && e.target === plan) {
         const planRect = plan.getBoundingClientRect();
         const x = Math.round((e.clientX - planRect.left - 10) / this.GRID_SIZE) * this.GRID_SIZE;
         const y = Math.round((e.clientY - planRect.top - 35) / this.GRID_SIZE) * this.GRID_SIZE;
@@ -133,11 +119,8 @@ export class ReservationComponent { /*
       }
     });
 
-    this.renderer.listen(this.designContainer.nativeElement, 'click', (e: MouseEvent) => {
-      if (this.isPlanConfirmed) return;
-      if (this.selectedWall && (e.target === this.selectedWall || 
-          (e.target instanceof HTMLElement && e.target.classList.contains('wall-resize-handle') && 
-          e.target.parentElement === this.selectedWall))) return;
+    this.renderer.listen(this.designContainer.nativeElement, 'click', (e: Event) => {
+      if (this.isPlanConfirmed || e.target === this.selectedWall) return;
       if (this.selectedPlan) {
         this.renderer.removeClass(this.selectedPlan, 'selected');
         this.selectedPlan = null;
@@ -149,45 +132,19 @@ export class ReservationComponent { /*
     });
   }
 
-  wouldTouchElements(plan: HTMLElement, newWidth: number, newHeight: number, newLeft: number, newTop: number): boolean {
-    const newRight = newLeft + newWidth;
-    const newBottom = newTop + newHeight;
-
-    if (newLeft < 0 || newTop < 0 || newRight > this.CONTAINER_WIDTH || newBottom > this.CONTAINER_HEIGHT) return true;
-
-    const desks = Array.from(plan.querySelectorAll('.desk'));
-    const walls = Array.from(plan.querySelectorAll('.wall'));
-
-    for (let desk of desks) {
-      const deskLeft = parseFloat(desk.style.left);
-      const deskTop = parseFloat(desk.style.top);
-      const rotation = parseFloat(desk.dataset.rotation || '0');
-      const width = 15;
-      const height = 50;
-      const deskRight = deskLeft + Math.max(width * Math.abs(Math.cos(rotation * Math.PI / 180)), height * Math.abs(Math.sin(rotation * Math.PI / 180)));
-      const deskBottom = deskTop + Math.max(height * Math.abs(Math.cos(rotation * Math.PI / 180)), width * Math.abs(Math.sin(rotation * Math.PI / 180)));
-
-      if (deskLeft < newLeft || deskRight > newRight || deskTop < newTop || deskBottom > newBottom) return true;
-    }
-
-    for (let wall of walls) {
-      const wallLeft = parseFloat(wall.style.left);
-      const wallTop = parseFloat(wall.style.top);
-      const rotation = parseFloat(wall.dataset.rotation || '0');
-      const wallWidth = parseFloat(wall.style.width);
-      const wallHeight = parseFloat(wall.style.height);
-      const wallRight = wallLeft + Math.max(wallWidth * Math.abs(Math.cos(rotation * Math.PI / 180)), wallHeight * Math.abs(Math.sin(rotation * Math.PI / 180)));
-      const wallBottom = wallTop + Math.max(wallHeight * Math.abs(Math.cos(rotation * Math.PI / 180)), wallWidth * Math.abs(Math.sin(rotation * Math.PI / 180)));
-
-      if (wallLeft < newLeft || wallRight > newRight || wallTop < newTop || wallBottom > newBottom) return true;
-    }
-    return false;
+  dragPlan(plan: HTMLElement, currentX: number, currentY: number, e: MouseEvent) {
+    e.preventDefault();
+    const planWidth = parseFloat(plan.style.width);
+    const planHeight = parseFloat(plan.style.height);
+    const x = Math.max(0, Math.min(e.clientX - currentX, this.CONTAINER_WIDTH - planWidth));
+    const y = Math.max(0, Math.min(e.clientY - currentY, this.CONTAINER_HEIGHT - planHeight));
+    this.renderer.setStyle(plan, 'left', `${x}px`);
+    this.renderer.setStyle(plan, 'top', `${y}px`);
   }
 
   addPlanResizeListener(plan: HTMLElement, handle: HTMLElement, position: string) {
     let isResizing = false;
     let initialX: number, initialY: number, initialWidth: number, initialHeight: number, initialLeft: number, initialTop: number;
-    let tooltip: HTMLElement;
 
     this.renderer.listen(handle, 'mousedown', (e: MouseEvent) => {
       if (this.isPlanConfirmed || this.selectedPlan !== plan) return;
@@ -200,239 +157,83 @@ export class ReservationComponent { /*
       initialLeft = parseFloat(plan.style.left);
       initialTop = parseFloat(plan.style.top);
 
-      tooltip = this.renderer.createElement('div');
-      this.renderer.addClass(tooltip, 'tooltip');
-      this.renderer.appendChild(document.body, tooltip);
-      this.updateTooltip(e.clientX, e.clientY, plan);
-
-      e.preventDefault();
-    });
-
-    this.renderer.listen(document, 'mousemove', (e: MouseEvent) => {
-      if (!isResizing) return;
-
-      let newWidth = initialWidth;
-      let newHeight = initialHeight;
-      let newLeft = initialLeft;
-      let newTop = initialTop;
-
-      const deltaX = e.clientX - initialX;
-      const deltaY = e.clientY - initialY;
-
-      switch (position) {
-        case 'bottom right':
-          newWidth = initialWidth + deltaX;
-          newHeight = initialHeight + deltaY;
-          break;
-        case 'top left':
-          newWidth = initialWidth - deltaX;
-          newHeight = initialHeight - deltaY;
-          newLeft = initialLeft + deltaX;
-          newTop = initialTop + deltaY;
-          break;
-        case 'top right':
-          newWidth = initialWidth + deltaX;
-          newHeight = initialHeight - deltaY;
-          newTop = initialTop + deltaY;
-          break;
-        case 'bottom left':
-          newWidth = initialWidth - deltaX;
-          newHeight = initialHeight + deltaY;
-          newLeft = initialLeft + deltaX;
-          break;
-        case 'top':
-          newHeight = initialHeight - deltaY;
-          newTop = initialTop + deltaY;
-          break;
-        case 'bottom':
-          newHeight = initialHeight + deltaY;
-          break;
-        case 'left':
-          newWidth = initialWidth - deltaX;
-          newLeft = initialLeft + deltaX;
-          break;
-        case 'right':
-          newWidth = initialWidth + deltaX;
-          break;
-      }
-
-      newWidth = Math.round(newWidth / this.GRID_SIZE) * this.GRID_SIZE;
-      newHeight = Math.round(newHeight / this.GRID_SIZE) * this.GRID_SIZE;
-
-      if (newWidth < this.MIN_PLAN_SIZE) {
-        newWidth = this.MIN_PLAN_SIZE;
-        if (position.includes('left')) newLeft = initialLeft + (initialWidth - newWidth);
-      }
-      if (newHeight < this.MIN_PLAN_SIZE) {
-        newHeight = this.MIN_PLAN_SIZE;
-        if (position.includes('top')) newTop = initialTop + (initialHeight - newHeight);
-      }
-
-      if (this.wouldTouchElements(plan, newWidth, newHeight, newLeft, newTop)) {
-        const desks = plan.querySelectorAll('.desk');
-        const walls = plan.querySelectorAll('.wall');
-        let minLeft = Infinity, maxRight = -Infinity, minTop = Infinity, maxBottom = -Infinity;
-
-        desks.forEach(desk => {
-          const deskLeft = parseFloat(desk.style.left);
-          const deskTop = parseFloat(desk.style.top);
-          const rotation = parseFloat(desk.dataset.rotation || '0');
-          const width = 15;
-          const height = 50;
-          const deskRight = deskLeft + Math.max(width * Math.abs(Math.cos(rotation * Math.PI / 180)), height * Math.abs(Math.sin(rotation * Math.PI / 180)));
-          const deskBottom = deskTop + Math.max(height * Math.abs(Math.cos(rotation * Math.PI / 180)), width * Math.abs(Math.sin(rotation * Math.PI / 180)));
-          minLeft = Math.min(minLeft, deskLeft);
-          maxRight = Math.max(maxRight, deskRight);
-          minTop = Math.min(minTop, deskTop);
-          maxBottom = Math.max(maxBottom, deskBottom);
-        });
-
-        walls.forEach(wall => {
-          const wallLeft = parseFloat(wall.style.left);
-          const wallTop = parseFloat(wall.style.top);
-          const rotation = parseFloat(wall.dataset.rotation || '0');
-          const wallWidth = parseFloat(wall.style.width);
-          const wallHeight = parseFloat(wall.style.height);
-          const wallRight = wallLeft + Math.max(wallWidth * Math.abs(Math.cos(rotation * Math.PI / 180)), wallHeight * Math.abs(Math.sin(rotation * Math.PI / 180)));
-          const wallBottom = wallTop + Math.max(wallHeight * Math.abs(Math.cos(rotation * Math.PI / 180)), wallWidth * Math.abs(Math.sin(rotation * Math.PI / 180)));
-          minLeft = Math.min(minLeft, wallLeft);
-          maxRight = Math.max(maxRight, wallRight);
-          minTop = Math.min(minTop, wallTop);
-          maxBottom = Math.max(maxBottom, wallBottom);
-        });
-
-        if (position === 'top left') {
-          if (newLeft > minLeft) newLeft = minLeft;
-          if (newTop > minTop) newTop = minTop;
-        } else if (position === 'top right') {
-          if (newWidth < maxRight) newWidth = maxRight;
-          if (newTop > minTop) newTop = minTop;
-        } else if (position === 'bottom left') {
-          if (newLeft > minLeft) newLeft = minLeft;
-          if (newHeight < maxBottom) newHeight = maxBottom;
-        } else if (position === 'bottom right') {
-          if (newWidth < maxRight) newWidth = maxRight;
-          if (newHeight < maxBottom) newHeight = maxBottom;
-        }
-      }
-
-      newWidth = Math.min(newWidth, this.CONTAINER_WIDTH - newLeft);
-      newHeight = Math.min(newHeight, this.CONTAINER_HEIGHT - newTop);
-      newLeft = Math.max(0, Math.min(newLeft, this.CONTAINER_WIDTH - newWidth));
-      newTop = Math.max(0, Math.min(newTop, this.CONTAINER_HEIGHT - newHeight));
-
-      this.renderer.setStyle(plan, 'width', `${newWidth}px`);
-      this.renderer.setStyle(plan, 'height', `${newHeight}px`);
-      this.renderer.setStyle(plan, 'left', `${newLeft}px`);
-      this.renderer.setStyle(plan, 'top', `${newTop}px`);
-
-      this.updateTooltip(e.clientX, e.clientY, plan);
-      this.updateStatusBar();
-    });
-
-    this.renderer.listen(document, 'mouseup', () => {
-      isResizing = false;
-      if (tooltip) this.renderer.removeChild(document.body, tooltip);
+      const moveListener = this.renderer.listen('document', 'mousemove', (moveEvent: MouseEvent) =>
+        this.resizePlan(plan, position, initialX, initialY, initialWidth, initialHeight, initialLeft, initialTop, moveEvent)
+      );
+      const upListener = this.renderer.listen('document', 'mouseup', () => {
+        isResizing = false;
+        moveListener();
+        upListener();
+      });
     });
   }
 
-  updateTooltip(mouseX: number, mouseY: number, plan: HTMLElement) {
-    const tooltip = document.querySelector('.tooltip');
-    if (tooltip) {
-      const width = parseFloat(plan.style.width);
-      const height = parseFloat(plan.style.height);
-      this.renderer.setProperty(tooltip, 'textContent', `${Math.round(width)}x${Math.round(height)}`);
-      this.renderer.setStyle(tooltip, 'left', `${mouseX + 10}px`);
-      this.renderer.setStyle(tooltip, 'top', `${mouseY - 30}px`);
-    }
-  }
+  resizePlan(plan: HTMLElement, position: string, initialX: number, initialY: number, initialWidth: number, initialHeight: number, initialLeft: number, initialTop: number, e: MouseEvent) {
+    let newWidth = initialWidth;
+    let newHeight = initialHeight;
+    let newLeft = initialLeft;
+    let newTop = initialTop;
 
-  countTouchingElements(plan: HTMLElement, newX: number, newY: number, width: number, height: number, excludeElement: HTMLElement | null = null): number {
-    const existingDesks = Array.from(plan.querySelectorAll('.desk'));
-    const existingWalls = Array.from(plan.querySelectorAll('.wall'));
-    let touchCount = 0;
+    const deltaX = e.clientX - initialX;
+    const deltaY = e.clientY - initialY;
 
-    const newRight = newX + width;
-    const newBottom = newY + height;
-
-    for (let desk of existingDesks) {
-      if (desk === excludeElement) continue;
-      const deskLeft = parseFloat(desk.style.left);
-      const deskTop = parseFloat(desk.style.top);
-      const rotation = parseFloat(desk.dataset.rotation || '0');
-      const deskWidth = 15;
-      const deskHeight = 50;
-      const deskRight = deskLeft + Math.max(deskWidth * Math.abs(Math.cos(rotation * Math.PI / 180)), deskHeight * Math.abs(Math.sin(rotation * Math.PI / 180)));
-      const deskBottom = deskTop + Math.max(deskHeight * Math.abs(Math.cos(rotation * Math.PI / 180)), deskWidth * Math.abs(Math.sin(rotation * Math.PI / 180)));
-
-      if ((Math.abs(newX - deskRight) < 1 && newY >= deskTop && newY < deskBottom) || 
-          (Math.abs(newRight - deskLeft) < 1 && newY >= deskTop && newY < deskBottom) || 
-          (Math.abs(newY - deskBottom) < 1 && newX >= deskLeft && newX < deskRight) || 
-          (Math.abs(newBottom - deskTop) < 1 && newX >= deskLeft && newX < deskRight)) {
-        touchCount++;
-        if (!excludeElement) {
-          this.renderer.addClass(desk, 'nearby');
-          setTimeout(() => this.renderer.removeClass(desk, 'nearby'), 300);
-        }
-      }
-      if (newX < deskRight && newRight > deskLeft && newY < deskBottom && newBottom > deskTop) return Infinity;
-    }
-
-    for (let wall of existingWalls) {
-      if (wall === excludeElement) continue;
-      const wallLeft = parseFloat(wall.style.left);
-      const wallTop = parseFloat(wall.style.top);
-      const rotation = parseFloat(wall.dataset.rotation || '0');
-      const wallWidth = parseFloat(wall.style.width);
-      const wallHeight = parseFloat(wall.style.height);
-      const wallRight = wallLeft + Math.max(wallWidth * Math.abs(Math.cos(rotation * Math.PI / 180)), wallHeight * Math.abs(Math.sin(rotation * Math.PI / 180)));
-      const wallBottom = wallTop + Math.max(wallHeight * Math.abs(Math.cos(rotation * Math.PI / 180)), wallWidth * Math.abs(Math.sin(rotation * Math.PI / 180)));
-
-      if ((Math.abs(newX - wallRight) < 1 && newY >= wallTop && newY < wallBottom) || 
-          (Math.abs(newRight - wallLeft) < 1 && newY >= wallTop && newY < wallBottom) || 
-          (Math.abs(newY - wallBottom) < 1 && newX >= wallLeft && newX < wallRight) || 
-          (Math.abs(newBottom - wallTop) < 1 && newX >= wallLeft && newX < wallRight)) {
-        touchCount++;
-        if (!excludeElement) {
-          this.renderer.addClass(wall, 'nearby');
-          setTimeout(() => this.renderer.removeClass(wall, 'nearby'), 300);
-        }
-      }
-      if (newX < wallRight && newRight > wallLeft && newY < wallBottom && newBottom > wallTop) return Infinity;
+    switch (position) {
+      case 'bottom right':
+        newWidth = initialWidth + deltaX;
+        newHeight = initialHeight + deltaY;
+        break;
+      case 'top left':
+        newWidth = initialWidth - deltaX;
+        newHeight = initialHeight - deltaY;
+        newLeft = initialLeft + deltaX;
+        newTop = initialTop + deltaY;
+        break;
+      case 'top right':
+        newWidth = initialWidth + deltaX;
+        newHeight = initialHeight - deltaY;
+        newTop = initialTop + deltaY;
+        break;
+      case 'bottom left':
+        newWidth = initialWidth - deltaX;
+        newHeight = initialHeight + deltaY;
+        newLeft = initialLeft + deltaX;
+        break;
+      case 'top':
+        newHeight = initialHeight - deltaY;
+        newTop = initialTop + deltaY;
+        break;
+      case 'bottom':
+        newHeight = initialHeight + deltaY;
+        break;
+      case 'left':
+        newWidth = initialWidth - deltaX;
+        newLeft = initialLeft + deltaX;
+        break;
+      case 'right':
+        newWidth = initialWidth + deltaX;
+        break;
     }
 
-    const planWidth = parseFloat(plan.style.width);
-    const planHeight = parseFloat(plan.style.height);
-    if (newX < 0 || newRight > planWidth || newY < 0 || newBottom > planHeight) touchCount++;
+    newWidth = Math.round(newWidth / this.GRID_SIZE) * this.GRID_SIZE;
+    newHeight = Math.round(newHeight / this.GRID_SIZE) * this.GRID_SIZE;
+    newWidth = Math.max(this.MIN_PLAN_SIZE, Math.min(newWidth, this.CONTAINER_WIDTH - newLeft));
+    newHeight = Math.max(this.MIN_PLAN_SIZE, Math.min(newHeight, this.CONTAINER_HEIGHT - newTop));
+    newLeft = Math.max(0, newLeft);
+    newTop = Math.max(0, newTop);
 
-    return touchCount;
+    this.renderer.setStyle(plan, 'width', `${newWidth}px`);
+    this.renderer.setStyle(plan, 'height', `${newHeight}px`);
+    this.renderer.setStyle(plan, 'left', `${newLeft}px`);
+    this.renderer.setStyle(plan, 'top', `${newTop}px`);
+    this.updateStatusBar();
   }
 
   createDesk(plan: HTMLElement, x: number, y: number) {
     const planRect = plan.getBoundingClientRect();
     let newX = Math.max(0, Math.min(x, planRect.width - 15));
-    let newY = Math.max(0, Math.min(y, planRect.height - 50));
+    let newY = Math.max(0, Math.min(y, planRect.height - this.DESK_SIZE));
     newX = this.useGridSnapping ? Math.round(newX / this.GRID_SIZE) * this.GRID_SIZE : newX;
     newY = this.useGridSnapping ? Math.round(newY / this.GRID_SIZE) * this.GRID_SIZE : newY;
-
-    if (this.countTouchingElements(plan, newX, newY, 15, 50) > 2) {
-      let foundSpot = false;
-      for (let tryX = 0; tryX <= planRect.width - 15; tryX += this.GRID_SIZE) {
-        for (let tryY = 0; tryY <= planRect.height - 50; tryY += this.GRID_SIZE) {
-          if (this.countTouchingElements(plan, tryX, tryY, 15, 50) <= 2) {
-            newX = tryX;
-            newY = tryY;
-            foundSpot = true;
-            break;
-          }
-        }
-        if (foundSpot) break;
-      }
-      if (!foundSpot) {
-        alert('No space available to add a new desk with max two elements touching!');
-        return;
-      }
-    }
 
     const desk = this.renderer.createElement('div');
     this.renderer.addClass(desk, 'desk');
@@ -454,38 +255,73 @@ export class ReservationComponent { /*
     this.updateStatusBar();
   }
 
+  addDeskEventListeners(desk: HTMLElement, plan: HTMLElement) {
+    let isDragging = false;
+    let currentX: number, currentY: number;
+
+    this.renderer.listen(desk, 'contextmenu', (e: MouseEvent) => {
+      if (this.isPlanConfirmed) return;
+      e.preventDefault();
+      if (this.selectedDesk !== desk) {
+        if (this.selectedDesk) this.renderer.removeClass(this.selectedDesk, 'selected');
+        this.renderer.addClass(desk, 'selected');
+        this.selectedDesk = desk;
+      }
+    });
+
+    this.renderer.listen(desk, 'dblclick', (e: Event) => {
+      if (this.isPlanConfirmed) return;
+      e.stopPropagation();
+      let currentRotation = parseFloat(desk.getAttribute('data-rotation') || '0');
+      currentRotation = (currentRotation + 90) % 360;
+      this.renderer.setAttribute(desk, 'data-rotation', `${currentRotation}`);
+      this.renderer.setStyle(desk, 'transform', `rotate(${currentRotation}deg)`);
+    });
+
+    this.renderer.listen(desk, 'mousedown', (e: MouseEvent) => {
+      if (this.isPlanConfirmed) return;
+      e.preventDefault();
+      isDragging = true;
+      currentX = e.clientX - parseFloat(desk.getAttribute('data-target-x') || desk.style.left || '0');
+      currentY = e.clientY - parseFloat(desk.getAttribute('data-target-y') || desk.style.top || '0');
+      const moveListener = this.renderer.listen('document', 'mousemove', (moveEvent: MouseEvent) =>
+        this.dragDesk(desk, plan, currentX, currentY, moveEvent)
+      );
+      const upListener = this.renderer.listen('document', 'mouseup', () => {
+        isDragging = false;
+        moveListener();
+        upListener();
+      });
+    });
+  }
+
+  dragDesk(desk: HTMLElement, plan: HTMLElement, currentX: number, currentY: number, e: MouseEvent) {
+    e.preventDefault();
+    let x = e.clientX - currentX;
+    let y = e.clientY - currentY;
+    const planWidth = parseFloat(plan.style.width);
+    const planHeight = parseFloat(plan.style.height);
+    x = Math.max(0, Math.min(x, planWidth - 15));
+    y = Math.max(0, Math.min(y, planHeight - this.DESK_SIZE));
+    this.renderer.setAttribute(desk, 'data-target-x', `${x}`);
+    this.renderer.setAttribute(desk, 'data-target-y', `${y}`);
+    this.renderer.setStyle(desk, 'left', `${x}px`);
+    this.renderer.setStyle(desk, 'top', `${y}px`);
+  }
+
   createWall(plan: HTMLElement, x: number, y: number) {
     const planRect = plan.getBoundingClientRect();
-    let newX = Math.max(0, Math.min(x, planRect.width - 20));
-    let newY = Math.max(0, Math.min(y, planRect.height - 20));
+    let newX = Math.max(0, Math.min(x, planRect.width - this.WALL_MIN_SIZE));
+    let newY = Math.max(0, Math.min(y, planRect.height - this.WALL_MIN_SIZE));
     newX = this.useGridSnapping ? Math.round(newX / this.GRID_SIZE) * this.GRID_SIZE : newX;
     newY = this.useGridSnapping ? Math.round(newY / this.GRID_SIZE) * this.GRID_SIZE : newY;
-
-    if (this.countTouchingElements(plan, newX, newY, 20, 20) > 2) {
-      let foundSpot = false;
-      for (let tryX = 0; tryX <= planRect.width - 20; tryX += this.GRID_SIZE) {
-        for (let tryY = 0; tryY <= planRect.height - 20; tryY += this.GRID_SIZE) {
-          if (this.countTouchingElements(plan, tryX, tryY, 20, 20) <= 2) {
-            newX = tryX;
-            newY = tryY;
-            foundSpot = true;
-            break;
-          }
-        }
-        if (foundSpot) break;
-      }
-      if (!foundSpot) {
-        alert('No space available to add a new wall with max two elements touching!');
-        return;
-      }
-    }
 
     const wall = this.renderer.createElement('div');
     this.renderer.addClass(wall, 'wall');
     this.renderer.setStyle(wall, 'left', `${newX}px`);
     this.renderer.setStyle(wall, 'top', `${newY}px`);
-    this.renderer.setStyle(wall, 'width', '20px');
-    this.renderer.setStyle(wall, 'height', '20px');
+    this.renderer.setStyle(wall, 'width', `${this.WALL_MIN_SIZE}px`);
+    this.renderer.setStyle(wall, 'height', `${this.WALL_MIN_SIZE}px`);
     this.renderer.setAttribute(wall, 'data-rotation', '0');
     this.renderer.setAttribute(wall, 'data-target-x', `${newX}`);
     this.renderer.setAttribute(wall, 'data-target-y', `${newY}`);
@@ -501,225 +337,70 @@ export class ReservationComponent { /*
 
     this.addWallEventListeners(wall, plan);
     this.renderer.appendChild(plan, wall);
+    this.checkWallConnections(wall, plan);
     this.updateStatusBar();
-  }
-
-  addDeskEventListeners(desk: HTMLElement, plan: HTMLElement) {
-    let isDragging = false;
-    let currentX: number, currentY: number;
-    let rafId: number;
-
-    this.renderer.listen(desk, 'contextmenu', (e: MouseEvent) => {
-      if (this.isPlanConfirmed) return;
-      e.preventDefault();
-      if (this.selectedDesk && this.selectedDesk !== desk) this.renderer.removeClass(this.selectedDesk, 'selected');
-      this.renderer.addClass(desk, 'selected');
-      this.selectedDesk = desk;
-      if (this.selectedWall) {
-        this.renderer.removeClass(this.selectedWall, 'selected');
-        this.selectedWall = null;
-      }
-    });
-
-    this.renderer.listen(desk, 'dblclick', (e: MouseEvent) => {
-      if (this.isPlanConfirmed) return;
-      e.stopPropagation();
-      let currentRotation = parseFloat(desk.dataset.rotation || '0');
-      currentRotation = (currentRotation + 90) % 360;
-      this.renderer.setAttribute(desk, 'data-rotation', `${currentRotation}`);
-      this.renderer.setStyle(desk, 'transform', `rotate(${currentRotation}deg)`);
-    });
-
-    this.renderer.listen(desk, 'mousedown', (e: MouseEvent) => {
-      if (this.isPlanConfirmed) return;
-      e.preventDefault();
-      isDragging = true;
-      currentX = e.clientX - parseFloat(desk.dataset.targetX || desk.style.left);
-      currentY = e.clientY - parseFloat(desk.dataset.targetY || desk.style.top);
-      this.animateDesk(desk);
-    });
-
-    this.renderer.listen(document, 'mousemove', (e: MouseEvent) => {
-      if (isDragging) {
-        e.preventDefault();
-        let x = e.clientX - currentX;
-        let y = e.clientY - currentY;
-
-        const rotation = parseFloat(desk.dataset.rotation || '0') * Math.PI / 180;
-        const baseWidth = 15;
-        const baseHeight = 50;
-        const cosRot = Math.abs(Math.cos(rotation));
-        const sinRot = Math.abs(Math.sin(rotation));
-        const effectiveWidth = baseWidth * cosRot + baseHeight * sinRot;
-        const effectiveHeight = baseWidth * sinRot + baseHeight * cosRot;
-
-        const planWidth = parseFloat(plan.style.width);
-        const planHeight = parseFloat(plan.style.height);
-
-        const offsetX = (effectiveWidth - baseWidth) / 2;
-        const offsetY = (effectiveHeight - baseHeight) / 2;
-
-        x = Math.max(-offsetX, Math.min(x, planWidth - effectiveWidth + offsetX));
-        y = Math.max(-offsetY, Math.min(y, planHeight - effectiveHeight + offsetY));
-
-        if (this.useGridSnapping) {
-          x = Math.round(x / this.GRID_SIZE) * this.GRID_SIZE;
-          y = Math.round(y / this.GRID_SIZE) * this.GRID_SIZE;
-        }
-
-        const touchCount = this.countTouchingElements(plan, x + offsetX, y + offsetY, effectiveWidth, effectiveHeight, desk);
-        if (touchCount <= 2) {
-          this.renderer.setAttribute(desk, 'data-target-x', `${x}`);
-          this.renderer.setAttribute(desk, 'data-target-y', `${y}`);
-        } else {
-          this.renderer.addClass(desk, 'nearby');
-          setTimeout(() => this.renderer.removeClass(desk, 'nearby'), 300);
-        }
-      }
-    });
-
-    this.renderer.listen(document, 'mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        cancelAnimationFrame(rafId);
-        if (this.selectedDesk === desk) {
-          this.renderer.removeClass(this.selectedDesk, 'selected');
-          this.selectedDesk = null;
-        }
-      }
-    });
-
-    this.renderer.listen(desk, 'click', (e: MouseEvent) => {
-      if (this.isPlanConfirmed || isDragging) return;
-      e.stopPropagation();
-      if (e.detail === 3 && confirm('Are you sure you want to delete this desk?')) {
-        this.renderer.removeChild(plan, desk);
-        if (this.selectedDesk === desk) this.selectedDesk = null;
-        this.updateStatusBar();
-      }
-    });
-  }
-
-  animateDesk(desk: HTMLElement) {
-    const currentX = parseFloat(desk.style.left) || 0;
-    const currentY = parseFloat(desk.style.top) || 0;
-    const targetX = parseFloat(desk.dataset.targetX || '0');
-    const targetY = parseFloat(desk.dataset.targetY || '0');
-
-    const newX = currentX + (targetX - currentX) * this.LERP_FACTOR;
-    const newY = currentY + (targetY - currentY) * this.LERP_FACTOR;
-
-    this.renderer.setStyle(desk, 'left', `${newX}px`);
-    this.renderer.setStyle(desk, 'top', `${newY}px`);
-
-    if (Math.abs(newX - targetX) > 0.1 || Math.abs(newY - targetY) > 0.1) {
-      requestAnimationFrame(() => this.animateDesk(desk));
-    }
   }
 
   addWallEventListeners(wall: HTMLElement, plan: HTMLElement) {
     let isDragging = false;
     let currentX: number, currentY: number;
-    let rafId: number;
 
     this.renderer.listen(wall, 'contextmenu', (e: MouseEvent) => {
       if (this.isPlanConfirmed) return;
       e.preventDefault();
-      if (this.selectedWall && this.selectedWall !== wall) this.renderer.removeClass(this.selectedWall, 'selected');
-      this.renderer.addClass(wall, 'selected');
-      this.selectedWall = wall;
-      if (this.selectedDesk) {
-        this.renderer.removeClass(this.selectedDesk, 'selected');
-        this.selectedDesk = null;
+      if (this.selectedWall !== wall) {
+        if (this.selectedWall) this.renderer.removeClass(this.selectedWall, 'selected');
+        this.renderer.addClass(wall, 'selected');
+        this.selectedWall = wall;
       }
     });
 
-    this.renderer.listen(wall, 'dblclick', (e: MouseEvent) => {
-      if (this.isPlanConfirmed || (e.target instanceof HTMLElement && e.target.classList.contains('wall-resize-handle'))) return;
+    this.renderer.listen(wall, 'dblclick', (e: Event) => {
+      if (this.isPlanConfirmed || (e.target as HTMLElement).classList.contains('wall-resize-handle')) return;
       e.stopPropagation();
-      let currentRotation = parseFloat(wall.dataset.rotation || '0');
+      let currentRotation = parseFloat(wall.getAttribute('data-rotation') || '0');
       currentRotation = (currentRotation + 90) % 360;
       this.renderer.setAttribute(wall, 'data-rotation', `${currentRotation}`);
       this.renderer.setStyle(wall, 'transform', `rotate(${currentRotation}deg)`);
+      this.checkWallConnections(wall, plan);
     });
 
     this.renderer.listen(wall, 'mousedown', (e: MouseEvent) => {
-      if (this.isPlanConfirmed || (e.target instanceof HTMLElement && e.target.classList.contains('wall-resize-handle'))) return;
+      if (this.isPlanConfirmed || (e.target as HTMLElement).classList.contains('wall-resize-handle')) return;
       isDragging = true;
-      currentX = e.clientX - parseFloat(wall.dataset.targetX || wall.style.left);
-      currentY = e.clientY - parseFloat(wall.dataset.targetY || wall.style.top);
-      this.animateWall(wall);
-    });
-
-    this.renderer.listen(document, 'mousemove', (e: MouseEvent) => {
-      if (isDragging) {
-        e.preventDefault();
-        let x = e.clientX - currentX;
-        let y = e.clientY - currentY;
-
-        const rotation = parseFloat(wall.dataset.rotation || '0');
-        const wallWidth = parseFloat(wall.style.width);
-        const wallHeight = parseFloat(wall.style.height);
-        const effectiveWidth = Math.max(wallWidth * Math.abs(Math.cos(rotation * Math.PI / 180)), wallHeight * Math.abs(Math.sin(rotation * Math.PI / 180)));
-        const effectiveHeight = Math.max(wallHeight * Math.abs(Math.cos(rotation * Math.PI / 180)), wallWidth * Math.abs(Math.sin(rotation * Math.PI / 180)));
-        x = Math.max(0, Math.min(x, parseFloat(plan.style.width) - effectiveWidth));
-        y = Math.max(0, Math.min(y, parseFloat(plan.style.height) - effectiveHeight));
-
-        if (this.useGridSnapping) {
-          x = Math.round(x / this.GRID_SIZE) * this.GRID_SIZE;
-          y = Math.round(y / this.GRID_SIZE) * this.GRID_SIZE;
-        }
-
-        const touchCount = this.countTouchingElements(plan, x, y, wallWidth, wallHeight, wall);
-        if (touchCount <= 2) {
-          this.renderer.setAttribute(wall, 'data-target-x', `${x}`);
-          this.renderer.setAttribute(wall, 'data-target-y', `${y}`);
-        } else {
-          this.renderer.addClass(wall, 'nearby');
-          setTimeout(() => this.renderer.removeClass(wall, 'nearby'), 300);
-        }
-      }
-    });
-
-    this.renderer.listen(document, 'mouseup', () => {
-      if (isDragging) {
+      currentX = e.clientX - parseFloat(wall.getAttribute('data-target-x') || wall.style.left || '0');
+      currentY = e.clientY - parseFloat(wall.getAttribute('data-target-y') || wall.style.top || '0');
+      const moveListener = this.renderer.listen('document', 'mousemove', (moveEvent: MouseEvent) =>
+        this.dragWall(wall, plan, currentX, currentY, moveEvent)
+      );
+      const upListener = this.renderer.listen('document', 'mouseup', () => {
         isDragging = false;
-        cancelAnimationFrame(rafId);
-      }
-    });
-
-    this.renderer.listen(wall, 'click', (e: MouseEvent) => {
-      if (this.isPlanConfirmed || isDragging) return;
-      e.stopPropagation();
-      if (e.detail === 3 && confirm('Are you sure you want to delete this wall?')) {
-        this.renderer.removeChild(plan, wall);
-        if (this.selectedWall === wall) this.selectedWall = null;
-        this.updateStatusBar();
-      }
+        moveListener();
+        upListener();
+      });
     });
   }
 
-  animateWall(wall: HTMLElement) {
-    const currentX = parseFloat(wall.style.left) || 0;
-    const currentY = parseFloat(wall.style.top) || 0;
-    const targetX = parseFloat(wall.dataset.targetX || '0');
-    const targetY = parseFloat(wall.dataset.targetY || '0');
-
-    const newX = currentX + (targetX - currentX) * this.LERP_FACTOR;
-    const newY = currentY + (targetY - currentY) * this.LERP_FACTOR;
-
-    this.renderer.setStyle(wall, 'left', `${newX}px`);
-    this.renderer.setStyle(wall, 'top', `${newY}px`);
-
-    if (Math.abs(newX - targetX) > 0.1 || Math.abs(newY - targetY) > 0.1) {
-      requestAnimationFrame(() => this.animateWall(wall));
-    }
+  dragWall(wall: HTMLElement, plan: HTMLElement, currentX: number, currentY: number, e: MouseEvent) {
+    e.preventDefault();
+    let x = e.clientX - currentX;
+    let y = e.clientY - currentY;
+    const wallWidth = parseFloat(wall.style.width);
+    const wallHeight = parseFloat(wall.style.height);
+    const planWidth = parseFloat(plan.style.width);
+    const planHeight = parseFloat(plan.style.height);
+    x = Math.max(0, Math.min(x, planWidth - wallWidth));
+    y = Math.max(0, Math.min(y, planHeight - wallHeight));
+    this.renderer.setAttribute(wall, 'data-target-x', `${x}`);
+    this.renderer.setAttribute(wall, 'data-target-y', `${y}`);
+    this.renderer.setStyle(wall, 'left', `${x}px`);
+    this.renderer.setStyle(wall, 'top', `${y}px`);
+    this.checkWallConnections(wall, plan);
   }
 
   addWallResizeListener(wall: HTMLElement, handle: HTMLElement, position: string) {
     let isResizing = false;
     let initialX: number, initialY: number, initialWidth: number, initialHeight: number, initialLeft: number, initialTop: number;
-    let tooltip: HTMLElement;
 
     this.renderer.listen(handle, 'mousedown', (e: MouseEvent) => {
       if (this.isPlanConfirmed || this.selectedWall !== wall) return;
@@ -734,98 +415,104 @@ export class ReservationComponent { /*
       initialLeft = parseFloat(wall.style.left);
       initialTop = parseFloat(wall.style.top);
 
-      tooltip = this.renderer.createElement('div');
-      this.renderer.addClass(tooltip, 'tooltip');
-      this.renderer.appendChild(document.body, tooltip);
-      this.updateWallTooltip(e.clientX, e.clientY, wall);
-    });
-
-    this.renderer.listen(document, 'mousemove', (e: MouseEvent) => {
-      if (!isResizing) return;
-      e.preventDefault();
-
-      const deltaX = e.clientX - initialX;
-      const deltaY = e.clientY - initialY;
-      const rotation = parseFloat(wall.dataset.rotation || '0');
-      const cosRot = Math.cos(rotation * Math.PI / 180);
-      const sinRot = Math.sin(rotation * Math.PI / 180);
-
-      let newWidth = initialWidth;
-      let newHeight = initialHeight;
-      let newLeft = initialLeft;
-      let newTop = initialTop;
-
-      const adjustedDeltaX = deltaX * cosRot + deltaY * sinRot;
-      const adjustedDeltaY = deltaY * cosRot - deltaX * sinRot;
-
-      switch (position) {
-        case 'bottom-right':
-          newWidth = initialWidth + adjustedDeltaX;
-          newHeight = initialHeight + adjustedDeltaY;
-          break;
-        case 'top-left':
-          newWidth = initialWidth - adjustedDeltaX;
-          newHeight = initialHeight - adjustedDeltaY;
-          newLeft = initialLeft + adjustedDeltaX;
-          newTop = initialTop + adjustedDeltaY;
-          break;
-        case 'top-right':
-          newWidth = initialWidth + adjustedDeltaX;
-          newHeight = initialHeight - adjustedDeltaY;
-          newTop = initialTop + adjustedDeltaY;
-          break;
-        case 'bottom-left':
-          newWidth = initialWidth - adjustedDeltaX;
-          newHeight = initialHeight + adjustedDeltaY;
-          newLeft = initialLeft + adjustedDeltaX;
-          break;
-      }
-
-      newWidth = Math.max(this.WALL_MIN_SIZE, Math.round(newWidth / this.GRID_SIZE) * this.GRID_SIZE);
-      newHeight = Math.max(this.WALL_MIN_SIZE, Math.round(newHeight / this.GRID_SIZE) * this.GRID_SIZE);
-
-      const planWidth = parseFloat(this.currentPlan!.style.width);
-      const planHeight = parseFloat(this.currentPlan!.style.height);
-      const effectiveWidth = Math.max(newWidth * Math.abs(cosRot), newHeight * Math.abs(sinRot));
-      const effectiveHeight = Math.max(newHeight * Math.abs(cosRot), newWidth * Math.abs(sinRot));
-
-      newLeft = Math.max(0, Math.min(newLeft, planWidth - effectiveWidth));
-      newTop = Math.max(0, Math.min(newTop, planHeight - effectiveHeight));
-      newWidth = Math.min(newWidth, planWidth - newLeft);
-      newHeight = Math.min(newHeight, planHeight - newTop);
-
-      const touchCount = this.countTouchingElements(this.currentPlan!, newLeft, newTop, effectiveWidth, effectiveHeight, wall);
-      if (touchCount <= 2) {
-        this.renderer.setStyle(wall, 'width', `${newWidth}px`);
-        this.renderer.setStyle(wall, 'height', `${newHeight}px`);
-        this.renderer.setStyle(wall, 'left', `${newLeft}px`);
-        this.renderer.setStyle(wall, 'top', `${newTop}px`);
-        this.renderer.setAttribute(wall, 'data-target-x', `${newLeft}`);
-        this.renderer.setAttribute(wall, 'data-target-y', `${newTop}`);
-      } else {
-        this.renderer.addClass(wall, 'nearby');
-        setTimeout(() => this.renderer.removeClass(wall, 'nearby'), 300);
-      }
-
-      this.updateWallTooltip(e.clientX, e.clientY, wall);
-      this.updateStatusBar();
-    });
-
-    this.renderer.listen(document, 'mouseup', () => {
-      isResizing = false;
-      if (tooltip) this.renderer.removeChild(document.body, tooltip);
+      const moveListener = this.renderer.listen('document', 'mousemove', (moveEvent: MouseEvent) =>
+        this.resizeWall(wall, position, initialX, initialY, initialWidth, initialHeight, initialLeft, initialTop, moveEvent)
+      );
+      const upListener = this.renderer.listen('document', 'mouseup', () => {
+        isResizing = false;
+        moveListener();
+        upListener();
+      });
     });
   }
 
-  updateWallTooltip(mouseX: number, mouseY: number, wall: HTMLElement) {
-    const tooltip = document.querySelector('.tooltip');
-    if (tooltip) {
-      const width = parseFloat(wall.style.width);
-      const height = parseFloat(wall.style.height);
-      this.renderer.setProperty(tooltip, 'textContent', `${Math.round(width)}x${Math.round(height)}`);
-      this.renderer.setStyle(tooltip, 'left', `${mouseX + 15}px`);
-      this.renderer.setStyle(tooltip, 'top', `${mouseY - 35}px`);
+  resizeWall(wall: HTMLElement, position: string, initialX: number, initialY: number, initialWidth: number, initialHeight: number, initialLeft: number, initialTop: number, e: MouseEvent) {
+    const deltaX = e.clientX - initialX;
+    const deltaY = e.clientY - initialY;
+    const rotation = parseFloat(wall.getAttribute('data-rotation') || '0');
+    const cosRot = Math.cos(rotation * Math.PI / 180);
+    const sinRot = Math.sin(rotation * Math.PI / 180);
+    const adjustedDeltaX = deltaX * cosRot + deltaY * sinRot;
+    const adjustedDeltaY = deltaY * cosRot - deltaX * sinRot;
+
+    let newWidth = initialWidth;
+    let newHeight = initialHeight;
+    let newLeft = initialLeft;
+    let newTop = initialTop;
+
+    const planWidth = parseFloat(this.currentPlan!.style.width);
+    const planHeight = parseFloat(this.currentPlan!.style.height);
+
+    switch (position) {
+      case 'bottom-right':
+        newWidth = initialWidth + adjustedDeltaX;
+        newHeight = initialHeight + adjustedDeltaY;
+        newWidth = Math.max(this.WALL_MIN_SIZE, Math.min(newWidth, planWidth - initialLeft));
+        newHeight = Math.max(this.WALL_MIN_SIZE, Math.min(newHeight, planHeight - initialTop));
+        break;
+      case 'top-left':
+        newWidth = initialWidth - adjustedDeltaX;
+        newHeight = initialHeight - adjustedDeltaY;
+        newLeft = initialLeft + adjustedDeltaX;
+        newTop = initialTop + adjustedDeltaY;
+        newWidth = Math.max(this.WALL_MIN_SIZE, newWidth);
+        newHeight = Math.max(this.WALL_MIN_SIZE, newHeight);
+        newLeft = Math.max(0, initialLeft - (newWidth - initialWidth));
+        newTop = Math.max(0, initialTop - (newHeight - initialHeight));
+        break;
+      case 'top-right':
+        newWidth = initialWidth + adjustedDeltaX;
+        newHeight = initialHeight - adjustedDeltaY;
+        newTop = initialTop + adjustedDeltaY;
+        newWidth = Math.max(this.WALL_MIN_SIZE, Math.min(newWidth, planWidth - initialLeft));
+        newHeight = Math.max(this.WALL_MIN_SIZE, newHeight);
+        newTop = Math.max(0, initialTop - (newHeight - initialHeight));
+        break;
+      case 'bottom-left':
+        newWidth = initialWidth - adjustedDeltaX;
+        newHeight = initialHeight + adjustedDeltaY;
+        newLeft = initialLeft + adjustedDeltaX;
+        newWidth = Math.max(this.WALL_MIN_SIZE, newWidth);
+        newHeight = Math.max(this.WALL_MIN_SIZE, Math.min(newHeight, planHeight - initialTop));
+        newLeft = Math.max(0, initialLeft - (newWidth - initialWidth));
+        break;
     }
+
+    newWidth = Math.round(newWidth / this.GRID_SIZE) * this.GRID_SIZE;
+    newHeight = Math.round(newHeight / this.GRID_SIZE) * this.GRID_SIZE;
+
+    this.renderer.setStyle(wall, 'width', `${newWidth}px`);
+    this.renderer.setStyle(wall, 'height', `${newHeight}px`);
+    this.renderer.setStyle(wall, 'left', `${newLeft}px`);
+    this.renderer.setStyle(wall, 'top', `${newTop}px`);
+    this.renderer.setAttribute(wall, 'data-target-x', `${newLeft}`);
+    this.renderer.setAttribute(wall, 'data-target-y', `${newTop}`);
+    this.checkWallConnections(wall, this.currentPlan!);
+    this.updateStatusBar();
+  }
+
+  checkWallConnections(currentWall: HTMLElement, plan: HTMLElement) {
+    const walls = Array.from(plan.querySelectorAll('.wall'));
+    const currentRect = currentWall.getBoundingClientRect();
+    const currentRotation = parseFloat(currentWall.getAttribute('data-rotation') || '0');
+    const currentWidth = parseFloat(currentWall.style.width);
+    const currentHeight = parseFloat(currentWall.style.height);
+
+    walls.forEach(wall => this.renderer.removeClass(wall, 'connected'));
+
+    walls.forEach(otherWall => {
+      if (otherWall === currentWall) return;
+      const otherRect = otherWall.getBoundingClientRect();
+      const otherRotation = parseFloat(otherWall.getAttribute('data-rotation') || '0');
+      const dx = Math.abs(currentRect.left + currentWidth / 2 - (otherRect.left + otherRect.width / 2));
+      const dy = Math.abs(currentRect.top + currentHeight / 2 - (otherRect.top + otherRect.height / 2));
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < this.WALL_CONNECTION_DISTANCE && Math.abs(currentRotation - otherRotation) % 180 === 0) {
+        this.renderer.addClass(currentWall, 'connected');
+        this.renderer.addClass(otherWall, 'connected');
+      }
+    });
   }
 
   deletePlan() {
@@ -837,6 +524,7 @@ export class ReservationComponent { /*
       this.selectedWall = null;
       this.planCounter = 0;
       this.isPlanConfirmed = false;
+      this.toggleButtonStates(false, true, true, true, true);
       this.updateStatusBar();
     }
   }
@@ -847,20 +535,7 @@ export class ReservationComponent { /*
       this.renderer.addClass(this.currentPlan, 'confirmed');
       if (this.selectedPlan) this.renderer.removeClass(this.selectedPlan, 'selected');
       this.selectedPlan = null;
-      const handles = this.currentPlan.querySelectorAll('.plan-resize-handle');
-      handles.forEach(handle => this.renderer.addClass(handle, 'disabled'));
-      const desks = this.currentPlan.querySelectorAll('.desk');
-      desks.forEach(desk => this.renderer.setStyle(desk, 'cursor', 'default'));
-      const walls = this.currentPlan.querySelectorAll('.wall');
-      walls.forEach(wall => this.renderer.setStyle(wall, 'cursor', 'default'));
-      if (this.selectedDesk) {
-        this.renderer.removeClass(this.selectedDesk, 'selected');
-        this.selectedDesk = null;
-      }
-      if (this.selectedWall) {
-        this.renderer.removeClass(this.selectedWall, 'selected');
-        this.selectedWall = null;
-      }
+      this.toggleButtonStates(true, true, false, true, false);
       this.updateStatusBar();
     }
   }
@@ -869,19 +544,41 @@ export class ReservationComponent { /*
     if (this.currentPlan && this.isPlanConfirmed) {
       this.isPlanConfirmed = false;
       this.renderer.removeClass(this.currentPlan, 'confirmed');
-      const handles = this.currentPlan.querySelectorAll('.plan-resize-handle');
-      handles.forEach(handle => this.renderer.removeClass(handle, 'disabled'));
-      const desks = this.currentPlan.querySelectorAll('.desk');
-      desks.forEach(desk => this.renderer.setStyle(desk, 'cursor', 'move'));
-      const walls = this.currentPlan.querySelectorAll('.wall');
-      walls.forEach(wall => this.renderer.setStyle(wall, 'cursor', 'pointer'));
+      this.toggleButtonStates(true, false, false, false, true);
       this.updateStatusBar();
     }
   }
 
-  toggleSidebar() {
-    this.sidebarHidden = !this.sidebarHidden;
+  toggleSidebar(visible: boolean) {
+    const sidebar = document.querySelector('.sidebar') as HTMLElement;
+    const openButton = document.getElementById('openSidebarButton') as HTMLElement;
+    const statusBar = document.getElementById('statusBar') as HTMLElement;
+    const designContainer = this.designContainer.nativeElement;
+
+    if (visible) {
+      this.renderer.removeClass(sidebar, 'hidden');
+      this.renderer.setStyle(openButton, 'display', 'none');
+      this.renderer.removeClass(statusBar, 'shifted');
+      this.renderer.removeClass(designContainer, 'shifted');
+    } else {
+      this.renderer.addClass(sidebar, 'hidden');
+      this.renderer.setStyle(openButton, 'display', 'block');
+      this.renderer.addClass(statusBar, 'shifted');
+      this.renderer.addClass(designContainer, 'shifted');
+    }
   }
-}
-  */
+
+  toggleButtonStates(createPlan: boolean, createWall: boolean, deletePlan: boolean, confirmDesign: boolean, modify: boolean) {
+    const buttons = {
+      createPlanButton: createPlan,
+      createWallButton: createWall,
+      deletePlanButton: deletePlan,
+      confirmDesignButton: confirmDesign,
+      modifyButton: modify
+    };
+    Object.entries(buttons).forEach(([id, disabled]) => {
+      const button = document.getElementById(id);
+      if (button) this.renderer.setProperty(button, 'disabled', disabled);
+    });
+  }
 }

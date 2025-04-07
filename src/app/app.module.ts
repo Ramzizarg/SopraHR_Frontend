@@ -14,6 +14,7 @@ import { ReservationComponent } from './reservation/reservation.component';
 import { CommonModule } from '@angular/common';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { PlanningComponent } from './planning/planning.component';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
     TeletravailComponent,
     ReservationComponent,
     ResetPasswordComponent,
+    PlanningComponent,
   ],
   imports: [
     BrowserModule,

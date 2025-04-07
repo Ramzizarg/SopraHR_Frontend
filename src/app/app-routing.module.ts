@@ -6,6 +6,7 @@ import { ForgetpasswordComponent } from './forgetpassword/forgetpassword.compone
 import { TeletravailComponent } from './teletravail/teletravail.component';
 import { ReservationComponent } from './reservation/reservation.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { PlanningComponent } from './planning/planning.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -14,7 +15,10 @@ const routes: Routes = [
   { path: 'forgot-password', component: ForgetpasswordComponent },
   { path: 'teletravail', component: TeletravailComponent},
   { path: 'reservation', component: ReservationComponent},
-  {path: 'reset-password', component: ResetPasswordComponent},
+  {path: 'reset-password', component: ResetPasswordComponent}, 
+   { path: 'planning', component: PlanningComponent},
+
+
 
 
 
