@@ -1,14 +1,8 @@
+// teletravail.component.ts
 import { Component, OnInit } from '@angular/core';
 import Swal from 'sweetalert2';
-
-interface TeletravailForm {
-  travailType: string;
-  teletravailDate: string;
-  travailMaison: string;
-  selectedPays?: string;
-  selectedGouvernorat?: string;
-  reason?: string;
-}
+import { Router } from '@angular/router';
+import { TeletravailForm, TeletravailService } from './TeletravailService';
 
 @Component({
   selector: 'app-teletravail',
@@ -23,20 +17,7 @@ export class TeletravailComponent implements OnInit {
   selectedGouvernorat: string = '';
   reason: string = '';
 
-  gouvernorats: { [key: string]: string[] } = {
-    tunisie: [
-      'Ariana', 'Beja', 'Ben Arous', 'Bizerte', 'Gabes', 'Gafsa', 'Jendouba', 'Kairouan', 'Kasserine', 'Kebili', 'Kef',
-      'Mahdia', 'Manouba', 'Medenine', 'Monastir', 'Nabeul', 'Sfax', 'Sidi Bouzid', 'Siliana', 'Tataouine', 'Tozeur',
-      'Tunis', 'Zaghouan'
-    ],
-    maroc: [
-      'Agadir-Ida-Outanane', 'Azilal', 'Benslimane', 'Benimellal', 'Casablanca-Settat', 'Chefchaouen', 'El Jadida',
-      'Fes-Meknes', 'Guelmim-Oued Noun', 'Ifrane', 'Khenifra', 'Khenitra', 'Khouribga', 'L’Oriental', 'Marrakech-Safi',
-      'Meknes', 'Mohammadia', 'Rabat-Sale-Kenitra', 'Safi', 'Settat', 'Sidi Kacem', 'Tanger-Tetouan-Al Hoceima',
-      'Taroudant', 'Taza', 'Tiznit', 'Zagora'
-    ]
-  };
-
+  countries: string[] = [];
   filteredGouvernorats: string[] = [];
   startOfCurrentWeek: string = '';
   endOfCurrentWeek: string = '';
@@ -45,83 +26,69 @@ export class TeletravailComponent implements OnInit {
   fridayCutoff: string = '';
   isDateDisabled: boolean = false;
 
-  constructor() {}
+  constructor(
+    private teletravailService: TeletravailService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
+    // Check if user is authenticated
+    if (!localStorage.getItem('token')) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    
     this.calculateWeekDates();
-    // Optional: Add interval to recalculate dates periodically
-    setInterval(() => this.calculateWeekDates(), 60000); // Recalculate every minute
+    setInterval(() => this.calculateWeekDates(), 60000);
+    this.loadCountries();
   }
 
-  /**
-   * Calculate week dates and Friday cutoff
-   */
+  private loadCountries(): void {
+    this.teletravailService.getCountries().subscribe({
+      next: (countries) => {
+        this.countries = countries;
+      },
+      error: () => {
+        Swal.fire('Erreur', 'Impossible de charger les pays', 'error');
+      }
+    });
+  }
+
   calculateWeekDates(): void {
     const today = new Date();
     const dayOfWeek = today.getDay();
     const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-    // Current week (Monday to Sunday)
     const startCurrent = new Date(today);
     startCurrent.setDate(today.getDate() - diffToMonday);
     startCurrent.setHours(0, 0, 0, 0);
     this.startOfCurrentWeek = this.formatDate(startCurrent);
 
     const endCurrent = new Date(startCurrent);
-    endCurrent.setDate(startCurrent.getDate() + 6); // End of current week
+    endCurrent.setDate(startCurrent.getDate() + 6);
     endCurrent.setHours(23, 59, 59, 999);
     this.endOfCurrentWeek = this.formatDate(endCurrent);
 
-    // Friday cutoff at 00:00
     const friday = new Date(startCurrent);
-    friday.setDate(startCurrent.getDate() + 4); // Friday is 4 days after Monday
+    friday.setDate(startCurrent.getDate() + 4);
     friday.setHours(0, 0, 0, 0);
     this.fridayCutoff = this.formatDate(friday);
 
-    // Next week (Monday to Sunday)
     const startNext = new Date(startCurrent);
     startNext.setDate(startCurrent.getDate() + 7);
     startNext.setHours(0, 0, 0, 0);
     this.startOfNextWeek = this.formatDate(startNext);
 
     const endNext = new Date(startNext);
-    endNext.setDate(startNext.getDate() + 13);
+    endNext.setDate(startNext.getDate() + 6);
     endNext.setHours(23, 59, 59, 999);
     this.endOfNextWeek = this.formatDate(endNext);
-
-    // Week after next (Monday to Sunday)
-    const startWeekAfterNext = new Date(startNext);
-    startWeekAfterNext.setDate(startNext.getDate() + 7);
-    startWeekAfterNext.setHours(0, 0, 0, 0);
-    const startOfWeekAfterNext = this.formatDate(startWeekAfterNext);
-
-    const endWeekAfterNext = new Date(startWeekAfterNext);
-    endWeekAfterNext.setDate(startWeekAfterNext.getDate() + 6);
-    endWeekAfterNext.setHours(23, 59, 59, 999);
-    const endOfWeekAfterNext = this.formatDate(endWeekAfterNext);
-
-    // Next Friday cutoff at 00:00
-    const nextFriday = new Date(startNext);
-    nextFriday.setDate(startNext.getDate() + 4); // Friday is 4 days after next Monday
-    nextFriday.setHours(0, 0, 0, 0);
-    const nextFridayCutoff = this.formatDate(nextFriday);
-
-    console.log(`Current Week: ${this.startOfCurrentWeek} to ${this.endOfCurrentWeek}`);
-    console.log(`Next Week: ${this.startOfNextWeek} to ${this.endOfNextWeek}`);
-    console.log(`Week After Next: ${startOfWeekAfterNext} to ${endOfWeekAfterNext}`);
-    console.log(`Next Friday Cutoff: ${nextFridayCutoff}`);
   }
 
-  /**
-   * Format date to YYYY-MM-DD
-   */
   private formatDate(date: Date): string {
     return date.toISOString().split('T')[0];
   }
 
-  /**
-   * Check if we're past Friday cutoff
-   */
   private isPastFridayCutoff(): boolean {
     const now = new Date();
     const friday = new Date(this.fridayCutoff);
@@ -129,9 +96,6 @@ export class TeletravailComponent implements OnInit {
     return now >= friday;
   }
 
-  /**
-   * Validate selected date based on Friday cutoff
-   */
   disableWeekends(event: Event): void {
     const input = event.target as HTMLInputElement;
     const selectedDate = new Date(input.value);
@@ -143,7 +107,6 @@ export class TeletravailComponent implements OnInit {
       new Date(this.startOfNextWeek) : 
       new Date(this.startOfCurrentWeek);
 
-    // Check if date is before minimum allowed date
     if (selectedDate < minAllowedDate) {
       this.showDateError(
         isPastCutoff ? 
@@ -154,7 +117,6 @@ export class TeletravailComponent implements OnInit {
       return;
     }
 
-    // Check if weekend
     const dayOfWeek = selectedDate.getDay();
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       this.showDateError('Les weekends ne sont pas disponibles');
@@ -165,9 +127,6 @@ export class TeletravailComponent implements OnInit {
     this.isDateDisabled = false;
   }
 
-  /**
-   * Show date validation error
-   */
   private showDateError(message: string): void {
     this.isDateDisabled = true;
     Swal.fire({
@@ -190,8 +149,19 @@ export class TeletravailComponent implements OnInit {
 
   onCountryChange(): void {
     this.selectedGouvernorat = '';
-    this.filteredGouvernorats = this.selectedPays ? 
-      this.gouvernorats[this.selectedPays.toLowerCase()] || [] : [];
+    if (this.selectedPays) {
+      this.teletravailService.getRegions(this.selectedPays).subscribe({
+        next: (regions) => {
+          this.filteredGouvernorats = regions;
+        },
+        error: () => {
+          Swal.fire('Erreur', 'Impossible de charger les régions', 'error');
+          this.filteredGouvernorats = [];
+        }
+      });
+    } else {
+      this.filteredGouvernorats = [];
+    }
   }
 
   onSubmit(): void {
@@ -224,14 +194,25 @@ export class TeletravailComponent implements OnInit {
       ...(requiresReason && { reason: this.reason })
     };
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Succès',
-      text: 'Votre demande de télétravail a été soumise avec succès !',
-      confirmButtonText: 'OK'
+    this.teletravailService.submitRequest(formData).subscribe({
+      next: (response) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès',
+          text: 'Votre demande de télétravail a été soumise avec succès !',
+          confirmButtonText: 'OK'
+        });
+        this.resetForm();
+      },
+      error: (error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: error.message || 'Échec de la soumission de la demande',
+          confirmButtonText: 'OK'
+        });
+      }
     });
-
-    this.resetForm();
   }
 
   private showError(message: string): void {
