@@ -11,13 +11,14 @@ import { AuthGuard } from './login/AuthGuard';
 
 const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-    { path: 'login', component: LoginComponent },
+  { path: 'login', component: LoginComponent },
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard]},
   { path: 'forgot-password', component: ForgetpasswordComponent },
-  { path: 'teletravail', component: TeletravailComponent},
   { path: 'reservation', component: ReservationComponent},
   {path: 'reset-password', component: ResetPasswordComponent}, 
-   { path: 'planning', component: PlanningComponent},
+  { path: 'planning', component: PlanningComponent},
+  { path: 'teletravail', component: TeletravailComponent},
+
 
 
 

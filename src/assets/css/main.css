@@ -334,14 +334,26 @@ h6 {
     line-height: 0;
     margin-right: 10px;
     cursor: pointer;
-    transition: color 0.3s;
+    transition: color 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .navmenu {
-    padding: 0;
-    z-index: 9997;
+  .mobile-nav-active .mobile-nav-toggle {
+    color: #fff;
+    font-size: 32px;
+    position: fixed; /* Changed to fixed for overlay consistency */
+    top: 15px;
+    right: 15px;
+    z-index: 9999;
   }
-
+  .mobile-nav-active .mobile-nav-toggle .bi-list {
+    display: none;
+  }
+  .mobile-nav-active .mobile-nav-toggle .bi-x {
+    display: inline-block;
+  }
   .navmenu ul {
     display: none;
     list-style: none;
@@ -429,27 +441,21 @@ h6 {
   .mobile-nav-active {
     overflow: hidden;
   }
-
-  .mobile-nav-active .mobile-nav-toggle {
-    color: #fff;
-    position: absolute;
-    font-size: 32px;
-    top: 15px;
-    right: 15px;
-    margin-right: 0;
-    z-index: 9999;
+  
+  .mobile-nav-active .navmenu ul {
+    display: block;
+    transform: translateX(0); /* Slide in when active */
   }
 
   .mobile-nav-active .navmenu {
     position: fixed;
-    overflow: hidden;
     inset: 0;
     background: rgba(33, 37, 41, 0.8);
-    transition: 0.3s;
+    overflow: hidden;
   }
 
-  .mobile-nav-active .navmenu>ul {
-    display: block;
+  .mobile-nav-active {
+    overflow: hidden;
   }
 }
 

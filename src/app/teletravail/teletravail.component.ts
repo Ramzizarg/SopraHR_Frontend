@@ -1,8 +1,7 @@
-// teletravail.component.ts
 import { Component, OnInit } from '@angular/core';
-import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
-import { TeletravailForm, TeletravailService } from './TeletravailService';
+import { TeletravailForm, TeletravailService, TeletravailResponse } from './TeletravailService';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-teletravail',
@@ -24,7 +23,9 @@ export class TeletravailComponent implements OnInit {
   startOfNextWeek: string = '';
   endOfNextWeek: string = '';
   fridayCutoff: string = '';
+  today: string = ''; // Added to track today's date for min restriction
   isDateDisabled: boolean = false;
+  existingRequestDates: string[] = [];
 
   constructor(
     private teletravailService: TeletravailService,
@@ -32,64 +33,132 @@ export class TeletravailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Check if user is authenticated
-    if (!localStorage.getItem('token')) {
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    if (!token) {
       this.router.navigate(['/login']);
       return;
     }
-    
+    console.log('TeletravailComponent: Loading page with token');
     this.calculateWeekDates();
     setInterval(() => this.calculateWeekDates(), 60000);
     this.loadCountries();
+    this.loadExistingRequests();
   }
 
   private loadCountries(): void {
     this.teletravailService.getCountries().subscribe({
-      next: (countries) => {
-        this.countries = countries;
+      next: (countries) => this.countries = countries,
+      error: (err) => {
+        console.error('Failed to load countries:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: 'Impossible de charger la liste des pays.',
+          confirmButtonText: 'OK',
+          timer: 3000,
+        });
+      }
+    });
+  }
+
+  private loadExistingRequests(): void {
+    this.teletravailService.getUserRequests().subscribe({
+      next: (requests) => {
+        this.existingRequestDates = requests
+          .filter(r => {
+            const date = new Date(r.teletravailDate);
+            const start = new Date(this.startOfCurrentWeek);
+            const end = new Date(this.endOfNextWeek);
+            return date >= start && date <= end;
+          })
+          .map(r => r.teletravailDate);
+        console.log('Existing request dates:', this.existingRequestDates);
       },
-      error: () => {
-        Swal.fire('Erreur', 'Impossible de charger les pays', 'error');
+      error: (err) => {
+        console.error('Failed to load existing requests:', err);
+        let errorMessage = 'Impossible de charger vos demandes existantes. Veuillez réessayer plus tard.';
+        if (err.status === 401) {
+          errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+          this.logout();
+        } else if (err.status === 0) {
+          errorMessage = 'Serveur inaccessible. Vérifiez votre connexion.';
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: errorMessage,
+          confirmButtonText: 'OK',
+          timer: 3000,
+        });
       }
     });
   }
 
   calculateWeekDates(): void {
     const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    this.today = this.formatDate(today); // Set today's date
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
 
-    const startCurrent = new Date(today);
-    startCurrent.setDate(today.getDate() - diffToMonday);
-    startCurrent.setHours(0, 0, 0, 0);
-    this.startOfCurrentWeek = this.formatDate(startCurrent);
+    if (dayOfWeek === 6) { // Saturday
+      // Start from next Monday (skip current week)
+      const startNextMonday = new Date(today);
+      startNextMonday.setDate(today.getDate() + (8 - dayOfWeek)); // Move to next Monday
+      startNextMonday.setHours(0, 0, 0, 0);
+      this.startOfCurrentWeek = this.formatDate(startNextMonday);
 
-    const endCurrent = new Date(startCurrent);
-    endCurrent.setDate(startCurrent.getDate() + 6);
-    endCurrent.setHours(23, 59, 59, 999);
-    this.endOfCurrentWeek = this.formatDate(endCurrent);
+      const endNextSunday = new Date(startNextMonday);
+      endNextSunday.setDate(startNextMonday.getDate() + 6);
+      endNextSunday.setHours(23, 59, 59, 999);
+      this.endOfCurrentWeek = this.formatDate(endNextSunday);
 
-    const friday = new Date(startCurrent);
-    friday.setDate(startCurrent.getDate() + 4);
-    friday.setHours(0, 0, 0, 0);
-    this.fridayCutoff = this.formatDate(friday);
+      const startFollowingMonday = new Date(startNextMonday);
+      startFollowingMonday.setDate(startNextMonday.getDate() + 7);
+      startFollowingMonday.setHours(0, 0, 0, 0);
+      this.startOfNextWeek = this.formatDate(startFollowingMonday);
 
-    const startNext = new Date(startCurrent);
-    startNext.setDate(startCurrent.getDate() + 7);
-    startNext.setHours(0, 0, 0, 0);
-    this.startOfNextWeek = this.formatDate(startNext);
+      const endFollowingSunday = new Date(startFollowingMonday);
+      endFollowingSunday.setDate(startFollowingMonday.getDate() + 6);
+      endFollowingSunday.setHours(23, 59, 59, 999);
+      this.endOfNextWeek = this.formatDate(endFollowingSunday);
 
-    const endNext = new Date(startNext);
-    endNext.setDate(startNext.getDate() + 6);
-    endNext.setHours(23, 59, 59, 999);
-    this.endOfNextWeek = this.formatDate(endNext);
+      const friday = new Date(startNextMonday);
+      friday.setDate(startNextMonday.getDate() + 4);
+      friday.setHours(0, 0, 0, 0);
+      this.fridayCutoff = this.formatDate(friday);
+    } else { // Any other day (Sunday to Friday)
+      const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const startCurrent = new Date(today);
+      startCurrent.setDate(today.getDate() - diffToMonday);
+      startCurrent.setHours(0, 0, 0, 0);
+      this.startOfCurrentWeek = this.formatDate(startCurrent);
+
+      const endCurrent = new Date(startCurrent);
+      endCurrent.setDate(startCurrent.getDate() + 6);
+      endCurrent.setHours(23, 59, 59, 999);
+      this.endOfCurrentWeek = this.formatDate(endCurrent);
+
+      const friday = new Date(startCurrent);
+      friday.setDate(startCurrent.getDate() + 4);
+      friday.setHours(0, 0, 0, 0);
+      this.fridayCutoff = this.formatDate(friday);
+
+      const startNext = new Date(startCurrent);
+      startNext.setDate(startCurrent.getDate() + 7);
+      startNext.setHours(0, 0, 0, 0);
+      this.startOfNextWeek = this.formatDate(startNext);
+
+      const endNext = new Date(startNext);
+      endNext.setDate(startNext.getDate() + 6);
+      endNext.setHours(23, 59, 59, 999);
+      this.endOfNextWeek = this.formatDate(endNext);
+    }
   }
 
   private formatDate(date: Date): string {
     return date.toISOString().split('T')[0];
   }
 
-  private isPastFridayCutoff(): boolean {
+  isPastFridayCutoff(): boolean {
     const now = new Date();
     const friday = new Date(this.fridayCutoff);
     friday.setHours(0, 0, 0, 0);
@@ -99,27 +168,49 @@ export class TeletravailComponent implements OnInit {
   disableWeekends(event: Event): void {
     const input = event.target as HTMLInputElement;
     const selectedDate = new Date(input.value);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
-    const isPastCutoff = this.isPastFridayCutoff();
-    const minAllowedDate = isPastCutoff ? 
-      new Date(this.startOfNextWeek) : 
-      new Date(this.startOfCurrentWeek);
+    const minAllowedDate = new Date(this.today > this.startOfCurrentWeek ? this.today : this.startOfCurrentWeek);
+    const maxAllowedDate = new Date(this.endOfNextWeek);
 
-    if (selectedDate < minAllowedDate) {
-      this.showDateError(
-        isPastCutoff ? 
-        'Veuillez sélectionner une date de la semaine prochaine' : 
-        'Veuillez sélectionner une date de cette semaine ou la semaine prochaine'
-      );
+    if (selectedDate < minAllowedDate || selectedDate > maxAllowedDate) {
+      this.showDateError('Veuillez sélectionner une date dans les deux semaines affichées, à partir d\'aujourd\'hui.');
       input.value = '';
       return;
     }
 
     const dayOfWeek = selectedDate.getDay();
     if (dayOfWeek === 0 || dayOfWeek === 6) {
-      this.showDateError('Les weekends ne sont pas disponibles');
+      this.showDateError('Les weekends ne sont pas disponibles.');
+      input.value = '';
+      return;
+    }
+
+    if (this.existingRequestDates.includes(input.value)) {
+      this.showDateError('Vous avez déjà une demande pour ce jour.');
+      input.value = '';
+      return;
+    }
+
+    const selectedEpoch = selectedDate.getTime() / (1000 * 60 * 60 * 24);
+    for (const dateStr of this.existingRequestDates) {
+      const existingDate = new Date(dateStr);
+      const existingEpoch = existingDate.getTime() / (1000 * 60 * 60 * 24);
+      if (Math.abs(selectedEpoch - existingEpoch) === 1) {
+        this.showDateError('Les jours de télétravail ne doivent pas être consécutifs.');
+        input.value = '';
+        return;
+      }
+    }
+
+    const requestDate = new Date(input.value);
+    const weekStart = requestDate >= new Date(this.startOfNextWeek) ? this.startOfNextWeek : this.startOfCurrentWeek;
+    const weekEnd = requestDate >= new Date(this.startOfNextWeek) ? this.endOfNextWeek : this.endOfCurrentWeek;
+    const requestsInWeek = this.existingRequestDates.filter(d => {
+      const date = new Date(d);
+      return date >= new Date(weekStart) && date <= new Date(weekEnd);
+    });
+    if (requestsInWeek.length >= 2) {
+      this.showDateError(`Vous avez déjà atteint la limite de 2 jours pour la semaine du ${weekStart}.`);
       input.value = '';
       return;
     }
@@ -151,12 +242,16 @@ export class TeletravailComponent implements OnInit {
     this.selectedGouvernorat = '';
     if (this.selectedPays) {
       this.teletravailService.getRegions(this.selectedPays).subscribe({
-        next: (regions) => {
-          this.filteredGouvernorats = regions;
-        },
-        error: () => {
-          Swal.fire('Erreur', 'Impossible de charger les régions', 'error');
-          this.filteredGouvernorats = [];
+        next: (regions) => this.filteredGouvernorats = regions,
+        error: (err) => {
+          console.error('Failed to load regions:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Impossible de charger la liste des régions.',
+            confirmButtonText: 'OK',
+            timer: 3000,
+          });
         }
       });
     } else {
@@ -169,17 +264,35 @@ export class TeletravailComponent implements OnInit {
     const requiresReason = this.travailType !== 'reguliere';
 
     if (!this.travailType || !this.teletravailDate || !this.travailMaison) {
-      this.showError('Veuillez remplir tous les champs obligatoires de base');
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Veuillez remplir tous les champs obligatoires.',
+        confirmButtonText: 'OK',
+        timer: 3000,
+      });
       return;
     }
 
     if (requiresLocation && (!this.selectedPays || !this.selectedGouvernorat)) {
-      this.showError('Veuillez sélectionner un pays et un gouvernorat');
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Veuillez sélectionner un pays et une région.',
+        confirmButtonText: 'OK',
+        timer: 3000,
+      });
       return;
     }
 
     if (requiresReason && !this.reason.trim()) {
-      this.showError('Veuillez fournir une raison');
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Veuillez fournir une raison pour une demande non régulière.',
+        confirmButtonText: 'OK',
+        timer: 3000,
+      });
       return;
     }
 
@@ -200,28 +313,39 @@ export class TeletravailComponent implements OnInit {
           icon: 'success',
           title: 'Succès',
           text: 'Votre demande de télétravail a été soumise avec succès !',
-          confirmButtonText: 'OK'
+          confirmButtonText: 'OK',
+          timer: 3000,
+        }).then(() => {
+          this.resetForm();
+          this.loadExistingRequests();
         });
-        this.resetForm();
       },
-      error: (error) => {
+      error: (err) => {
+        console.error('Failed to submit teletravail request:', err);
         Swal.fire({
           icon: 'error',
           title: 'Erreur',
-          text: error.message || 'Échec de la soumission de la demande',
-          confirmButtonText: 'OK'
+          text: err.error?.errorMessage || 'Échec de la soumission. Veuillez réessayer.',
+          confirmButtonText: 'OK',
+          timer: 5000,
         });
       }
     });
   }
 
-  private showError(message: string): void {
-    Swal.fire({
-      icon: 'error',
-      title: 'Champs manquants',
-      text: message,
-      confirmButtonText: 'OK'
-    });
+  logout(): void {
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    if (token) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('refreshToken');
+      this.router.navigate(['/login']);
+      console.log('Logged out successfully');
+    } else {
+      this.router.navigate(['/login']);
+      console.log('No active session found, redirected to login');
+    }
   }
 
   resetForm(): void {

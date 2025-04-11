@@ -15,21 +15,17 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-    rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 </head>
 
 <body class="teletravail-page">
-
   <!-- Header -->
   <header id="header" class="header d-flex align-items-center sticky-top">
     <div class="container position-relative d-flex align-items-center">
-
       <a href="/home" class="logo d-flex align-items-center me-auto">
-        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Company Logo"
-          style="transform: scale(1.5); max-width: 150px; height: auto;">
+        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Company Logo" style="transform: scale(1.5); max-width: 150px; height: auto;">
       </a>
 
       <nav id="navmenu" class="navmenu">
@@ -38,7 +34,7 @@
           <li><a href="/teletravail" class="active">Télétravail</a></li>
           <li><a href="/reservation">Réservations de Postes</a></li>
           <li><a href="/planning">Planning</a></li>
-          <li><a href="contact.html">Déconnexion</a></li>
+          <button class="btn btn-logout" (click)="logout()">Déconnexion</button>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -46,17 +42,18 @@
       <div class="header-notification">
         <a href="#" class="notification">
           <i class="bi bi-bell"></i>
-          <span class="badge">3</span> <!-- Example notification count -->
+          <span class="badge">3</span>
         </a>
       </div>
     </div>
   </header>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
   <div class="main-content">
     <section class="form-container">
       <h2 class="form-title">Demande de Télétravail</h2>
       <form #teletravailForm="ngForm" (ngSubmit)="onSubmit()" class="teletravail-form">
-
         <!-- Type and Date Row -->
         <div class="form-row">
           <div class="form-group">
@@ -83,68 +80,63 @@
                 class="form-input" 
                 name="teletravailDate"
                 [(ngModel)]="teletravailDate" 
-                (change)="disableWeekends($event)" 
-                [min]="startOfNextWeek" 
+                (change)="disableWeekends($event); onDateChange($event)" 
+                [min]="today > startOfCurrentWeek ? today : startOfCurrentWeek" 
                 [max]="endOfNextWeek" 
                 [attr.disabled]="isDateDisabled ? true : null"
-                (change)="onDateChange($event)"
                 required
               />
             </div>
           </div>
-        </div> <!-- End of Type and Date Row -->
-          
-          
-<!-- Travail à domicile Section -->
-<div class="form-row">
-  <div class="radio-group-container">
-    <label class="form-label">
-      <i class="fas fa-home"></i> Travail à domicile ?
-    </label>
-    <div class="radio-group">
-      <label class="radio-label">
-        <input type="radio" name="travailMaison" [(ngModel)]="travailMaison" value="oui">
-        <span class="radio-custom"></span>
-        <span class="radio-text">Oui</span>
-      </label>
-      <label class="radio-label">
-        <input type="radio" name="travailMaison" [(ngModel)]="travailMaison" value="non">
-        <span class="radio-custom"></span>
-        <span class="radio-text">Non</span>
-      </label>
-    </div>
-  </div>
-</div>
+        </div>
 
-<!-- Country and Governorate (only visible when travailMaison is "non") -->
-<div *ngIf="travailMaison === 'non'" class="form-row">
-  <div class="form-group">
-    <label for="pays" class="form-label">
-      <i class="fas fa-globe-africa"></i> Pays
-    </label>
-    <div class="select-wrapper">
-      <select id="pays" class="form-input" name="pays" [(ngModel)]="selectedPays" (change)="onCountryChange()"
-        required>
-        <option value="" disabled selected>Sélectionnez un pays</option>
-        <option value="tunisie">Tunisie</option>
-        <option value="maroc">Maroc</option>
-      </select>
-    </div>
-  </div>
+        <!-- Travail à domicile Section -->
+        <div class="form-row">
+          <div class="radio-group-container">
+            <label class="form-label">
+              <i class="fas fa-home"></i> Travail à domicile ?
+            </label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="travailMaison" [(ngModel)]="travailMaison" value="oui" required>
+                <span class="radio-custom"></span>
+                <span class="radio-text">Oui</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="travailMaison" [(ngModel)]="travailMaison" value="non">
+                <span class="radio-custom"></span>
+                <span class="radio-text">Non</span>
+              </label>
+            </div>
+          </div>
+        </div>
 
-  <div class="form-group">
-    <label for="gouvernorat" class="form-label">
-      <i class="fas fa-map-marker-alt"></i> Gouvernorat
-    </label>
-    <div class="select-wrapper">
-      <select id="gouvernorat" class="form-input" name="gouvernorat" [(ngModel)]="selectedGouvernorat" required>
-        <option value="" disabled selected>Sélectionnez un gouvernorat</option>
-        <option *ngFor="let gouvernorat of filteredGouvernorats" [value]="gouvernorat">{{ gouvernorat }}
-        </option>
-      </select>
-    </div>
-  </div>
-</div> <!-- End of Country and Governorate Section -->
+        <!-- Country and Governorate Section -->
+        <div *ngIf="travailMaison === 'non'" class="form-row">
+          <div class="form-group">
+            <label for="pays" class="form-label">
+              <i class="fas fa-globe-africa"></i> Pays
+            </label>
+            <div class="select-wrapper">
+              <select id="pays" class="form-input" name="pays" [(ngModel)]="selectedPays" (change)="onCountryChange()" required>
+                <option value="" disabled selected>Sélectionnez un pays</option>
+                <option *ngFor="let country of countries" [value]="country">{{ country }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="gouvernorat" class="form-label">
+              <i class="fas fa-map-marker-alt"></i> Gouvernorat
+            </label>
+            <div class="select-wrapper">
+              <select id="gouvernorat" class="form-input" name="gouvernorat" [(ngModel)]="selectedGouvernorat" [disabled]="!selectedPays" required>
+                <option value="" disabled selected>Sélectionnez un gouvernorat</option>
+                <option *ngFor="let gouvernorat of filteredGouvernorats" [value]="gouvernorat">{{ gouvernorat }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         <!-- Reason for Teletravail Section -->
         <div class="form-row" *ngIf="travailType === 'exceptionnelle'">
@@ -152,22 +144,18 @@
             <label for="reason" class="form-label">
               <i class="fas fa-comment"></i> Justification
             </label>
-            <textarea id="reason" class="form-input" name="reason" [(ngModel)]="reason" required
-              placeholder="Entrez la raison"></textarea>
+            <textarea id="reason" class="form-input" name="reason" [(ngModel)]="reason" required placeholder="Entrez la raison"></textarea>
           </div>
-        </div> <!-- End of Reason Section -->
+        </div>
 
         <!-- Submit Button -->
         <button type="submit" class="submit-btn" [disabled]="!teletravailForm.valid">
           <span>Suivant</span>
           <i class="fas fa-paper-plane"></i>
         </button>
-
       </form>
     </section>
   </div>
-
-  
 
   <!-- Footer -->
   <footer id="footer" class="footer dark-background">
@@ -188,15 +176,14 @@
           <h4>Useful Links</h4>
           <ul>
             <li><a href="/home">Page d'accueil</a></li>
-          <li><a href="/teletravail" >Télétravail</a></li>
-          <li><a href="/reservation">Réservations de Postes</a></li>
-          <li><a href="/planning"class="active">Planning</a></li>
-          <li><a href="/login">Déconnexion</a></li>
+            <li><a href="/teletravail">Télétravail</a></li>
+            <li><a href="/reservation">Réservations de Postes</a></li>
+            <li><a href="/planning">Planning</a></li>
+            <li><button class="btn btn-logout" (click)="logout()">Déconnexion</button></li>
           </ul>
         </div>
         <div class="col-lg-4 col-md-6 footer-logo text-end">
-          <img src="../../assets/img/Sopra.png" alt="Company Logo"
-            style="max-width: 100%; height: auto; transform: scale(0.5); margin-bottom: 0;">
+          <img src="../../assets/img/Sopra.png" alt="Company Logo" style="max-width: 100%; height: auto; transform: scale(0.5); margin-bottom: 0;">
           <p style="margin-top: -60px;">© <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong>
             <span>All Rights Reserved</span>
           </p>
@@ -206,9 +193,6 @@
   </footer>
 
   <!-- Scroll Top -->
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
-      class="bi bi-arrow-up-short"></i></a>
-
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 </body>
-
 </html>

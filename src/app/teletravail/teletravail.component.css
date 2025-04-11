@@ -223,3 +223,32 @@ input[type="radio"] {
   padding: 3px 6px;
   border-radius: 50%;
 }
+body {
+  font-family: Arial, sans-serif;
+}
+
+.carousel-item {
+  text-align: center;
+  color: white;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: bold;
+}
+.btn-logout {
+  background-color: #e52c2c;
+  color: #fff;
+  font-weight: 600;
+  padding: 6px 12px;    /* Small size */
+  font-size: 0.9em;     /* Small text */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-left: 20px;   /* Pushes it left in flex context */
+}
+
+.btn-logout:hover {
+  background-color: #ff9191;
+}

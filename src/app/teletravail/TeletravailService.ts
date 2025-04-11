@@ -1,8 +1,6 @@
-// teletravail.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 export interface TeletravailForm {
   travailType: string;
@@ -13,39 +11,44 @@ export interface TeletravailForm {
   reason?: string;
 }
 
+export interface TeletravailResponse {
+  id: number;
+  travailType: string;
+  teletravailDate: string;
+  travailMaison: string;
+  selectedPays?: string;
+  selectedGouvernorat?: string;
+  reason?: string;
+  message?: string;
+  errorMessage?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class TeletravailService {
   private apiUrl = 'http://localhost:7001/api/teletravail';
-  
+
   constructor(private http: HttpClient) {}
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token'); // Assuming token is stored after login
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    });
-  }
-
-  submitRequest(formData: TeletravailForm): Observable<any> {
-    return this.http.post(this.apiUrl, formData, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
 
   getCountries(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/countries`)
-      .pipe(catchError(this.handleError));
+    return this.http.get<string[]>(`${this.apiUrl}/countries`);
   }
 
-  getRegions(countryName: string): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/regions/${countryName}`)
-      .pipe(catchError(this.handleError));
+  getRegions(country: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/regions/${country}`);
   }
 
-  private handleError(error: any): Observable<never> {
-    console.error('An error occurred:', error);
-    return throwError(() => new Error(error.message || 'Server error'));
+  submitRequest(form: TeletravailForm): Observable<TeletravailResponse> {
+    return this.http.post<TeletravailResponse>(this.apiUrl, form, { headers: this.getHeaders() });
+  }
+
+  getUserRequests(): Observable<TeletravailResponse[]> {
+    return this.http.get<TeletravailResponse[]>(this.apiUrl, { headers: this.getHeaders() });
   }
 }
