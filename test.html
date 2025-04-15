@@ -1,0 +1,2739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Desk Booking System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --background-color: #f1f5f9;
+            --card-background: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --plan-background: #e0f2fe;
+            --plan-border: #bae6fd;
+            --plan-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.1);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
+            --gradient-success: linear-gradient(135deg, #10b981, #059669);
+            --gradient-danger: linear-gradient(135deg, #ef4444, #dc2626);
+            --gradient-plan: linear-gradient(135deg, #e0f2fe, #bae6fd);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(45deg, transparent 48%, rgba(59, 130, 246, 0.05) 49%, rgba(59, 130, 246, 0.05) 51%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(59, 130, 246, 0.05) 49%, rgba(59, 130, 246, 0.05) 51%, transparent 52%);
+            background-size: 40px 40px;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .app-container {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            gap: 1.5rem;
+        }
+
+        .main-content {
+            flex: 1;
+            position: relative;
+            display: flex;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            position: relative;
+            background: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .floating-buttons {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .floating-button {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .floating-button i {
+            font-size: 1.25rem;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -0.5rem;
+            right: -0.5rem;
+            background: var(--danger-color);
+            color: white;
+            font-size: 0.75rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: var(--card-background);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+            max-width: 200px;
+            text-align: center;
+        }
+
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+            border-top-color: var(--card-background);
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tooltip.active {
+            opacity: 1;
+            transform: translateY(-5px);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100%;
+            background: var(--card-background);
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 10;
+            transition: transform 0.3s ease;
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-300px);
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-title i {
+            color: var(--primary-color);
+            font-size: 1.75rem;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 1rem 1.25rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        button:not(:disabled):active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .primary-button {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .primary-button:hover:not(:disabled) {
+            background: var(--gradient-primary);
+            filter: brightness(1.1);
+        }
+
+        .secondary-button {
+            background: var(--secondary-color);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .secondary-button:hover:not(:disabled) {
+            background: var(--secondary-color);
+            filter: brightness(1.1);
+        }
+
+        .danger-button {
+            background: var(--gradient-danger);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .danger-button:hover:not(:disabled) {
+            background: var(--gradient-danger);
+            filter: brightness(1.1);
+        }
+
+        .success-button {
+            background: var(--gradient-success);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .success-button:hover:not(:disabled) {
+            background: var(--gradient-success);
+            filter: brightness(1.1);
+        }
+
+        .warning-button {
+            background: var(--warning-color);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .warning-button:hover:not(:disabled) {
+            background: var(--warning-color);
+            filter: brightness(1.1);
+        }
+
+        button i {
+            font-size: 1.25rem;
+            transition: transform 0.3s ease;
+        }
+
+        button:hover:not(:disabled) i {
+            transform: scale(1.1);
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .close-button:hover {
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        #openSidebarButton {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            z-index: 9;
+            display: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-xl);
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        #openSidebarButton:hover {
+            background: var(--secondary-color);
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        #openSidebarButton i {
+            font-size: 1.25rem;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        #openSidebarButton i::before {
+            content: '';
+            display: block;
+            width: 1.25rem;
+            height: 0.125rem;
+            background: currentColor;
+            border-radius: 0.125rem;
+            transition: all 0.3s ease;
+        }
+
+        #openSidebarButton i::after {
+            content: '';
+            display: block;
+            width: 1.25rem;
+            height: 0.125rem;
+            background: currentColor;
+            border-radius: 0.125rem;
+            transition: all 0.3s ease;
+        }
+
+        #openSidebarButton:hover i::before {
+            transform: translateY(0.375rem) rotate(45deg);
+        }
+
+        #openSidebarButton:hover i::after {
+            transform: translateY(-0.375rem) rotate(-45deg);
+        }
+
+        #openSidebarButton::after {
+            display: none;
+        }
+
+        #designContainer {
+            position: absolute;
+            top: 1.5rem;
+            left: 340px;
+            width: calc(100% - 340px - 3rem);
+            height: calc(100vh - 3rem - 100px);
+            background-color: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-bottom: 100px;
+            padding: 1rem;
+        }
+
+        #designContainer.shifted {
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 3rem - 3rem);
+            max-width: 1200px;
+        }
+
+        .plan {
+            position: absolute;
+            width: 400px;
+            height: 300px;
+            background-color: #AAD5E6;
+            border: none;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 2;
+            top: 0;
+            left: 0;
+            transform-origin: center center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform, left, top, width, height;
+        }
+
+        .plan.moving {
+            transition: none;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transform: scale(1.01);
+        }
+
+        .plan.selected {
+            border: 2px dashed #000000;
+            cursor: move;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .plan-resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border: 2px solid white;
+            border-radius: 50%;
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: none;
+        }
+
+        .plan.selected .plan-resize-handle {
+            display: block;
+        }
+
+        .plan-resize-handle:hover {
+            transform: scale(1.2);
+            background: var(--primary-hover);
+        }
+
+        .plan-resize-handle.top-left { top: -6px; left: -6px; cursor: nwse-resize; }
+        .plan-resize-handle.top-right { top: -6px; right: -6px; cursor: nesw-resize; }
+        .plan-resize-handle.bottom-left { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .plan-resize-handle.bottom-right { bottom: -6px; right: -6px; cursor: nwse-resize; }
+        .plan-resize-handle.top { top: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .plan-resize-handle.bottom { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .plan-resize-handle.left { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+        .plan-resize-handle.right { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+        .desk {
+            position: absolute;
+            width: 15px;
+            height: 50px;
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-sm);
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .desk:hover {
+            box-shadow: var(--shadow-md);
+            transform: scale(1.05);
+        }
+
+        .desk.available {
+            border-color: var(--success-color);
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        }
+
+        .desk.reserved {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            cursor: not-allowed;
+        }
+
+        .desk.selected {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        }
+
+        .desk-booking-info {
+            position: absolute;
+            top: -2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-background);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            box-shadow: var(--shadow-md);
+            display: none;
+            border: 1px solid var(--border-color);
+            z-index: 2;
+            color: var(--text-primary);
+        }
+
+        .desk.reserved .desk-booking-info {
+            border-color: #ef4444;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .desk:hover .desk-booking-info {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 340px;
+            width: calc(100% - 340px - 3rem);
+            background: var(--card-background);
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            z-index: 100;
+            flex-wrap: wrap;
+        }
+
+        .status-bar.shifted {
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 3rem - 3rem);
+            max-width: 1200px;
+        }
+
+        .date-navigation {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-left: auto;
+            padding: 0.25rem;
+            background: var(--background-color);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            min-width: fit-content;
+            flex-shrink: 0;
+        }
+
+        .date-nav-button {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.625rem;
+            flex-shrink: 0;
+            padding: 0;
+        }
+
+        .date-nav-button:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .date-nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--border-color);
+        }
+
+        .date-display {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            min-width: 80px;
+            text-align: center;
+            padding: 0 0.25rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            background: var(--background-color);
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .status-indicator {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-indicator.available {
+            background: var(--gradient-success);
+        }
+
+        .status-indicator.reserved {
+            background: var(--gradient-danger);
+        }
+
+        .booking-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-background);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-xl);
+            width: 450px;
+            z-index: 100;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .booking-modal.active {
+            display: block;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-title i {
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            background: var(--background-color);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .wall {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #1e293b;
+            border: 2px solid #0f172a;
+            border-radius: 4px;
+            box-shadow: var(--shadow-md);
+            cursor: move;
+            z-index: 3;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform, width, height, left, top;
+        }
+
+        .wall:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .wall.selected {
+            background: #334155;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+            transform: scale(1.1);
+        }
+
+        .wall.moving {
+            transition: none;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .wall-resize-handle {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-color);
+            border: 2px solid white;
+            border-radius: 50%;
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none;
+            box-shadow: var(--shadow-md);
+        }
+
+        .wall.selected .wall-resize-handle {
+            display: block;
+        }
+
+        .wall-resize-handle:hover {
+            transform: scale(1.3);
+            background: var(--primary-hover);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .wall-resize-handle:active {
+            transform: scale(1.2);
+            background: var(--primary-hover);
+        }
+
+        .wall-resize-handle.top-left { top: -8px; left: -8px; cursor: nwse-resize; }
+        .wall-resize-handle.top-right { top: -8px; right: -8px; cursor: nesw-resize; }
+        .wall-resize-handle.bottom-left { bottom: -8px; left: -8px; cursor: nesw-resize; }
+        .wall-resize-handle.bottom-right { bottom: -8px; right: -8px; cursor: nwse-resize; }
+        .wall-resize-handle.top { top: -8px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .wall-resize-handle.bottom { bottom: -8px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+        .wall-resize-handle.left { left: -8px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+        .wall-resize-handle.right { right: -8px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
+        .wall.nearby {
+            border-color: var(--danger-color);
+            animation: bump 0.3s ease-out;
+        }
+
+        .wall.connected {
+            border: 2px solid var(--success-color);
+        }
+
+        @keyframes bump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Add a wrapper for both elements */
+        .main-content-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        /* Add styles for the mode toggle and calendar */
+        .mode-toggle {
+            display: flex;
+            gap: 0.125rem;
+            margin-right: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        .mode-button {
+            padding: 0.125rem 0.25rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            background: var(--background-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.125rem;
+            font-size: 0.625rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .mode-button.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .mode-button:hover:not(.active) {
+            background: var(--border-color);
+        }
+
+        .mode-button i {
+            font-size: 0.75rem;
+        }
+
+        .date-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .week-calendar {
+            margin-top: 1rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--background-color);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .calendar-day {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--card-background);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 3rem;
+        }
+
+        .calendar-day:hover:not(.disabled) {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .calendar-day.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .calendar-day.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .calendar-day::before {
+            content: attr(data-weekday);
+            font-size: 0.75rem;
+            color: inherit;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+
+        .calendar-day::after {
+            content: attr(data-date);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: inherit;
+        }
+
+        .calendar-day.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--border-color);
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">
+                <i class="fas fa-desk"></i>
+                Desk Booking
+            </div>
+            <button id="closeSidebarButton" class="secondary-button">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="button-container">
+            <button id="createPlanButton" class="primary-button">
+                <i class="fas fa-plus"></i>
+                Create New Plan
+            </button>
+            <button id="createWallButton" class="secondary-button" disabled>
+                <i class="fas fa-wall"></i>
+                Create Wall
+            </button>
+            <button id="deletePlanButton" class="danger-button" disabled>
+                <i class="fas fa-trash"></i>
+                Delete Plan
+            </button>
+            <button id="confirmDesignButton" class="success-button" disabled>
+                <i class="fas fa-check"></i>
+                Confirm Design
+            </button>
+            <button id="modifyButton" class="warning-button" disabled>
+                <i class="fas fa-edit"></i>
+                Modify
+            </button>
+        </div>
+    </div>
+    <button id="openSidebarButton" class="primary-button" style="display: none;">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div class="main-content-wrapper">
+        <div id="designContainer"></div>
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator available"></div>
+                <span>Available</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator reserved"></div>
+                <span>Reserved</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-ruler"></i>
+                <span id="planDimensions">Plan: 400x300</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-chair"></i>
+                <span id="deskCount">Desks: 0</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-wall"></i>
+                <span id="wallCount">Walls: 0</span>
+            </div>
+            <div class="date-navigation">
+                <div class="mode-toggle">
+                    <button class="mode-button active" id="dayModeButton">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>Day</span>
+                    </button>
+                    <button class="mode-button" id="weekModeButton">
+                        <i class="fas fa-calendar-week"></i>
+                        <span>Week</span>
+                    </button>
+                </div>
+                <div class="date-controls">
+                    <button class="date-nav-button" id="prevDateButton">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="date-display" id="currentDateDisplay"></div>
+                    <button class="date-nav-button" id="nextDateButton">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="booking-modal" id="bookingModal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-calendar-check"></i>
+                <span id="modalTitle">Book Desk</span>
+            </div>
+            <button class="close-button" id="closeModalButton">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Employee Name</label>
+            <input type="text" class="form-input" id="employeeName" placeholder="Enter employee name">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Duration</label>
+            <select class="form-input" id="bookingDuration">
+                <option value="4">Half day</option>
+                <option value="8">Full day</option>
+            </select>
+        </div>
+        <div class="form-group week-calendar" id="weekCalendar" style="display: none;">
+            <label class="form-label">Select Days</label>
+            <div class="calendar-grid">
+                <!-- Calendar days will be populated by JavaScript -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary-button" id="cancelBookingButton">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+            <button class="primary-button" id="confirmBookingButton">
+                <i class="fas fa-check"></i>
+                Confirm Booking
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let planCounter = 0;
+        let currentPlan = null;
+        let selectedDesk = null;
+        let selectedPlan = null;
+        let selectedWall = null;
+        let isPlanConfirmed = false;
+        let isDragging = false;
+        const DESK_SIZE = 50;
+        const GRID_SIZE = 10;
+        const INITIAL_WIDTH = 400;
+        const INITIAL_HEIGHT = 300;
+
+        // Initialize the system
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize date management
+            let currentDate = new Date();
+            const dateDisplay = document.getElementById('currentDateDisplay');
+            const prevDateButton = document.getElementById('prevDateButton');
+            const nextDateButton = document.getElementById('nextDateButton');
+            
+            // Function to get the next weekday
+            const getNextWeekday = (date) => {
+                const newDate = new Date(date);
+                while (newDate.getDay() === 0 || newDate.getDay() === 6) {
+                    newDate.setDate(newDate.getDate() + 1);
+                }
+                return newDate;
+            };
+
+            // Initialize currentDate to today or next weekday
+            currentDate = getNextWeekday(currentDate);
+            
+            // Store desk reservations
+            const deskReservations = new Map();
+
+            // Function to format date for display
+            const formatDisplayDate = (date) => {
+                const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            };
+
+            // Function to update date display and desk statuses
+            const updateDateAndDesks = () => {
+                // Update date display
+                dateDisplay.textContent = formatDisplayDate(currentDate);
+                
+                // Get today's date at midnight
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Check if we're on Friday
+                const isFriday = today.getDay() === 5;
+                let maxDate;
+                
+                if (isFriday) {
+                    // On Friday, max date is next Friday
+                    const nextMonday = new Date(today);
+                    nextMonday.setDate(today.getDate() + 3); // Friday to Monday
+                    const nextFriday = new Date(nextMonday);
+                    nextFriday.setDate(nextMonday.getDate() + 4); // Monday to Friday
+                    maxDate = nextFriday;
+                } else {
+                    // On other days, max date is two weeks from today
+                    maxDate = new Date(today);
+                    maxDate.setDate(today.getDate() + 14);
+                }
+                
+                // Find the next valid date (skip weekends)
+                const nextValidDate = new Date(currentDate);
+                nextValidDate.setDate(currentDate.getDate() + 1);
+                while (nextValidDate.getDay() === 0 || nextValidDate.getDay() === 6) {
+                    nextValidDate.setDate(nextValidDate.getDate() + 1);
+                }
+                
+                // Find the previous valid date (skip weekends)
+                const prevValidDate = new Date(currentDate);
+                prevValidDate.setDate(currentDate.getDate() - 1);
+                while (prevValidDate.getDay() === 0 || prevValidDate.getDay() === 6) {
+                    prevValidDate.setDate(prevValidDate.getDate() - 1);
+                }
+                
+                // Disable previous button if no valid previous date exists
+                prevDateButton.disabled = prevValidDate < today;
+                
+                // Disable next button if no valid next date exists
+                nextDateButton.disabled = nextValidDate > maxDate;
+                
+                // Update desk statuses
+                const desks = document.querySelectorAll('.desk');
+                desks.forEach(desk => {
+                    const deskId = desk.id;
+                    const reservations = deskReservations.get(deskId) || [];
+                    const isReserved = reservations.some(res => {
+                        const resDate = new Date(res.date);
+                        return resDate.toDateString() === currentDate.toDateString();
+                    });
+                    
+                    if (isReserved) {
+                        desk.classList.remove('available');
+                        desk.classList.add('reserved');
+                        desk.dataset.status = 'reserved';
+                        const bookingInfo = desk.querySelector('.desk-booking-info');
+                        const reservation = reservations.find(res => 
+                            new Date(res.date).toDateString() === currentDate.toDateString()
+                        );
+                        if (reservation) {
+                            const durationText = reservation.duration === '8' ? 'Full day' : 'Half day';
+                            bookingInfo.textContent = `${reservation.employeeName} - ${durationText}`;
+                        }
+                    } else {
+                        desk.classList.remove('reserved');
+                        desk.classList.add('available');
+                        desk.dataset.status = 'available';
+                        const bookingInfo = desk.querySelector('.desk-booking-info');
+                        bookingInfo.textContent = 'Available';
+                    }
+                });
+            };
+
+            // Handle date navigation
+            prevDateButton.addEventListener('click', () => {
+                const newDate = new Date(currentDate);
+                newDate.setDate(currentDate.getDate() - 1);
+                
+                // Skip weekends when navigating
+                while (newDate.getDay() === 0 || newDate.getDay() === 6) {
+                    newDate.setDate(newDate.getDate() - 1);
+                }
+                
+                // Don't allow going to past dates
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (newDate >= today) {
+                    currentDate = newDate;
+                    updateDateAndDesks();
+                }
+            });
+
+            nextDateButton.addEventListener('click', () => {
+                const newDate = new Date(currentDate);
+                newDate.setDate(currentDate.getDate() + 1);
+                
+                // Skip weekends when navigating
+                while (newDate.getDay() === 0 || newDate.getDay() === 6) {
+                    newDate.setDate(newDate.getDate() + 1);
+                }
+                
+                // Check if we're on Friday
+                const today = new Date();
+                const isFriday = today.getDay() === 5;
+                let maxDate;
+                
+                if (isFriday) {
+                    // On Friday, max date is next Friday
+                    const nextMonday = new Date(today);
+                    nextMonday.setDate(today.getDate() + 3); // Friday to Monday
+                    const nextFriday = new Date(nextMonday);
+                    nextFriday.setDate(nextMonday.getDate() + 4); // Monday to Friday
+                    maxDate = nextFriday;
+                } else {
+                    // On other days, max date is two weeks from today
+                    maxDate = new Date(today);
+                    maxDate.setDate(today.getDate() + 14);
+                }
+                
+                if (newDate <= maxDate) {
+                    currentDate = newDate;
+                    updateDateAndDesks();
+                }
+            });
+
+            // Modify the booking confirmation to store reservations
+            document.getElementById('confirmBookingButton').addEventListener('click', () => {
+                const modal = document.getElementById('bookingModal');
+                const deskId = modal.dataset.deskId;
+                const desk = document.getElementById(deskId);
+                
+                if (!desk) {
+                    modal.classList.remove('active');
+                    return;
+                }
+
+                const employeeName = document.getElementById('employeeName').value.trim();
+                const duration = document.getElementById('bookingDuration').value;
+
+                if (!employeeName) {
+                    alert('Please enter employee name');
+                    return;
+                }
+
+                if (currentMode === 'week' && selectedWeekDays.size === 0) {
+                    alert('Please select at least one day');
+                    return;
+                }
+
+                const datesToBook = currentMode === 'day' 
+                    ? [currentDate.toISOString().split('T')[0]]
+                    : Array.from(selectedWeekDays);
+
+                // Store the reservations
+                const reservations = deskReservations.get(deskId) || [];
+                datesToBook.forEach(date => {
+                    reservations.push({
+                        date,
+                        employeeName,
+                        duration
+                    });
+                });
+                deskReservations.set(deskId, reservations);
+
+                // Update desk status
+                if (currentMode === 'day') {
+                    desk.classList.remove('available');
+                    desk.classList.add('reserved');
+                    desk.dataset.status = 'reserved';
+                    
+                    // Update booking info
+                    const bookingInfo = desk.querySelector('.desk-booking-info');
+                    const durationText = duration === '8' ? 'Full day' : 'Half day';
+                    bookingInfo.textContent = `${employeeName} - ${durationText}`;
+                } else {
+                    // In week mode, update the display to show the first booking
+                    const firstDate = datesToBook[0];
+                    const bookingInfo = desk.querySelector('.desk-booking-info');
+                    const durationText = duration === '8' ? 'Full day' : 'Half day';
+                    bookingInfo.textContent = `${employeeName} - ${durationText}`;
+                }
+                
+                // Store booking details
+                desk.dataset.employeeName = employeeName;
+                desk.dataset.duration = duration;
+
+                // Remove selection and close modal
+                desk.classList.remove('selected');
+                modal.classList.remove('active');
+                selectedWeekDays.clear();
+                updateDateAndDesks();
+            });
+
+            // Initialize date and desk statuses
+            updateDateAndDesks();
+
+            // Add document click event listener for deselection
+            document.addEventListener('click', (e) => {
+                // Check if click is outside any desk, wall, or plan
+                if (!e.target.closest('.desk') && !e.target.closest('.wall') && !e.target.closest('.plan') && 
+                    !e.target.closest('.desk-booking-info') && !e.target.closest('#bookingModal')) {
+                    // Remove selection from all elements
+                    document.querySelectorAll('.desk.selected, .wall.selected, .plan.selected').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    // Close booking modal if open
+                    document.getElementById('bookingModal').classList.remove('active');
+                }
+            });
+
+            // Add event listeners for sidebar buttons
+            document.getElementById('createPlanButton').addEventListener('click', () => {
+                createPlan(0, 0);
+            });
+
+            document.getElementById('deletePlanButton').addEventListener('click', () => {
+                if (currentPlan) {
+                    if (confirm('Are you sure you want to delete this plan?')) {
+                        currentPlan.remove();
+                        currentPlan = null;
+                        selectedPlan = null;
+                        selectedDesk = null;
+                        planCounter = 0;
+                        isPlanConfirmed = false;
+                        document.getElementById('createPlanButton').disabled = false;
+                        document.getElementById('createWallButton').disabled = true;
+                        document.getElementById('deletePlanButton').disabled = true;
+                        document.getElementById('confirmDesignButton').disabled = true;
+                        document.getElementById('modifyButton').disabled = true;
+                        updateStatusBar();
+                    }
+                }
+            });
+
+            document.getElementById('confirmDesignButton').addEventListener('click', () => {
+                if (currentPlan && !isPlanConfirmed) {
+                    isPlanConfirmed = true;
+                    currentPlan.classList.add('confirmed');
+                    if (selectedPlan) selectedPlan.classList.remove('selected');
+                    selectedPlan = null;
+                    const desks = currentPlan.querySelectorAll('.desk');
+                    desks.forEach(desk => {
+                        desk.style.cursor = 'pointer';
+                        const bookingInfo = desk.querySelector('.desk-booking-info');
+                        bookingInfo.style.display = 'none'; // Hide by default, show on hover
+                        if (desk.dataset.status === 'available') {
+                            bookingInfo.textContent = 'Available';
+                        }
+                    });
+                    document.getElementById('createPlanButton').disabled = true;
+                    document.getElementById('createWallButton').disabled = true;
+                    document.getElementById('deletePlanButton').disabled = false;
+                    document.getElementById('confirmDesignButton').disabled = true;
+                    document.getElementById('modifyButton').disabled = false;
+                    updateStatusBar();
+                }
+            });
+
+            document.getElementById('modifyButton').addEventListener('click', () => {
+                if (currentPlan && isPlanConfirmed) {
+                    isPlanConfirmed = false;
+                    currentPlan.classList.remove('confirmed');
+                    const desks = currentPlan.querySelectorAll('.desk');
+                    desks.forEach(desk => {
+                        desk.style.cursor = 'move';
+                        const bookingInfo = desk.querySelector('.desk-booking-info');
+                        bookingInfo.style.display = 'none'; // Hide booking info during modification
+                    });
+                    document.getElementById('createPlanButton').disabled = true;
+                    document.getElementById('createWallButton').disabled = false;
+                    document.getElementById('deletePlanButton').disabled = false;
+                    document.getElementById('confirmDesignButton').disabled = false;
+                    document.getElementById('modifyButton').disabled = true;
+                    updateStatusBar();
+                }
+            });
+
+            // Sidebar toggle functionality
+            document.getElementById('closeSidebarButton').addEventListener('click', () => {
+                const sidebar = document.querySelector('.sidebar');
+                sidebar.classList.add('hidden');
+                document.getElementById('openSidebarButton').style.display = 'block';
+                
+                // Update both elements together
+                const designContainer = document.getElementById('designContainer');
+                const statusBar = document.querySelector('.status-bar');
+                designContainer.classList.add('shifted');
+                statusBar.classList.add('shifted');
+            });
+
+            document.getElementById('openSidebarButton').addEventListener('click', () => {
+                const sidebar = document.querySelector('.sidebar');
+                sidebar.classList.remove('hidden');
+                document.getElementById('openSidebarButton').style.display = 'none';
+                
+                // Update both elements together
+                const designContainer = document.getElementById('designContainer');
+                const statusBar = document.querySelector('.status-bar');
+                designContainer.classList.remove('shifted');
+                statusBar.classList.remove('shifted');
+            });
+
+            // Booking modal functionality
+            document.getElementById('closeModalButton').addEventListener('click', () => {
+                const modal = document.getElementById('bookingModal');
+                const deskId = modal.dataset.deskId;
+                const desk = document.getElementById(deskId);
+                if (desk) {
+                    desk.classList.remove('selected');
+                }
+                modal.classList.remove('active');
+            });
+
+            document.getElementById('cancelBookingButton').addEventListener('click', () => {
+                const modal = document.getElementById('bookingModal');
+                const deskId = modal.dataset.deskId;
+                const desk = document.getElementById(deskId);
+                
+                if (desk && desk.dataset.status === 'reserved') {
+                    if (confirm('Are you sure you want to cancel this booking?')) {
+                        // Reset desk status
+                        desk.classList.remove('reserved');
+                        desk.classList.add('available');
+                        desk.dataset.status = 'available';
+                        
+                        // Clear booking info
+                        const bookingInfo = desk.querySelector('.desk-booking-info');
+                        bookingInfo.textContent = 'Available';
+                        
+                        // Clear stored booking details
+                        delete desk.dataset.employeeName;
+                        delete desk.dataset.bookingDate;
+                        delete desk.dataset.duration;
+                        
+                        updateStatusBar();
+                    }
+                }
+                
+                // Remove selection and close modal
+                if (desk) {
+                    desk.classList.remove('selected');
+                }
+                modal.classList.remove('active');
+            });
+
+            // Add event listener for create wall button
+            document.getElementById('createWallButton').addEventListener('click', () => {
+                if (currentPlan) {
+                    const x = Math.round(10 / GRID_SIZE) * GRID_SIZE;
+                    const y = Math.round(35 / GRID_SIZE) * GRID_SIZE;
+                    createWall(currentPlan, x, y);
+                }
+            });
+        });
+
+        function createPlan(x = 0, y = 0) {
+            if (planCounter >= 1) return;
+            planCounter++;
+            const container = document.getElementById('designContainer');
+            const plan = document.createElement('div');
+            plan.className = 'plan';
+            plan.id = `plan-${planCounter}`;
+            plan.style.left = `${x}px`;
+            plan.style.top = `${y}px`;
+            plan.style.width = `${INITIAL_WIDTH}px`;
+            plan.style.height = `${INITIAL_HEIGHT}px`;
+
+            // Add resize handles
+            const handles = [
+                'top-left', 'top', 'top-right',
+                'left', 'right',
+                'bottom-left', 'bottom', 'bottom-right'
+            ];
+            handles.forEach(pos => {
+                const handle = document.createElement('div');
+                handle.className = `plan-resize-handle ${pos}`;
+                plan.appendChild(handle);
+                addPlanResizeListener(plan, handle, pos);
+            });
+
+            container.appendChild(plan);
+            addPlanEventListeners(plan);
+            currentPlan = plan;
+            isPlanConfirmed = false;
+
+            document.getElementById('createPlanButton').disabled = true;
+            document.getElementById('createWallButton').disabled = false;
+            document.getElementById('deletePlanButton').disabled = false;
+            document.getElementById('confirmDesignButton').disabled = false;
+            document.getElementById('modifyButton').disabled = true;
+            updateStatusBar();
+        }
+
+        function addPlanEventListeners(plan) {
+            let isDragging = false;
+            let currentX, currentY;
+            let rafId = null;
+            let lastTime = 0;
+            const LERP_FACTOR = 0.15;
+            const EASING_FACTOR = 0.25;
+            const CONTAINER_WIDTH = document.getElementById('designContainer').offsetWidth;
+            const CONTAINER_HEIGHT = document.getElementById('designContainer').offsetHeight;
+            const KEYBOARD_MOVE_SPEED = 8;
+            const KEYBOARD_MOVE_INTERVAL = 30;
+
+            // Add keyboard event listeners
+            let keyState = {};
+            let moveInterval = null;
+
+            document.addEventListener('keydown', (e) => {
+                if (selectedPlan !== plan) return;
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                    if (!keyState[e.key]) {
+                        keyState[e.key] = true;
+                        movePlanWithKeyboard();
+                        moveInterval = setInterval(movePlanWithKeyboard, KEYBOARD_MOVE_INTERVAL);
+                    }
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    keyState[e.key] = false;
+                    if (Object.values(keyState).every(state => !state)) {
+                        clearInterval(moveInterval);
+                        moveInterval = null;
+                    }
+                }
+            });
+
+            function movePlanWithKeyboard() {
+                if (!selectedPlan) return;
+
+                const planWidth = parseFloat(plan.style.width);
+                const planHeight = parseFloat(plan.style.height);
+                let newLeft = parseFloat(plan.style.left) || 0;
+                let newTop = parseFloat(plan.style.top) || 0;
+
+                if (keyState['ArrowUp']) {
+                    newTop = Math.max(0, newTop - KEYBOARD_MOVE_SPEED);
+                }
+                if (keyState['ArrowDown']) {
+                    newTop = Math.min(CONTAINER_HEIGHT - planHeight, newTop + KEYBOARD_MOVE_SPEED);
+                }
+                if (keyState['ArrowLeft']) {
+                    newLeft = Math.max(0, newLeft - KEYBOARD_MOVE_SPEED);
+                }
+                if (keyState['ArrowRight']) {
+                    newLeft = Math.min(CONTAINER_WIDTH - planWidth, newLeft + KEYBOARD_MOVE_SPEED);
+                }
+
+                // Smooth grid snapping
+                const targetLeft = Math.round(newLeft / GRID_SIZE) * GRID_SIZE;
+                const targetTop = Math.round(newTop / GRID_SIZE) * GRID_SIZE;
+                
+                newLeft = newLeft + (targetLeft - newLeft) * EASING_FACTOR;
+                newTop = newTop + (targetTop - newTop) * EASING_FACTOR;
+
+                // Apply smooth transition
+                plan.style.transition = 'left 0.1s ease-out, top 0.1s ease-out';
+                plan.style.left = `${newLeft}px`;
+                plan.style.top = `${newTop}px`;
+
+                // Reset transition after animation
+                setTimeout(() => {
+                    plan.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                }, 100);
+            }
+
+            plan.addEventListener('click', (e) => {
+                if (isPlanConfirmed || e.target.classList.contains('desk') || 
+                    e.target.classList.contains('wall') || 
+                    e.target.classList.contains('plan-resize-handle')) return;
+                
+                // Deselect all other elements
+                document.querySelectorAll('.wall.selected, .plan.selected, .desk.selected').forEach(el => {
+                    if (el !== plan) {
+                        el.classList.remove('selected');
+                    }
+                });
+                
+                // Toggle plan selection
+                if (selectedPlan === plan) {
+                    plan.classList.remove('selected');
+                    selectedPlan = null;
+                } else {
+                    plan.classList.add('selected');
+                    selectedPlan = plan;
+                }
+                
+                // Clear wall selection
+                if (selectedWall) {
+                    selectedWall.classList.remove('selected');
+                    selectedWall = null;
+                }
+            });
+
+            plan.addEventListener('mousedown', startDragging);
+            function startDragging(e) {
+                if (isPlanConfirmed || selectedPlan !== plan || 
+                    e.target.classList.contains('desk') || 
+                    e.target.classList.contains('wall') || 
+                    e.target.classList.contains('plan-resize-handle')) return;
+                e.preventDefault();
+                isDragging = true;
+                plan.classList.add('moving');
+                currentX = e.clientX - parseFloat(plan.style.left);
+                currentY = e.clientY - parseFloat(plan.style.top);
+                lastTime = performance.now();
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDragging);
+                animate();
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    const planWidth = parseFloat(plan.style.width);
+                    const planHeight = parseFloat(plan.style.height);
+                    
+                    let x = e.clientX - currentX;
+                    let y = e.clientY - currentY;
+
+                    // Constrain to container bounds
+                    x = Math.max(0, Math.min(x, CONTAINER_WIDTH - planWidth));
+                    y = Math.max(0, Math.min(y, CONTAINER_HEIGHT - planHeight));
+
+                    // Smooth grid snapping
+                    const targetX = Math.round(x / GRID_SIZE) * GRID_SIZE;
+                    const targetY = Math.round(y / GRID_SIZE) * GRID_SIZE;
+                    
+                    x = x + (targetX - x) * EASING_FACTOR;
+                    y = y + (targetY - y) * EASING_FACTOR;
+
+                    plan.dataset.targetX = x;
+                    plan.dataset.targetY = y;
+                }
+            }
+
+            function animate() {
+                if (!isDragging) return;
+
+                const currentTime = performance.now();
+                const deltaTime = currentTime - lastTime;
+                lastTime = currentTime;
+
+                const currentX = parseFloat(plan.style.left) || 0;
+                const currentY = parseFloat(plan.style.top) || 0;
+                const targetX = parseFloat(plan.dataset.targetX);
+                const targetY = parseFloat(plan.dataset.targetY);
+
+                // Smooth movement using lerp with delta time
+                const lerpFactor = Math.min(1, LERP_FACTOR * (deltaTime / 16.67)); // Normalize to 60fps
+                const newX = currentX + (targetX - currentX) * lerpFactor;
+                const newY = currentY + (targetY - currentY) * lerpFactor;
+
+                // Apply easing based on distance
+                const dx = targetX - newX;
+                const dy = targetY - newY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 0.1) {
+                    plan.style.left = `${targetX}px`;
+                    plan.style.top = `${targetY}px`;
+                } else {
+                    plan.style.left = `${newX}px`;
+                    plan.style.top = `${newY}px`;
+                }
+
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function stopDragging() {
+                if (!isDragging) return;
+                isDragging = false;
+                plan.classList.remove('moving');
+                cancelAnimationFrame(rafId);
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDragging);
+
+                // Final snap to grid with smooth transition
+                const x = Math.round(parseFloat(plan.style.left) / GRID_SIZE) * GRID_SIZE;
+                const y = Math.round(parseFloat(plan.style.top) / GRID_SIZE) * GRID_SIZE;
+                
+                // Use CSS transition for the final snap
+                plan.style.transition = 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1), top 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                plan.style.left = `${x}px`;
+                plan.style.top = `${y}px`;
+
+                // Reset transition after animation completes
+                setTimeout(() => {
+                    plan.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                }, 200);
+            }
+
+            plan.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (!isPlanConfirmed && e.target === plan) {
+                    const planRect = plan.getBoundingClientRect();
+                    const x = Math.round((e.clientX - planRect.left - 10) / GRID_SIZE) * GRID_SIZE;
+                    const y = Math.round((e.clientY - planRect.top - 35) / GRID_SIZE) * GRID_SIZE;
+                    createDesk(plan, x, y);
+                }
+            });
+        }
+
+        function addPlanResizeListener(plan, handle, position) {
+            let isResizing = false;
+            let initialX, initialY, initialWidth, initialHeight, initialLeft, initialTop;
+
+            handle.addEventListener('mousedown', startResizing);
+            function startResizing(e) {
+                if (isPlanConfirmed || selectedPlan !== plan) return;
+                e.preventDefault();
+                e.stopPropagation();
+                isResizing = true;
+                initialX = e.clientX;
+                initialY = e.clientY;
+                initialWidth = parseFloat(plan.style.width);
+                initialHeight = parseFloat(plan.style.height);
+                initialLeft = parseFloat(plan.style.left);
+                initialTop = parseFloat(plan.style.top);
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResizing);
+            }
+
+            function resize(e) {
+                if (!isResizing) return;
+                e.preventDefault();
+
+                const deltaX = e.clientX - initialX;
+                const deltaY = e.clientY - initialY;
+                let newWidth = initialWidth;
+                let newHeight = initialHeight;
+                let newLeft = initialLeft;
+                let newTop = initialTop;
+
+                const container = document.getElementById('designContainer');
+                const containerRect = container.getBoundingClientRect();
+                const padding = 10;
+
+                switch (position) {
+                    case 'top-left':
+                        newWidth = initialWidth - deltaX;
+                        newHeight = initialHeight - deltaY;
+                        newLeft = initialLeft + deltaX;
+                        newTop = initialTop + deltaY;
+                        break;
+                    case 'top':
+                        newHeight = initialHeight - deltaY;
+                        newTop = initialTop + deltaY;
+                        break;
+                    case 'top-right':
+                        newWidth = initialWidth + deltaX;
+                        newHeight = initialHeight - deltaY;
+                        newTop = initialTop + deltaY;
+                        break;
+                    case 'left':
+                        newWidth = initialWidth - deltaX;
+                        newLeft = initialLeft + deltaX;
+                        break;
+                    case 'right':
+                        newWidth = initialWidth + deltaX;
+                        break;
+                    case 'bottom-left':
+                        newWidth = initialWidth - deltaX;
+                        newHeight = initialHeight + deltaY;
+                        newLeft = initialLeft + deltaX;
+                        break;
+                    case 'bottom':
+                        newHeight = initialHeight + deltaY;
+                        break;
+                    case 'bottom-right':
+                        newWidth = initialWidth + deltaX;
+                        newHeight = initialHeight + deltaY;
+                        break;
+                }
+
+                // Minimum size constraints
+                const MIN_WIDTH = 200;
+                const MIN_HEIGHT = 150;
+                newWidth = Math.max(MIN_WIDTH, newWidth);
+                newHeight = Math.max(MIN_HEIGHT, newHeight);
+
+                // Maximum size constraints with padding
+                newWidth = Math.min(newWidth, containerRect.width - newLeft - padding * 2);
+                newHeight = Math.min(newHeight, containerRect.height - newTop - padding * 2);
+
+                // Position constraints with padding
+                newLeft = Math.max(padding, Math.min(newLeft, containerRect.width - newWidth - padding));
+                newTop = Math.max(padding, Math.min(newTop, containerRect.height - newHeight - padding));
+
+                // Snap to grid
+                newWidth = Math.round(newWidth / GRID_SIZE) * GRID_SIZE;
+                newHeight = Math.round(newHeight / GRID_SIZE) * GRID_SIZE;
+                newLeft = Math.round(newLeft / GRID_SIZE) * GRID_SIZE;
+                newTop = Math.round(newTop / GRID_SIZE) * GRID_SIZE;
+
+                // Update plan dimensions
+                plan.style.width = `${newWidth}px`;
+                plan.style.height = `${newHeight}px`;
+                plan.style.left = `${newLeft}px`;
+                plan.style.top = `${newTop}px`;
+
+                updateStatusBar();
+            }
+
+            function stopResizing() {
+                isResizing = false;
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResizing);
+            }
+        }
+
+        function createDesk(plan, x, y) {
+            const planRect = plan.getBoundingClientRect();
+            let newX = Math.max(0, Math.min(x, planRect.width - 15));
+            let newY = Math.max(0, Math.min(y, planRect.height - 50));
+            newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+            newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+
+            const desk = document.createElement('div');
+            desk.className = 'desk available';
+            desk.id = `desk-${Date.now()}`;
+            desk.style.left = `${newX}px`;
+            desk.style.top = `${newY}px`;
+            desk.style.width = `15px`;
+            desk.style.height = `50px`;
+            desk.dataset.rotation = '0';
+            desk.dataset.targetX = newX;
+            desk.dataset.targetY = newY;
+            desk.dataset.status = 'available';
+
+            const bookingInfo = document.createElement('div');
+            bookingInfo.className = 'desk-booking-info';
+            bookingInfo.style.display = 'none'; // Hide booking info during design phase
+            desk.appendChild(bookingInfo);
+
+            // Add hover event listeners
+            desk.addEventListener('mouseenter', () => {
+                if (isPlanConfirmed) {
+                    const bookingInfo = desk.querySelector('.desk-booking-info');
+                    bookingInfo.style.display = 'block';
+                    if (desk.dataset.status === 'available') {
+                        bookingInfo.textContent = 'Available';
+                    } else if (desk.dataset.status === 'reserved') {
+                        const employeeName = desk.dataset.employeeName;
+                        const duration = desk.dataset.duration;
+                        const durationText = duration === '8' ? 'Full day' : 'Half day';
+                        bookingInfo.textContent = `${employeeName} - ${durationText}`;
+                    }
+                }
+            });
+
+            desk.addEventListener('mouseleave', () => {
+                const bookingInfo = desk.querySelector('.desk-booking-info');
+                bookingInfo.style.display = 'none';
+            });
+
+            desk.addEventListener('click', (e) => {
+                if (isPlanConfirmed && !isDragging) {
+                    e.stopPropagation();
+                    // Deselect all other elements
+                    document.querySelectorAll('.wall.selected, .plan.selected, .desk.selected').forEach(el => {
+                        if (el !== desk) {
+                            el.classList.remove('selected');
+                        }
+                    });
+                    desk.classList.add('selected');
+                    
+                    // Show booking modal
+                    const modal = document.getElementById('bookingModal');
+                    modal.classList.add('active');
+                    modal.dataset.deskId = desk.id;
+                    
+                    // Show/hide week calendar based on mode
+                    document.getElementById('weekCalendar').style.display = currentMode === 'week' ? 'block' : 'none';
+                    
+                    // If desk is already reserved, pre-fill the form
+                    if (desk.dataset.status === 'reserved') {
+                        document.getElementById('employeeName').value = desk.dataset.employeeName || '';
+                        document.getElementById('bookingDuration').value = desk.dataset.duration || '4';
+                    } else {
+                        // Reset form fields for new booking
+                        document.getElementById('employeeName').value = '';
+                        document.getElementById('bookingDuration').value = '4';
+                    }
+                    
+                    if (currentMode === 'week') {
+                        updateWeekCalendar();
+                    }
+                }
+            });
+
+            addDeskEventListeners(desk, plan);
+            plan.appendChild(desk);
+            updateStatusBar();
+            return desk;
+        }
+
+        function addDeskEventListeners(desk, plan) {
+            let isDragging = false;
+            let currentX, currentY;
+
+            desk.addEventListener('mousedown', startDragging);
+            function startDragging(e) {
+                if (isPlanConfirmed) return;
+                e.preventDefault();
+                isDragging = true;
+                currentX = e.clientX - parseFloat(desk.dataset.targetX || desk.style.left);
+                currentY = e.clientY - parseFloat(desk.dataset.targetY || desk.style.top);
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDragging);
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    let x = e.clientX - currentX;
+                    let y = e.clientY - currentY;
+
+                    const planWidth = parseFloat(plan.style.width);
+                    const planHeight = parseFloat(plan.style.height);
+
+                    x = Math.max(0, Math.min(x, planWidth - 15));
+                    y = Math.max(0, Math.min(y, planHeight - 50));
+
+                    x = Math.round(x / GRID_SIZE) * GRID_SIZE;
+                    y = Math.round(y / GRID_SIZE) * GRID_SIZE;
+
+                    desk.dataset.targetX = x;
+                    desk.dataset.targetY = y;
+                    desk.style.left = `${x}px`;
+                    desk.style.top = `${y}px`;
+                }
+            }
+
+            function stopDragging() {
+                if (!isDragging) return;
+                isDragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDragging);
+            }
+
+            desk.addEventListener('dblclick', (e) => {
+                if (isPlanConfirmed) return;
+                e.stopPropagation();
+                let currentRotation = parseFloat(desk.dataset.rotation || 0);
+                currentRotation = (currentRotation + 90) % 360;
+                desk.dataset.rotation = currentRotation;
+                desk.style.transform = `rotate(${currentRotation}deg)`;
+            });
+
+            desk.addEventListener('click', (e) => {
+                if (isPlanConfirmed || isDragging) return;
+                e.stopPropagation();
+                const clickCount = e.detail;
+                if (clickCount === 3) {
+                    if (confirm('Are you sure you want to delete this desk?')) {
+                        desk.remove();
+                        updateStatusBar();
+                    }
+                }
+            });
+        }
+
+        function createWall(plan, x, y) {
+            const planRect = plan.getBoundingClientRect();
+            let newX = Math.max(0, Math.min(x, planRect.width - 20));
+            let newY = Math.max(0, Math.min(y, planRect.height - 20));
+            newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+            newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+
+            const wall = document.createElement('div');
+            wall.className = 'wall';
+            wall.id = `wall-${Date.now()}`;
+            wall.style.left = `${newX}px`;
+            wall.style.top = `${newY}px`;
+            wall.style.width = `20px`;
+            wall.style.height = `20px`;
+            wall.dataset.rotation = '0';
+            wall.dataset.targetX = newX;
+            wall.dataset.targetY = newY;
+
+            // Add resize handles (8 handles: 4 corners and 4 sides)
+            const handles = [
+                'top-left', 'top', 'top-right',
+                'left', 'right',
+                'bottom-left', 'bottom', 'bottom-right'
+            ];
+            handles.forEach(pos => {
+                const handle = document.createElement('div');
+                handle.className = `wall-resize-handle ${pos}`;
+                wall.appendChild(handle);
+                addWallResizeListener(wall, handle, pos);
+            });
+
+            addWallEventListeners(wall, plan);
+            plan.appendChild(wall);
+            updateStatusBar();
+            return wall;
+        }
+
+        function addWallResizeListener(wall, handle, position) {
+            let isResizing = false;
+            let initialX, initialY, initialWidth, initialHeight, initialLeft, initialTop;
+            let rafId = null;
+
+            handle.addEventListener('mousedown', startResizing);
+            function startResizing(e) {
+                if (isPlanConfirmed) return;
+                e.preventDefault();
+                e.stopPropagation();
+                isResizing = true;
+                wall.classList.add('moving');
+                initialX = e.clientX;
+                initialY = e.clientY;
+                initialWidth = parseFloat(wall.style.width);
+                initialHeight = parseFloat(wall.style.height);
+                initialLeft = parseFloat(wall.style.left);
+                initialTop = parseFloat(wall.style.top);
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResizing);
+                animate();
+            }
+
+            function resize(e) {
+                if (!isResizing) return;
+                e.preventDefault();
+
+                const deltaX = e.clientX - initialX;
+                const deltaY = e.clientY - initialY;
+                let newWidth = initialWidth;
+                let newHeight = initialHeight;
+                let newLeft = initialLeft;
+                let newTop = initialTop;
+
+                const plan = wall.parentElement;
+                const planWidth = parseFloat(plan.style.width);
+                const planHeight = parseFloat(plan.style.height);
+
+                switch (position) {
+                    case 'top-left':
+                        newWidth = initialWidth - deltaX;
+                        newHeight = initialHeight - deltaY;
+                        newLeft = initialLeft + deltaX;
+                        newTop = initialTop + deltaY;
+                        break;
+                    case 'top':
+                        newHeight = initialHeight - deltaY;
+                        newTop = initialTop + deltaY;
+                        break;
+                    case 'top-right':
+                        newWidth = initialWidth + deltaX;
+                        newHeight = initialHeight - deltaY;
+                        newTop = initialTop + deltaY;
+                        break;
+                    case 'left':
+                        newWidth = initialWidth - deltaX;
+                        newLeft = initialLeft + deltaX;
+                        break;
+                    case 'right':
+                        newWidth = initialWidth + deltaX;
+                        break;
+                    case 'bottom-left':
+                        newWidth = initialWidth - deltaX;
+                        newHeight = initialHeight + deltaY;
+                        newLeft = initialLeft + deltaX;
+                        break;
+                    case 'bottom':
+                        newHeight = initialHeight + deltaY;
+                        break;
+                    case 'bottom-right':
+                        newWidth = initialWidth + deltaX;
+                        newHeight = initialHeight + deltaY;
+                        break;
+                }
+
+                // Minimum size constraints
+                const MIN_SIZE = 20;
+                newWidth = Math.max(MIN_SIZE, newWidth);
+                newHeight = Math.max(MIN_SIZE, newHeight);
+
+                // Maximum size constraints (allow touching plan edges)
+                newWidth = Math.min(newWidth, planWidth - newLeft);
+                newHeight = Math.min(newHeight, planHeight - newTop);
+
+                // Position constraints (allow touching plan edges)
+                newLeft = Math.max(0, Math.min(newLeft, planWidth - newWidth));
+                newTop = Math.max(0, Math.min(newTop, planHeight - newHeight));
+
+                // Snap to grid
+                newWidth = Math.round(newWidth / GRID_SIZE) * GRID_SIZE;
+                newHeight = Math.round(newHeight / GRID_SIZE) * GRID_SIZE;
+                newLeft = Math.round(newLeft / GRID_SIZE) * GRID_SIZE;
+                newTop = Math.round(newTop / GRID_SIZE) * GRID_SIZE;
+
+                wall.style.width = `${newWidth}px`;
+                wall.style.height = `${newHeight}px`;
+                wall.style.left = `${newLeft}px`;
+                wall.style.top = `${newTop}px`;
+            }
+
+            function animate() {
+                if (!isResizing) return;
+
+                const currentWidth = parseFloat(wall.style.width);
+                const currentHeight = parseFloat(wall.style.height);
+                const currentLeft = parseFloat(wall.style.left);
+                const currentTop = parseFloat(wall.style.top);
+                const targetWidth = parseFloat(wall.dataset.targetWidth);
+                const targetHeight = parseFloat(wall.dataset.targetHeight);
+                const targetLeft = parseFloat(wall.dataset.targetLeft);
+                const targetTop = parseFloat(wall.dataset.targetTop);
+
+                // Smooth movement using lerp
+                const LERP_FACTOR = 0.2;
+                const newWidth = currentWidth + (targetWidth - currentWidth) * LERP_FACTOR;
+                const newHeight = currentHeight + (targetHeight - currentHeight) * LERP_FACTOR;
+                const newLeft = currentLeft + (targetLeft - currentLeft) * LERP_FACTOR;
+                const newTop = currentTop + (targetTop - currentTop) * LERP_FACTOR;
+
+                wall.style.width = `${newWidth}px`;
+                wall.style.height = `${newHeight}px`;
+                wall.style.left = `${newLeft}px`;
+                wall.style.top = `${newTop}px`;
+
+                rafId = requestAnimationFrame(animate);
+            }
+
+            function stopResizing() {
+                if (!isResizing) return;
+                isResizing = false;
+                wall.classList.remove('moving');
+                cancelAnimationFrame(rafId);
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResizing);
+
+                // Final snap to grid
+                const width = Math.round(parseFloat(wall.style.width) / GRID_SIZE) * GRID_SIZE;
+                const height = Math.round(parseFloat(wall.style.height) / GRID_SIZE) * GRID_SIZE;
+                const left = Math.round(parseFloat(wall.style.left) / GRID_SIZE) * GRID_SIZE;
+                const top = Math.round(parseFloat(wall.style.top) / GRID_SIZE) * GRID_SIZE;
+
+                wall.style.width = `${width}px`;
+                wall.style.height = `${height}px`;
+                wall.style.left = `${left}px`;
+                wall.style.top = `${top}px`;
+
+                updateStatusBar();
+            }
+        }
+
+        function addWallEventListeners(wall, plan) {
+            let isDragging = false;
+            let isResizing = false;
+            let resizeHandle = null;
+            let startX, startY;
+            let startWidth, startHeight;
+            let startLeft, startTop;
+
+            wall.addEventListener('contextmenu', (e) => {
+                if (isPlanConfirmed) return;
+                e.preventDefault();
+                // Deselect all other elements
+                document.querySelectorAll('.wall.selected, .plan.selected, .desk.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                wall.classList.add('selected');
+                selectedWall = wall;
+            });
+
+            wall.addEventListener('click', (e) => {
+                if (isPlanConfirmed) return;
+                if (e.detail === 2) { // Double click for deletion
+                    if (confirm('Are you sure you want to delete this wall?')) {
+                        if (selectedWall === wall) {
+                            selectedWall = null;
+                        }
+                        wall.remove();
+                        updateStatusBar();
+                    }
+                } else if (e.detail === 1) { // Single click for selection
+                    // Deselect all other elements
+                    document.querySelectorAll('.wall.selected, .plan.selected, .desk.selected').forEach(el => {
+                        if (el !== wall) {
+                            el.classList.remove('selected');
+                        }
+                    });
+                    wall.classList.add('selected');
+                    selectedWall = wall;
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!wall.contains(e.target) && !e.target.classList.contains('wall-resize-handle')) {
+                    wall.classList.remove('selected');
+                    if (selectedWall === wall) {
+                        selectedWall = null;
+                    }
+                }
+            });
+
+            wall.addEventListener('mousedown', (e) => {
+                if (isPlanConfirmed) return;
+                if (e.button === 2) { // Right click
+                    e.preventDefault();
+                    return;
+                }
+
+                const handle = e.target.closest('.wall-resize-handle');
+                if (handle) {
+                    isResizing = true;
+                    resizeHandle = handle;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = wall.offsetWidth;
+                    startHeight = wall.offsetHeight;
+                    startLeft = wall.offsetLeft;
+                    startTop = wall.offsetTop;
+                    return;
+                }
+
+                isDragging = true;
+                startX = e.clientX - wall.offsetLeft;
+                startY = e.clientY - wall.offsetTop;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isPlanConfirmed) return;
+                if (isResizing && resizeHandle) {
+                    e.preventDefault();
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+                    const plan = wall.parentElement;
+                    const planWidth = parseFloat(plan.style.width);
+                    const planHeight = parseFloat(plan.style.height);
+
+                    let newWidth = startWidth;
+                    let newHeight = startHeight;
+                    let newLeft = startLeft;
+                    let newTop = startTop;
+
+                    if (resizeHandle.classList.contains('top-left')) {
+                        newWidth = Math.max(20, startWidth - deltaX);
+                        newHeight = Math.max(20, startHeight - deltaY);
+                        newLeft = Math.max(0, startLeft + deltaX);
+                        newTop = Math.max(0, startTop + deltaY);
+                    } else if (resizeHandle.classList.contains('top-right')) {
+                        newWidth = Math.max(20, startWidth + deltaX);
+                        newHeight = Math.max(20, startHeight - deltaY);
+                        newTop = Math.max(0, startTop + deltaY);
+                    } else if (resizeHandle.classList.contains('bottom-left')) {
+                        newWidth = Math.max(20, startWidth - deltaX);
+                        newHeight = Math.max(20, startHeight + deltaY);
+                        newLeft = Math.max(0, startLeft + deltaX);
+                    } else if (resizeHandle.classList.contains('bottom-right')) {
+                        newWidth = Math.max(20, startWidth + deltaX);
+                        newHeight = Math.max(20, startHeight + deltaY);
+                    } else if (resizeHandle.classList.contains('top')) {
+                        newHeight = Math.max(20, startHeight - deltaY);
+                        newTop = Math.max(0, startTop + deltaY);
+                    } else if (resizeHandle.classList.contains('bottom')) {
+                        newHeight = Math.max(20, startHeight + deltaY);
+                    } else if (resizeHandle.classList.contains('left')) {
+                        newWidth = Math.max(20, startWidth - deltaX);
+                        newLeft = Math.max(0, startLeft + deltaX);
+                    } else if (resizeHandle.classList.contains('right')) {
+                        newWidth = Math.max(20, startWidth + deltaX);
+                    }
+
+                    // Ensure wall stays within plan bounds (allow touching edges)
+                    newWidth = Math.min(newWidth, planWidth - newLeft);
+                    newHeight = Math.min(newHeight, planHeight - newTop);
+
+                    // Snap to grid
+                    newWidth = Math.round(newWidth / GRID_SIZE) * GRID_SIZE;
+                    newHeight = Math.round(newHeight / GRID_SIZE) * GRID_SIZE;
+                    newLeft = Math.round(newLeft / GRID_SIZE) * GRID_SIZE;
+                    newTop = Math.round(newTop / GRID_SIZE) * GRID_SIZE;
+
+                    wall.style.width = `${newWidth}px`;
+                    wall.style.height = `${newHeight}px`;
+                    wall.style.left = `${newLeft}px`;
+                    wall.style.top = `${newTop}px`;
+                } else if (isDragging) {
+                    const plan = wall.parentElement;
+                    const planWidth = parseFloat(plan.style.width);
+                    const planHeight = parseFloat(plan.style.height);
+
+                    let newLeft = e.clientX - startX;
+                    let newTop = e.clientY - startY;
+
+                    // Ensure wall stays within plan bounds (allow touching edges)
+                    newLeft = Math.max(0, Math.min(newLeft, planWidth - wall.offsetWidth));
+                    newTop = Math.max(0, Math.min(newTop, planHeight - wall.offsetHeight));
+
+                    // Snap to grid
+                    newLeft = Math.round(newLeft / GRID_SIZE) * GRID_SIZE;
+                    newTop = Math.round(newTop / GRID_SIZE) * GRID_SIZE;
+
+                    wall.style.left = `${newLeft}px`;
+                    wall.style.top = `${newTop}px`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                isResizing = false;
+                resizeHandle = null;
+            });
+        }
+
+        function updateStatusBar() {
+            const width = parseFloat(currentPlan?.style.width) || 0;
+            const height = parseFloat(currentPlan?.style.height) || 0;
+            const deskCount = currentPlan?.querySelectorAll('.desk').length || 0;
+            const wallCount = currentPlan?.querySelectorAll('.wall').length || 0;
+            
+            document.getElementById('planDimensions').textContent = `Plan: ${Math.round(width)}x${Math.round(height)}`;
+            document.getElementById('deskCount').textContent = `Desks: ${deskCount}`;
+            document.getElementById('wallCount').textContent = `Walls: ${wallCount}`;
+        }
+
+        // Add window resize handler to maintain alignment
+        window.addEventListener('resize', () => {
+            const designContainer = document.getElementById('designContainer');
+            const statusBar = document.querySelector('.status-bar');
+            const isShifted = designContainer.classList.contains('shifted');
+            
+            if (isShifted) {
+                designContainer.style.width = 'calc(100% - 3rem - 3rem)';
+                statusBar.style.width = 'calc(100% - 3rem - 3rem)';
+            } else {
+                designContainer.style.width = 'calc(100% - 340px - 3rem)';
+                statusBar.style.width = 'calc(100% - 340px - 3rem)';
+            }
+        });
+
+        // Add mode state management
+        let currentMode = 'day'; // 'day' or 'week'
+        let selectedWeekDays = new Set();
+        let currentDate = new Date();
+        let deskReservations = new Map();
+        let dateDisplay = document.getElementById('currentDateDisplay');
+
+        // Function to format date for display
+        function formatDisplayDate(date) {
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Initialize mode toggle buttons
+        document.getElementById('dayModeButton').addEventListener('click', () => {
+            if (currentMode !== 'day') {
+                switchToDayMode();
+            }
+        });
+
+        document.getElementById('weekModeButton').addEventListener('click', () => {
+            if (currentMode !== 'week') {
+                switchToWeekMode();
+            }
+        });
+
+        function switchToDayMode() {
+            currentMode = 'day';
+            document.getElementById('dayModeButton').classList.add('active');
+            document.getElementById('weekModeButton').classList.remove('active');
+            document.getElementById('weekCalendar').style.display = 'none';
+            document.getElementById('modalTitle').textContent = 'Book Desk';
+            selectedWeekDays.clear();
+            
+            // Show date controls in day mode
+            document.querySelector('.date-controls').style.display = 'flex';
+            updateDateAndDesks();
+        }
+
+        function switchToWeekMode() {
+            currentMode = 'week';
+            document.getElementById('weekModeButton').classList.add('active');
+            document.getElementById('dayModeButton').classList.remove('active');
+            document.getElementById('modalTitle').textContent = 'Book Desk for Week';
+            
+            // Hide date controls in week mode
+            document.querySelector('.date-controls').style.display = 'none';
+            updateWeekCalendar();
+            updateDateAndDesks();
+        }
+
+        function updateWeekCalendar() {
+            const calendarGrid = document.querySelector('.calendar-grid');
+            calendarGrid.innerHTML = '';
+            
+            // Get today's date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Start from next Monday if today is not Monday
+            const startOfWeek = new Date(today);
+            const daysUntilMonday = (8 - startOfWeek.getDay()) % 7;
+            startOfWeek.setDate(startOfWeek.getDate() + daysUntilMonday);
+            
+            // Create two weeks of days
+            for (let week = 0; week < 2; week++) {
+                for (let day = 0; day < 5; day++) {
+                    const currentDay = new Date(startOfWeek);
+                    currentDay.setDate(startOfWeek.getDate() + (week * 7) + day);
+                    
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day';
+                    const weekday = currentDay.toLocaleDateString('en-US', { weekday: 'short' });
+                    const date = currentDay.toLocaleDateString('en-US', { day: 'numeric' });
+                    dayElement.setAttribute('data-weekday', weekday);
+                    dayElement.setAttribute('data-date', date);
+                    
+                    // Check if this day is already selected
+                    const dateString = currentDay.toISOString().split('T')[0];
+                    if (selectedWeekDays.has(dateString)) {
+                        dayElement.classList.add('selected');
+                    }
+                    
+                    // Disable past dates
+                    if (currentDay < today) {
+                        dayElement.classList.add('disabled');
+                    } else {
+                        dayElement.addEventListener('click', () => {
+                            if (!dayElement.classList.contains('disabled')) {
+                                dayElement.classList.toggle('selected');
+                                if (dayElement.classList.contains('selected')) {
+                                    selectedWeekDays.add(dateString);
+                                } else {
+                                    selectedWeekDays.delete(dateString);
+                                }
+                            }
+                        });
+                    }
+                    
+                    calendarGrid.appendChild(dayElement);
+                }
+            }
+        }
+
+        // Update the booking confirmation handler
+        document.getElementById('confirmBookingButton').addEventListener('click', () => {
+            const modal = document.getElementById('bookingModal');
+            const deskId = modal.dataset.deskId;
+            const desk = document.getElementById(deskId);
+            
+            if (!desk) {
+                modal.classList.remove('active');
+                return;
+            }
+
+            const employeeName = document.getElementById('employeeName').value.trim();
+            const duration = document.getElementById('bookingDuration').value;
+
+            if (!employeeName) {
+                alert('Please enter employee name');
+                return;
+            }
+
+            if (currentMode === 'week' && selectedWeekDays.size === 0) {
+                alert('Please select at least one day');
+                return;
+            }
+
+            const datesToBook = currentMode === 'day' 
+                ? [currentDate.toISOString().split('T')[0]]
+                : Array.from(selectedWeekDays);
+
+            // Store the reservations
+            const reservations = deskReservations.get(deskId) || [];
+            datesToBook.forEach(date => {
+                // Remove any existing reservation for this date
+                const existingIndex = reservations.findIndex(res => res.date === date);
+                if (existingIndex !== -1) {
+                    reservations.splice(existingIndex, 1);
+                }
+                
+                // Add new reservation
+                reservations.push({
+                    date,
+                    employeeName,
+                    duration
+                });
+            });
+            deskReservations.set(deskId, reservations);
+
+            // Update desk status
+            if (currentMode === 'day') {
+                desk.classList.remove('available');
+                desk.classList.add('reserved');
+                desk.dataset.status = 'reserved';
+                
+                // Update booking info
+                const bookingInfo = desk.querySelector('.desk-booking-info');
+                const durationText = duration === '8' ? 'Full day' : 'Half day';
+                bookingInfo.textContent = `${employeeName} - ${durationText}`;
+            } else {
+                // In week mode, update the display to show the first booking
+                const firstDate = datesToBook[0];
+                const bookingInfo = desk.querySelector('.desk-booking-info');
+                const durationText = duration === '8' ? 'Full day' : 'Half day';
+                bookingInfo.textContent = `${employeeName} - ${durationText}`;
+            }
+            
+            // Store booking details
+            desk.dataset.employeeName = employeeName;
+            desk.dataset.duration = duration;
+
+            // Remove selection and close modal
+            desk.classList.remove('selected');
+            modal.classList.remove('active');
+            selectedWeekDays.clear();
+            updateDateAndDesks();
+        });
+
+        // Add event listener for desk click in week mode
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('desk') && isPlanConfirmed && !isDragging) {
+                const desk = e.target;
+                const modal = document.getElementById('bookingModal');
+                
+                // Deselect all other elements
+                document.querySelectorAll('.wall.selected, .plan.selected, .desk.selected').forEach(el => {
+                    if (el !== desk) {
+                        el.classList.remove('selected');
+                    }
+                });
+                desk.classList.add('selected');
+                
+                // Show booking modal
+                modal.classList.add('active');
+                modal.dataset.deskId = desk.id;
+                
+                // Show/hide week calendar based on mode
+                document.getElementById('weekCalendar').style.display = currentMode === 'week' ? 'block' : 'none';
+                
+                // If desk is already reserved, pre-fill the form
+                if (desk.dataset.status === 'reserved') {
+                    document.getElementById('employeeName').value = desk.dataset.employeeName || '';
+                    document.getElementById('bookingDuration').value = desk.dataset.duration || '4';
+                } else {
+                    // Reset form fields for new booking
+                    document.getElementById('employeeName').value = '';
+                    document.getElementById('bookingDuration').value = '4';
+                }
+                
+                if (currentMode === 'week') {
+                    updateWeekCalendar();
+                }
+            }
+        });
+
+        // Update the date navigation to handle week mode
+        function updateDateAndDesks() {
+            // Update date display based on mode
+            if (currentMode === 'day') {
+                dateDisplay.textContent = formatDisplayDate(currentDate);
+                
+                // Update button states for day mode
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                prevDateButton.disabled = currentDate <= today;
+                
+                const isFriday = today.getDay() === 5;
+                let maxDate;
+                
+                if (isFriday) {
+                    const nextMonday = new Date(today);
+                    nextMonday.setDate(today.getDate() + 3);
+                    const nextFriday = new Date(nextMonday);
+                    nextFriday.setDate(nextMonday.getDate() + 4);
+                    maxDate = nextFriday;
+                } else {
+                    maxDate = new Date(today);
+                    maxDate.setDate(today.getDate() + 14);
+                }
+                
+                nextDateButton.disabled = currentDate >= maxDate;
+            } else {
+                // Week mode: show week range
+                const startOfWeek = new Date(currentDate);
+                startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+                dateDisplay.textContent = `Week of ${formatDisplayDate(startOfWeek)}`;
+            }
+            
+            // Update desk statuses
+            const desks = document.querySelectorAll('.desk');
+            desks.forEach(desk => {
+                const deskId = desk.id;
+                const reservations = deskReservations.get(deskId) || [];
+                
+                if (currentMode === 'day') {
+                    // Day mode: check reservation for current date
+                    const isReserved = reservations.some(res => {
+                        const resDate = new Date(res.date);
+                        return resDate.toDateString() === currentDate.toDateString();
+                    });
+                    
+                    updateDeskStatus(desk, isReserved, reservations);
+                } else {
+                    // Week mode: check reservations for any day in the current week
+                    const startOfWeek = new Date(currentDate);
+                    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 4);
+                    
+                    const isReserved = reservations.some(res => {
+                        const resDate = new Date(res.date);
+                        return resDate >= startOfWeek && resDate <= endOfWeek;
+                    });
+                    
+                    updateDeskStatus(desk, isReserved, reservations);
+                }
+            });
+        }
+
+        function updateDeskStatus(desk, isReserved, reservations) {
+            if (isReserved) {
+                desk.classList.remove('available');
+                desk.classList.add('reserved');
+                desk.dataset.status = 'reserved';
+                const bookingInfo = desk.querySelector('.desk-booking-info');
+                const reservation = reservations.find(res => 
+                    new Date(res.date).toDateString() === currentDate.toDateString()
+                );
+                if (reservation) {
+                    const durationText = reservation.duration === '8' ? 'Full day' : 'Half day';
+                    bookingInfo.textContent = `${reservation.employeeName} - ${durationText}`;
+                }
+            } else {
+                desk.classList.remove('reserved');
+                desk.classList.add('available');
+                desk.dataset.status = 'available';
+                const bookingInfo = desk.querySelector('.desk-booking-info');
+                bookingInfo.textContent = 'Available';
+            }
+        }
+
+        // Initialize the mode and date controls
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial mode to day
+            currentMode = 'day';
+            document.getElementById('dayModeButton').classList.add('active');
+            document.querySelector('.date-controls').style.display = 'flex';
+            document.getElementById('weekCalendar').style.display = 'none';
+            
+            // Rest of your initialization code...
+        });
+    </script>
+</body>
+</html> 

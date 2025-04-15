@@ -10,14 +10,13 @@ import { HttpClientModule } from '@angular/common/http';
 import { HomeComponent } from './home/home.component';
 import { ForgetpasswordComponent } from './forgetpassword/forgetpassword.component';
 import { TeletravailComponent } from './teletravail/teletravail.component';
-import { ReservationComponent } from './reservation/reservation.component';
 import { CommonModule } from '@angular/common';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { PlanningComponent } from './planning/planning.component';
 import { AuthService } from './login/AuthService';
 import { AuthGuard } from './login/AuthGuard';
-
+import { ReservationComponent } from './reservation/reservation.component';
 
 @NgModule({
   declarations: [
@@ -27,9 +26,9 @@ import { AuthGuard } from './login/AuthGuard';
     HomeComponent,
     ForgetpasswordComponent,
     TeletravailComponent,
-    ReservationComponent,
     ResetPasswordComponent,
     PlanningComponent,
+    ReservationComponent
   ],
   imports: [
     BrowserModule,
@@ -39,10 +38,9 @@ import { AuthGuard } from './login/AuthGuard';
     ReactiveFormsModule,
     HttpClientModule,
     CommonModule,
-    BrowserAnimationsModule,
-    
-    ],
-    providers: [AuthService, AuthGuard],
-      bootstrap: [AppComponent]
+    BrowserAnimationsModule
+  ],
+  providers: [AuthService, AuthGuard],
+  bootstrap: [AppComponent]
 })
 export class AppModule { }

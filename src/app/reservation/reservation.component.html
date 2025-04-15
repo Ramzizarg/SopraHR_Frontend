@@ -1,77 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Réservation de Poste de Travail</title>
-  <meta name="description" content="Réservation de poste de travail chez Sopra HR">
-  <meta name="keywords" content="Poste de travail, Réservation, Sopra HR">
-
-  <!-- Favicons -->
-  <link href="../../assets/img/Sopra.png" rel="icon">
-  <link href="../../assets/img/apple-touch-icon.png" rel="apple-touch-icon">
-
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-
-</head>
-
-<body class="reservation-page">
-
-<!-- Header -->
-<header id="header" class="header d-flex align-items-center sticky-top">
-  <div class="container position-relative d-flex align-items-center">
-    <a href="/home" class="logo d-flex align-items-center me-auto">
-      <img src="assets/img/Sopra_Steria_logo.svg.png" alt="Company Logo" style="transform: scale(1.5); max-width: 150px; height: auto;">
-    </a>
-
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="/home">Page d'accueil</a></li>
-        <li><a href="/teletravail">Télétravail</a></li>
-        <li><a href="/reservation" class="active">Réservations de Postes</a></li>
-        <li><a href="/planning">Planning</a></li>
-        <li><a href="/contact">Déconnexion</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-
-    <div class="header-notification">
-      <a href="#" class="notification">
-        <i class="bi bi-bell"></i>
-        <span class="badge">3</span>
-      </a>
-    </div>
+<div class="app-container">
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading...</span>
   </div>
-</header>
 
-<!-- Main Content -->
-<main class="main-content">
-  <div class="sidebar">
-    <div class="title">Plan Work</div>
+  <!-- Sidebar -->
+  <div class="sidebar" [class.hidden]="!isSidebarVisible">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <i class="fas fa-desk"></i>
+        Desk Booking
+      </div>
+      <button id="closeSidebarButton" class="secondary-button" (click)="toggleSidebar()" 
+              aria-label="Close sidebar" title="Close sidebar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
     <div class="button-container">
-      <button id="createPlanButton" (click)="createPlan()">Create New Plan</button>
-      <button id="createWallButton" (click)="currentPlan && createWall(currentPlan, 10, 35)" [disabled]="!currentPlan || isPlanConfirmed">Create Wall</button>
-      <button id="deletePlanButton" (click)="deletePlan()" [disabled]="!currentPlan">Delete Plan</button>
-      <button id="confirmDesignButton" (click)="confirmDesign()" [disabled]="!currentPlan || isPlanConfirmed">Confirm Design</button>
-      <button id="modifyButton" (click)="modifyDesign()" [disabled]="!currentPlan || !isPlanConfirmed">Modify</button>
-      <button id="closeSidebarButton" (click)="toggleSidebar(false)">Close Sidebar</button>
+      <button id="createPlanButton" class="primary-button" (click)="createPlan()" [disabled]="plans.length >= 1"
+              aria-label="Create new plan" title="Create new plan">
+        <i class="fas fa-plus"></i>
+        Create New Plan
+      </button>
+      <button id="createWallButton" class="secondary-button" (click)="createWall()" [disabled]="!currentPlan || isPlanConfirmed"
+              aria-label="Create wall" title="Create wall">
+        <i class="fa-wall"></i>
+        Create Wall
+      </button>
+      <button id="deletePlanButton" class="danger-button" (click)="deletePlan()" [disabled]="!currentPlan"
+              aria-label="Delete plan" title="Delete plan">
+        <i class="fas fa-trash"></i>
+        Delete Plan
+      </button>
+      <button id="confirmDesignButton" class="success-button" (click)="confirmDesign()" [disabled]="!currentPlan || isPlanConfirmed"
+              aria-label="Confirm design" title="Confirm design">
+        <i class="fas fa-check"></i>
+        Confirm Design
+      </button>
+      <button id="modifyButton" class="warning-button" (click)="modifyDesign()" [disabled]="!currentPlan || !isPlanConfirmed"
+              aria-label="Modify design" title="Modify design">
+        <i class="fas fa-edit"></i>
+        Modify
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="help-text">
+        <i class="fas fa-info-circle"></i>
+        <span>Tip: Double-click on a desk to rotate it</span>
+      </div>
     </div>
   </div>
 
-  <button id="openSidebarButton" (click)="toggleSidebar(true)">
-    <span class="hamburger-icon">&#9776;</span>
+  <!-- Open Sidebar Button -->
+  <button id="openSidebarButton" class="primary-button" *ngIf="!isSidebarVisible" (click)="toggleSidebar()"
+          aria-label="Open sidebar" title="Open sidebar">
+    <i class="fas fa-bars"></i>
   </button>
 
-  <div id="designContainer" #designContainer></div>
-  <div id="statusBar">Plan: 0x0 | Desks: 0 | Walls: 0</div>
-</main>
+  <!-- Main Content -->
+  <div class="main-content-wrapper">
+    <div id="designContainer" #designContainer [class.shifted]="!isSidebarVisible">
+      <div *ngIf="!currentPlan" class="empty-state">
+        <i class="fas fa-drafting-compass"></i>
+        <h3>No Plan Created</h3>
+        <p>Click "Create New Plan" to start designing your workspace</p>
+      </div>
+      <div *ngFor="let plan of plans" class="plan"
+           [ngStyle]="{'left.px': plan.left, 'top.px': plan.top, 'width.px': plan.width, 'height.px': plan.height}"
+           [class.selected]="plan === selectedPlan"
+           [class.confirmed]="isPlanConfirmed"
+           (click)="selectPlan(plan, $event)"
+           (contextmenu)="createDeskAtPosition($event, plan)"
+           (mousedown)="startPlanDragging($event, plan)">
+        <!-- Plan Resize Handles -->
+        <div *ngFor="let handle of resizeHandles" class="plan-resize-handle {{handle}}"
+             (mousedown)="startPlanResizing($event, plan, handle)">
+        </div>
+        <!-- Desks -->
+        <div *ngFor="let desk of plan.desks" class="desk"
+             [ngStyle]="{'left.px': desk.left, 'top.px': desk.top, 'transform': 'rotate(' + desk.rotation + 'deg)'}"
+             [class.selected]="desk === selectedDesk"
+             (click)="selectDesk(desk, $event)"
+             (mousedown)="!isPlanConfirmed && startDeskDragging($event, desk)"
+             (dblclick)="!isPlanConfirmed && rotateDesk(desk)"
+             (contextmenu)="!isPlanConfirmed && onDeskContextMenu($event, desk)">
+        </div>
+        <!-- Walls -->
+        <div *ngFor="let wall of plan.walls" class="wall"
+             [ngStyle]="{'left.px': wall.left, 'top.px': wall.top, 'width.px': wall.width, 'height.px': wall.height}"
+             [class.selected]="wall === selectedWall"
+             (contextmenu)="!isPlanConfirmed && onWallContextMenu($event, wall)"
+             (mousedown)="!isPlanConfirmed && startWallDragging($event, wall)">
+          <div *ngFor="let handle of resizeHandles" class="wall-resize-handle {{handle}}"
+               (mousedown)="!isPlanConfirmed && startWallResizing($event, wall, handle)">
+          </div>
+        </div>
+      </div>
+    </div>
 
-<!-- Scroll Top -->
-<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-</body>
-</html>
+    <!-- Status Bar -->
+    <div class="status-bar" #statusBar [class.shifted]="!isSidebarVisible">
+      <div class="status-item">
+        <div class="status-indicator available"></div>
+        <span>Available</span>
+      </div>
+      <div class="status-item">
+        <div class="status-indicator reserved"></div>
+        <span>Reserved</span>
+      </div>
+      <div class="status-item">
+        <i class="fas fa-ruler"></i>
+        <span id="planDimensions">Plan: {{currentPlan ? (currentPlan.width + 'x' + currentPlan.height) : '0x0'}}</span>
+      </div>
+      <div class="status-item">
+        <i class="fas fa-chair"></i>
+        <span id="deskCount">Desks: {{currentPlan ? currentPlan.desks.length : 0}}</span>
+      </div>
+      <div class="status-item">
+        <i class="fas fa-wall"></i>
+        <span id="wallCount">Walls: {{currentPlan ? currentPlan.walls.length : 0}}</span>
+      </div>
+    </div>
+  </div>
+</div>
