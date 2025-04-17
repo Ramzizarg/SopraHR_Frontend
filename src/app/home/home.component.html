@@ -39,7 +39,7 @@
           <li><a href="/reservation">Réservations de Postes</a></li>
           <li><a href="portfolio.html">Planning</a></li>
           <li>
-            <button class="btn btn-logout" (click)="logout()">Déconnexion</button>
+            <button class="btn btn-logout" (click)="logout()"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
           </li>        </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -87,38 +87,52 @@
 
 
     <!-- About Section -->
-    <section id="about" class="about section">
-
+    <section class="about">
       <div class="container">
-
-        <div class="row position-relative">
-
-          <div class="col-lg-7 about-img" data-aos="zoom-out" data-aos-delay="200"><img src="../../assets/img/about.jpg"></div>
-
-          <div class="col-lg-7" data-aos="fade-up" data-aos-delay="100">
+        <div class="row align-items-center">
+          <div class="col-lg-6">
+            <div class="about-img">
+              <img src="assets/img/about.jpg" alt="About Us" class="img-fluid">
+            </div>
+          </div>
+          <div class="col-lg-6">
             <div class="our-story">
-              <h4>Est 2009</h4>
-              <h3> Cultiver l’excellence et l’innovation</h3>
-              <p>Chez Sopra HR, nous croyons que nos collaborateurs sont la clé de notre réussite. Nous nous engageons à créer une culture d’innovation, de collaboration et de développement continu. En offrant un environnement de travail dynamique et bienveillant, nous permettons à chacun d’atteindre son plein potentiel. </p>
+              <h4>Notre Histoire</h4>
+              <h3>Une Entreprise Innovante au Service de l'Emploi</h3>
+              <p>Nous sommes une entreprise spécialisée dans le recrutement et le placement de personnel qualifié. Notre mission est de connecter les talents aux opportunités qui correspondent à leurs compétences et aspirations.</p>
               <ul>
-                <li><i class="bi bi-check-circle"></i> <span>Évolution et apprentissage</span></li>
-                <li><i class="bi bi-check-circle"></i> <span>Innovation et impact</span></li>
-                <li><i class="bi bi-check-circle"></i> <span>Équilibre vie pro / vie perso</span></li>
+                <li><i class="bi bi-check-circle-fill"></i> Expertise dans le recrutement de profils techniques</li>
+                <li><i class="bi bi-check-circle-fill"></i> Accompagnement personnalisé des candidats</li>
+                <li><i class="bi bi-check-circle-fill"></i> Partenariats avec des entreprises leaders</li>
+                <li><i class="bi bi-check-circle-fill"></i> Processus de recrutement transparent et efficace</li>
               </ul>
-              <p>Grâce à des programmes de formation, des technologies de pointe et un esprit d’équipe fort, nous veillons à ce que chaque employé se sente valorisé et motivé. Ensemble, nous façonnons l’avenir des solutions RH et avons un impact réel sur les entreprises et les personnes à travers le monde.</p>
-
-              <div class="watch-video d-flex align-items-center position-relative">
-                <i class="bi bi-play-circle"></i>
-                <a href="https://www.youtube.com/watch?v=kQzx_pa98-E" class="glightbox stretched-link">Watch Video</a>
+              <div class="watch-video">
+                <a href="#" data-bs-toggle="modal" data-bs-target="#videoModal">
+                  <i class="bi bi-play-circle-fill"></i> Regarder notre vidéo de présentation
+                </a>
               </div>
             </div>
           </div>
-
         </div>
-
       </div>
+    </section>
 
-    </section><!-- /About Section -->
+    <!-- Video Modal -->
+    <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="videoModalLabel">Notre Présentation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="ratio ratio-16x9">
+              <iframe src="https://www.youtube.com/embed/your-video-id" title="YouTube video" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Services Section -->
     <section id="services" class="services section light-background">
@@ -299,7 +313,7 @@
             <li><a href="/home" class="active">Page d'accueil</a></li>
             <li><a href="/teletravail">Télétravail</a></li>
             <li><a href="/reservation">Réservations de Postes</a></li>
-            <li><a href="portfolio.html">Planning</a></li>
+            <li><a href="/planning">Planning</a></li>
             <li><a href="contact.html">Contact</a></li>
           </ul>
         </div>

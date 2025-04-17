@@ -17,7 +17,7 @@ import { PlanningComponent } from './planning/planning.component';
 import { AuthService } from './login/AuthService';
 import { AuthGuard } from './login/AuthGuard';
 import { ReservationComponent } from './reservation/reservation.component';
-
+5 
 @NgModule({
   declarations: [
     AppComponent,
@@ -28,7 +28,8 @@ import { ReservationComponent } from './reservation/reservation.component';
     TeletravailComponent,
     ResetPasswordComponent,
     PlanningComponent,
-    ReservationComponent
+    ReservationComponent,
+    PlanningComponent
   ],
   imports: [
     BrowserModule,

@@ -498,14 +498,11 @@ button:hover:not(:disabled) i {
   position: absolute;
   width: 0.75rem;
   height: 0.75rem;
-  background: #22c55e;
   border-radius: 50%;
-  box-shadow: 
-    0 0 0 0.125rem white,
-    0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 0.125rem white;
   z-index: 2;
   transform: translateX(0.75rem);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
 
 .desk::after {
@@ -539,7 +536,7 @@ button:hover:not(:disabled) i {
 }
 
 .desk.reserved {
-  border-color: #ef4444;
+  border-color: var(--danger-color);
   background: linear-gradient(135deg, #fee2e2, #fecaca);
   cursor: not-allowed;
 }
@@ -595,7 +592,7 @@ button:hover:not(:disabled) i {
 }
 
 .desk.reserved .desk-booking-info {
-  border-color: #ef4444;
+  border-color: var(--danger-color);
   background: #fee2e2;
   color: #991b1b;
 }
@@ -738,6 +735,14 @@ button:hover:not(:disabled) i {
   margin-left: 4.5rem;
 }
 
+/* Add a new container for the right-side elements */
+.status-bar-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 0.5rem;
+}
+
 .status-item {
   display: flex;
   align-items: center;
@@ -823,62 +828,13 @@ button:hover:not(:disabled) i {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: auto;
+  margin-left: 0;
   padding: 0.5rem;
   background: var(--background-color);
   border-radius: 0.75rem;
   border: 1px solid var(--border-color);
   min-width: fit-content;
   flex-shrink: 0;
-}
-
-.mode-toggle {
-  display: flex;
-  gap: 0.25rem;
-  margin-right: 0.5rem;
-  flex-shrink: 0;
-}
-
-.mode-button {
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  background: var(--card-background);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.mode-button.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-  box-shadow: var(--shadow-sm);
-}
-
-.mode-button:hover:not(.active) {
-  background: var(--border-color);
-  transform: translateY(-1px);
-}
-
-.mode-button i {
-  font-size: 0.875rem;
-}
-
-.date-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.25rem;
-  background: var(--card-background);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
 }
 
 .date-nav-button {
@@ -915,11 +871,14 @@ button:hover:not(:disabled) i {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
-  min-width: 100px;
+  min-width: 120px;
   text-align: center;
   padding: 0 0.5rem;
   white-space: nowrap;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Responsive adjustments */
@@ -1092,4 +1051,342 @@ button:hover:not(:disabled) i {
   background: currentColor;
   border-radius: 0.25rem;
   transform: rotate(-45deg);
+}
+
+/* Booking Dialog */
+.booking-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.booking-dialog-content {
+  background: var(--card-background);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 400px;
+  padding: 1.5rem;
+}
+
+.booking-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.booking-dialog-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.booking-dialog-body {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--card-background);
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.booking-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Desk Status Indicators */
+.desk::before {
+  content: '';
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.125rem white;
+  z-index: 2;
+  transform: translateX(0.75rem);
+  transition: all 0.3s ease;
+}
+
+.desk.available::before {
+  background: var(--success-color);
+}
+
+.desk.reserved::before {
+  background: var(--danger-color);
+}
+
+.desk-booking-info {
+  position: absolute;
+  top: -2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-background);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  display: none;
+  border: 1px solid var(--border-color);
+  z-index: 2;
+  color: var(--text-primary);
+}
+
+.desk:hover .desk-booking-info {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+.desk.reserved .desk-booking-info {
+  border-color: var(--danger-color);
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.view-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0;
+  margin-right: 0.5rem;
+  background: var(--background-color);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.view-mode-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.view-mode-button:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.view-mode-button.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.view-mode-button i {
+  font-size: 1rem;
+}
+
+/* Removing week navigation styles */
+.booking-week-days {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.booking-day-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 60px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.booking-day-button:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+}
+
+.booking-day-button.selected {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.booking-day-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: pre-line;
+  text-align: center;
+  line-height: 1.4;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.booking-day-name::first-line {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.booking-day-button.selected .booking-day-name::first-line {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.booking-day-button.today {
+  border-color: #10b981;
+  background: #f0fdf4;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.booking-day-button.today::before {
+  content: 'Today';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.booking-day-button.selected.today {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.booking-day-button.selected.today::before {
+  background: #3b82f6;
+}
+
+.booking-day-button.past {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.booking-day-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.booking-day-status {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75rem;
+}
+
+.booking-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.booking-hint i {
+  color: #3b82f6;
+  font-size: 0.875rem;
+}
+
+/* Week separator with gradient */
+.booking-week-days::after {
+  content: '';
+  grid-column: 1 / -1;
+  height: 2px;
+  background: linear-gradient(to right, 
+    transparent 0%, 
+    #e2e8f0 20%, 
+    #e2e8f0 80%, 
+    transparent 100%
+  );
+  margin: 1rem 0;
+  opacity: 0.5;
+}
+
+/* Add subtle hover effect to the container */
+.booking-week-days:hover {
+  box-shadow: 0 6px 12px -1px rgba(0, 0, 0, 0.1), 0 3px 6px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Add animation for selection */
+@keyframes selectPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.booking-day-button.selected {
+  animation: selectPulse 0.3s ease-in-out;
 }

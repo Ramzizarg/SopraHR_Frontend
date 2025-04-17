@@ -1,4 +1,4 @@
-<div class="app-container">
+<!DOCTYPE html>
   <!-- Loading Overlay -->
   <div class="loading-overlay" *ngIf="isLoading">
     <div class="loading-spinner"></div>
@@ -81,10 +81,20 @@
         <div *ngFor="let desk of plan.desks" class="desk"
              [ngStyle]="{'left.px': desk.left, 'top.px': desk.top, 'transform': 'rotate(' + desk.rotation + 'deg)'}"
              [class.selected]="desk === selectedDesk"
+             [class.available]="desk.status === 'available'"
+             [class.reserved]="desk.status === 'reserved'"
              (click)="selectDesk(desk, $event)"
              (mousedown)="!isPlanConfirmed && startDeskDragging($event, desk)"
              (dblclick)="!isPlanConfirmed && rotateDesk(desk)"
              (contextmenu)="!isPlanConfirmed && onDeskContextMenu($event, desk)">
+          <div class="desk-booking-info" *ngIf="isPlanConfirmed">
+            <ng-container *ngIf="desk.status === 'available'">
+              Available
+            </ng-container>
+            <ng-container *ngIf="desk.status === 'reserved'">
+              {{ desk.employeeName }} - {{ desk.duration === '8' ? 'Full day' : 'Half day' }}
+            </ng-container>
+          </div>
         </div>
         <!-- Walls -->
         <div *ngFor="let wall of plan.walls" class="wall"
@@ -121,6 +131,79 @@
         <i class="fas fa-wall"></i>
         <span id="wallCount">Walls: {{currentPlan ? currentPlan.walls.length : 0}}</span>
       </div>
+      <div class="status-bar-right">
+        <div class="view-mode-toggle">
+          <button class="view-mode-button" [class.active]="viewMode === 'day'" (click)="toggleViewMode()">
+            <i class="fas fa-calendar-day"></i>
+            Day
+          </button>
+          <button class="view-mode-button" [class.active]="viewMode === 'week'" (click)="toggleViewMode()">
+            <i class="fas fa-calendar-week"></i>
+            Week
+          </button>
+        </div>
+        <div class="date-navigation" *ngIf="viewMode === 'day'">
+          <button class="date-nav-button" (click)="previousDate()" [disabled]="!canGoToPreviousDate()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <span class="date-display">{{formatDate(currentDate)}}</span>
+          <button class="date-nav-button" (click)="nextDate()" [disabled]="!canGoToNextDate()">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
+
+  <!-- Booking Dialog -->
+  <div class="booking-dialog" *ngIf="showBookingDialog">
+    <div class="booking-dialog-content">
+      <div class="booking-dialog-header">
+        <h3>Book Desk</h3>
+        <button class="close-button" (click)="closeBookingDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="booking-dialog-body">
+        <div class="form-group">
+          <label for="employeeName">Employee Name</label>
+          <input type="text" id="employeeName" [(ngModel)]="employeeName" placeholder="Enter employee name">
+        </div>
+        <div class="form-group">
+          <label for="bookingDuration">Duration</label>
+          <select id="bookingDuration" [(ngModel)]="bookingDuration">
+            <option value="4">Half Day</option>
+            <option value="8">Full Day</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="viewMode === 'week'">
+          <label>Select Dates</label>
+          <div class="booking-week-days">
+            <button *ngFor="let date of bookingWeekDates" 
+                    class="booking-day-button"
+                    [class.selected]="isSelectedBookingDate(date)"
+                    [class.today]="isToday(date)"
+                    [class.past]="isPastDate(date)"
+                    [disabled]="isPastDate(date)"
+                    (click)="toggleBookingDate(date)">
+              <span class="booking-day-name">{{formatDate(date)}}</span>
+              <span class="booking-day-status" *ngIf="isSelectedBookingDate(date)">
+                <i class="fas fa-check"></i>
+              </span>
+            </button>
+          </div>
+          <div class="booking-hint">
+            <i class="fas fa-info-circle"></i>
+            <span>Click to select multiple days for booking</span>
+          </div>
+        </div>
+      </div>
+      <div class="booking-dialog-footer">
+        <button class="secondary-button" (click)="closeBookingDialog()">Cancel</button>
+        <button class="primary-button" (click)="confirmBooking()" [disabled]="!employeeName.trim()">
+          {{ selectedDeskForBooking?.status === 'reserved' ? 'Update' : 'Book' }}
+        </button>
+      </div>
+    </div>
+  </div>
+

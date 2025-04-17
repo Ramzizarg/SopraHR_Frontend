@@ -9,6 +9,10 @@ export interface Desk {
   top: number;
   rotation: number;
   moving?: boolean;
+  status?: 'available' | 'reserved';
+  employeeName?: string;
+  duration?: '4' | '8'; // 4 for half day, 8 for full day
+  bookingDate?: string;
 }
 
 export interface Wall {
@@ -79,10 +83,37 @@ export class ReservationComponent implements OnInit {
   private resizeHandle: string = '';
   private activePlan: Plan | null = null;
 
+  public showBookingDialog = false;
+  public selectedDeskForBooking: Desk | null = null;
+  public employeeName = '';
+  public bookingDuration: '4' | '8' = '4';
+  public currentDate = '';
+
+  private readonly MAX_FUTURE_DAYS = 14; // Maximum two weeks in the future
+  private readonly MAX_PAST_DAYS = 0;    // No past days allowed
+
+  public viewMode: 'week' | 'day' = 'day';
+  public weekDates: string[] = [];
+  public selectedWeekDates: Set<string> = new Set();
+  public selectedBookingDates: Set<string> = new Set();
+  public bookingWeekDates: string[] = [];
+
   ngOnInit(): void {
     this.setupKeyboardListeners();
     this.syncContainerWidths();
     this.setupDocumentClickHandler();
+    // Set initial date to today or next business day if today is weekend
+    const today = new Date();
+    let initialDate = new Date(today);
+    if (this.isWeekend(today)) {
+      initialDate = this.getNextBusinessDay(today);
+    }
+    const year = initialDate.getFullYear();
+    const month = String(initialDate.getMonth() + 1).padStart(2, '0');
+    const day = String(initialDate.getDate()).padStart(2, '0');
+    this.currentDate = `${year}-${month}-${day}`;
+    this.selectedWeekDates.add(this.currentDate);
+    this.updateWeekDates();
   }
 
   private syncContainerWidths(): void {
@@ -168,13 +199,13 @@ export class ReservationComponent implements OnInit {
 
   public confirmDesign(): void {
     if (!this.currentPlan) return;
-    this.isPlanConfirmed = true;
+      this.isPlanConfirmed = true;
     this.clearSelections();
   }
 
   public modifyDesign(): void {
     if (!this.currentPlan) return;
-    this.isPlanConfirmed = false;
+      this.isPlanConfirmed = false;
     this.clearSelections();
   }
 
@@ -185,16 +216,31 @@ export class ReservationComponent implements OnInit {
       id: Date.now(),
       left: newX,
       top: newY,
-      rotation: 0
+      rotation: 0,
+      status: 'available'
     };
     plan.desks.push(desk);
   }
 
   public selectDesk(desk: Desk, event: MouseEvent): void {
-    if (this.isPlanConfirmed) return;
-    event.stopPropagation();
-    this.clearSelections();
-    this.selectedDesk = desk;
+    if (this.isPlanConfirmed) {
+      this.selectedDeskForBooking = desk;
+      this.showBookingDialog = true;
+      this.selectedBookingDates.clear();
+      this.selectedBookingDates.add(this.currentDate);
+      this.updateBookingWeekDates();
+      if (desk.status === 'reserved') {
+        this.employeeName = desk.employeeName || '';
+        this.bookingDuration = desk.duration || '4';
+      } else {
+        this.employeeName = '';
+        this.bookingDuration = '4';
+      }
+    } else {
+      event.stopPropagation();
+      this.clearSelections();
+      this.selectedDesk = desk;
+    }
   }
 
   public rotateDesk(desk: Desk): void {
@@ -226,7 +272,7 @@ export class ReservationComponent implements OnInit {
   }
 
   public selectWall(wall: Wall, event: MouseEvent): void {
-    if (this.isPlanConfirmed) return;
+      if (this.isPlanConfirmed) return;
     event.preventDefault();
     event.stopPropagation();
     this.clearSelections();
@@ -789,6 +835,293 @@ export class ReservationComponent implements OnInit {
         }
       }
     }
+  }
+
+  public confirmBooking(): void {
+    if (!this.selectedDeskForBooking || !this.employeeName.trim() || this.selectedBookingDates.size === 0) {
+      return;
+    }
+
+    // Create bookings for all selected dates
+    this.selectedBookingDates.forEach(date => {
+      const booking: Desk = {
+        ...this.selectedDeskForBooking!,
+        status: 'reserved',
+        employeeName: this.employeeName.trim(),
+        duration: this.bookingDuration,
+        bookingDate: date
+      };
+      
+      // Update the desk status for this date
+      if (this.currentPlan) {
+        const deskIndex = this.currentPlan.desks.findIndex(d => d.id === booking.id);
+        if (deskIndex !== -1) {
+          this.currentPlan.desks[deskIndex] = booking;
+        }
+      }
+    });
+
+    this.showBookingDialog = false;
+    this.selectedDeskForBooking = null;
+    this.employeeName = '';
+    this.bookingDuration = '4';
+    this.selectedBookingDates.clear();
+  }
+
+  public cancelBooking(): void {
+    if (!this.selectedDeskForBooking) {
+      return;
+    }
+
+    if (this.selectedDeskForBooking.status === 'reserved') {
+      this.selectedDeskForBooking.status = 'available';
+      this.selectedDeskForBooking.employeeName = undefined;
+      this.selectedDeskForBooking.duration = undefined;
+      this.selectedDeskForBooking.bookingDate = undefined;
+    }
+
+    this.showBookingDialog = false;
+    this.selectedDeskForBooking = null;
+    this.employeeName = '';
+    this.bookingDuration = '4';
+  }
+
+  public closeBookingDialog(): void {
+    this.showBookingDialog = false;
+    this.selectedDeskForBooking = null;
+    this.employeeName = '';
+    this.bookingDuration = '4';
+  }
+
+  public formatDate(date: string): string {
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayNumber = dateObj.getDate();
+    
+    // Only show month in day view mode
+    if (this.viewMode === 'day') {
+      const monthName = dateObj.toLocaleDateString('en-US', { month: 'short' });
+      return `${dayName} ${dayNumber} ${monthName}`;
+    }
+    
+    // In week view, only show day name and number
+    return `${dayName} ${dayNumber}`;
+  }
+
+  public isToday(date: string): boolean {
+    const today = new Date();
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    return dateObj.toDateString() === today.toDateString();
+  }
+
+  public isPastDate(date: string): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    return dateObj < today;
+  }
+
+  public toggleBookingDate(date: string): void {
+    if (this.isPastDate(date)) return;
+    
+    if (this.selectedBookingDates.has(date)) {
+      this.selectedBookingDates.delete(date);
+    } else {
+      this.selectedBookingDates.add(date);
+    }
+  }
+
+  private isWeekend(date: Date): boolean {
+    const day = date.getDay();
+    return day === 0 || day === 6; // 0 is Sunday, 6 is Saturday
+  }
+
+  private getNextBusinessDay(date: Date): Date {
+    const nextDay = new Date(date);
+    nextDay.setDate(date.getDate() + 1);
+    while (this.isWeekend(nextDay)) {
+      nextDay.setDate(nextDay.getDate() + 1);
+    }
+    return nextDay;
+  }
+
+  private getPreviousBusinessDay(date: Date): Date {
+    const prevDay = new Date(date);
+    prevDay.setDate(date.getDate() - 1);
+    while (this.isWeekend(prevDay)) {
+      prevDay.setDate(prevDay.getDate() - 1);
+    }
+    return prevDay;
+  }
+
+  public canGoToPreviousDate(): boolean {
+    const [year, month, day] = this.currentDate.split('-').map(Number);
+    const currentDateObj = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get the previous business day
+    const prevBusinessDay = this.getPreviousBusinessDay(currentDateObj);
+    return prevBusinessDay >= today;
+  }
+
+  public canGoToNextDate(): boolean {
+    const [year, month, day] = this.currentDate.split('-').map(Number);
+    const currentDateObj = new Date(year, month - 1, day);
+    const maxDate = new Date();
+    maxDate.setHours(0, 0, 0, 0);
+    maxDate.setDate(maxDate.getDate() + this.MAX_FUTURE_DAYS);
+    
+    // Get the next business day
+    const nextBusinessDay = this.getNextBusinessDay(currentDateObj);
+    return nextBusinessDay <= maxDate;
+  }
+
+  public previousDate(): void {
+    const [year, month, day] = this.currentDate.split('-').map(Number);
+    const currentDateObj = new Date(year, month - 1, day);
+    
+    // Get the previous business day
+    const newDate = this.getPreviousBusinessDay(currentDateObj);
+    
+    // Only allow navigation if the new date is not before today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (newDate >= today) {
+      const newYear = newDate.getFullYear();
+      const newMonth = String(newDate.getMonth() + 1).padStart(2, '0');
+      const newDay = String(newDate.getDate()).padStart(2, '0');
+      this.currentDate = `${newYear}-${newMonth}-${newDay}`;
+      this.updateDeskStatuses();
+    }
+  }
+
+  public nextDate(): void {
+    const [year, month, day] = this.currentDate.split('-').map(Number);
+    const currentDateObj = new Date(year, month - 1, day);
+    
+    // Get the next business day
+    const newDate = this.getNextBusinessDay(currentDateObj);
+    
+    // Check if the new date is within the two-week limit
+    const maxDate = new Date();
+    maxDate.setHours(0, 0, 0, 0);
+    maxDate.setDate(maxDate.getDate() + this.MAX_FUTURE_DAYS);
+    
+    if (newDate <= maxDate) {
+      const newYear = newDate.getFullYear();
+      const newMonth = String(newDate.getMonth() + 1).padStart(2, '0');
+      const newDay = String(newDate.getDate()).padStart(2, '0');
+      this.currentDate = `${newYear}-${newMonth}-${newDay}`;
+      this.updateDeskStatuses();
+    }
+  }
+
+  private updateDeskStatuses(): void {
+    if (!this.currentPlan) return;
+
+    this.currentPlan.desks.forEach(desk => {
+      if (desk.bookingDate === this.currentDate) {
+        desk.status = 'reserved';
+      } else {
+        desk.status = 'available';
+        desk.employeeName = undefined;
+        desk.duration = undefined;
+      }
+    });
+  }
+
+  private updateWeekDates(): void {
+    const [year, month, day] = this.currentDate.split('-').map(Number);
+    const currentDate = new Date(year, month - 1, day);
+    this.weekDates = [];
+    
+    // Get Monday of the current week
+    const monday = new Date(currentDate);
+    const dayOfWeek = currentDate.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Sunday
+    monday.setDate(currentDate.getDate() + diff);
+    
+    // Get all business days of the week
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      if (!this.isWeekend(date)) {
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        this.weekDates.push(dateStr);
+      }
+    }
+  }
+
+  public toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'day' ? 'week' : 'day';
+    if (this.viewMode === 'week') {
+      this.updateWeekDates();
+      // Set the selected week date to the current date if it's in the week
+      if (this.weekDates.includes(this.currentDate)) {
+        this.selectedWeekDates.clear();
+        this.selectedWeekDates.add(this.currentDate);
+      } else {
+        // If current date is not in the week, select the first day of the week
+        this.selectedWeekDates.clear();
+        this.selectedWeekDates.add(this.weekDates[0]);
+        this.currentDate = this.weekDates[0];
+        this.updateDeskStatuses();
+      }
+    }
+  }
+
+  public toggleWeekDate(date: string, event: MouseEvent): void {
+    if (event.ctrlKey || event.metaKey) {
+      // Toggle selection with Ctrl/Cmd key
+      if (this.selectedWeekDates.has(date)) {
+        this.selectedWeekDates.delete(date);
+      } else {
+        this.selectedWeekDates.add(date);
+      }
+    } else {
+      // Single selection without Ctrl/Cmd
+      this.selectedWeekDates.clear();
+      this.selectedWeekDates.add(date);
+    }
+    this.currentDate = date;
+    this.updateDeskStatuses();
+  }
+
+  public isSelectedWeekDate(date: string): boolean {
+    return this.selectedWeekDates.has(date);
+  }
+
+  private updateBookingWeekDates(): void {
+    const [year, month, day] = this.currentDate.split('-').map(Number);
+    const currentDate = new Date(year, month - 1, day);
+    this.bookingWeekDates = [];
+    
+    // Get Monday of the current week
+    const monday = new Date(currentDate);
+    const dayOfWeek = currentDate.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Sunday
+    monday.setDate(currentDate.getDate() + diff);
+    
+    // Get business days for two weeks
+    for (let week = 0; week < 2; week++) {
+      for (let i = 0; i < 5; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + (week * 7) + i);
+        if (!this.isWeekend(date)) {
+          const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          this.bookingWeekDates.push(dateStr);
+        }
+      }
+    }
+  }
+
+  public isSelectedBookingDate(date: string): boolean {
+    return this.selectedBookingDates.has(date);
   }
 
 }
