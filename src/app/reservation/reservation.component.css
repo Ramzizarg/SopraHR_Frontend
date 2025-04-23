@@ -1390,3 +1390,35 @@ button:hover:not(:disabled) i {
 .booking-day-button.selected {
   animation: selectPulse 0.3s ease-in-out;
 }
+
+/* Support for Forced Colors Mode (replacing -ms-high-contrast) */
+@media (forced-colors: active) {
+  .desk.available::before {
+    forced-color-adjust: none;
+    background: var(--success-color);
+  }
+  
+  .desk.reserved::before {
+    forced-color-adjust: none;
+    background: var(--danger-color);
+  }
+  
+  .status-indicator.available,
+  .status-indicator.reserved {
+    forced-color-adjust: none;
+  }
+  
+  .booking-day-button.selected {
+    forced-color-adjust: none;
+    background: var(--primary-color);
+    color: white;
+  }
+  
+  .booking-day-button.today {
+    forced-color-adjust: none;
+  }
+  
+  .booking-day-button.today::before {
+    forced-color-adjust: none;
+  }
+}
