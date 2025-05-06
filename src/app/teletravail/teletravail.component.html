@@ -24,33 +24,39 @@
   <!-- Header -->
   <header id="header" class="header d-flex align-items-center sticky-top">
     <div class="container position-relative d-flex align-items-center">
+      <!-- Mobile menu toggle button positioned FIRST for proper layering -->
+      <div class="mobile-menu-container d-block d-lg-none">
+        <button #mobileNavToggle type="button" class="mobile-nav-toggle" 
+               [class.active]="isMobileMenuOpen"
+               (click)="toggleMobileMenu($event)">
+          <i class="bi" [class.bi-list]="!isMobileMenuOpen" [class.bi-x-lg]="isMobileMenuOpen"></i>
+        </button>
+      </div>
+      
       <a href="/home" class="logo d-flex align-items-center me-auto">
-        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Company Logo" style="transform: scale(1.5); max-width: 150px; height: auto;">
+        <img src="../../assets/img/Sopra_Steria_logo.svg.png" 
+             alt="Company Logo" 
+             loading="eager"
+             style="transform: scale(1.5); max-width: 150px; height: auto;">
       </a>
-
-      <nav id="navmenu" class="navmenu">
+      <nav #navmenu id="navmenu" class="navmenu" [class.active]="isMobileMenuOpen">
         <ul>
-          <li><a href="/home">Page d'accueil</a></li>
-          <li><a href="/teletravail" class="active">Télétravail</a></li>
-          <li><a href="/reservation">Réservations de Postes</a></li>
-          <li><a href="/planning">Planning</a></li>
+          <li><a href="/home" class="nav-link"><i class="bi bi-house-door me-2"></i>Page d'accueil</a></li>
+          <li><a href="/teletravail" class="nav-link active"><i class="bi bi-laptop me-2"></i>Télétravail</a></li>
+          <li><a href="/reservation" class="nav-link"><i class="bi bi-calendar-check me-2"></i>Réservations de Postes</a></li>
+          <li><a href="/planning" class="nav-link"><i class="bi bi-calendar-week me-2"></i>Planning</a></li>
           <li>
             <button class="btn btn-logout" (click)="logout()"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
           </li>
         </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+        <!-- No need for internal close button as we have the toggle outside -->
       </nav>
-
-      <div class="header-notification">
-        <a href="#" class="notification">
-          <i class="bi bi-bell"></i>
-          <span class="badge">3</span>
-        </a>
-      </div>
     </div>
   </header>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <!-- Ensure proper spacing in mobile view -->
 
   <div class="main-content">
     <section class="form-container">
@@ -165,7 +171,7 @@
     <div class="row gy-4">
       <div class="col-lg-4 col-md-6 footer-about">
         <a href="/home" class="logo d-flex align-items-center">
-          <span class="sitename" style="margin-left: 5px;">Sopra HR</span>
+          <span class="sitename" style="margin-left: 25px;">Sopra HR</span>
         </a>
         <div class="social-links d-flex mt-4">
           <a href="https://x.com/sopraHR" class="twitter"><i class="bi bi-twitter-x"></i></a>
@@ -181,12 +187,14 @@
           <li><a href="/teletravail">Télétravail</a></li>
           <li><a href="/reservation">Réservations de Postes</a></li>
           <li><a href="/planning">Planning</a></li>
-          <li><a href="contact.html">Contact</a></li>
+          <li><a href="/contact">Contact Us</a></li>
         </ul>
       </div>
-      <div class="col-lg-4 col-md-6 footer-logo text-end">
-        <img src="../../assets/img/Sopra.png" alt="Company Logo" style="max-width: 100%; height: auto; transform: scale(0.5); margin-bottom: 0;  margin-right: 15px;">
-        <p style="margin-top: -60px;">© <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
+      <div class="col-lg-4 col-md-6 footer-logo text-center">
+        <div class="logo-container">
+          <img src="../../assets/img/Sopra.png" alt="Company Logo" loading="lazy" class="footer-company-logo">
+          <p class="copyright-text">© 2025 <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
+        </div>
         <div class="credits">
         </div>
       </div>

@@ -48,5 +48,5 @@ export class ForgetpasswordComponent implements OnInit {
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:9000' // Adjust to your backend URL
+  apiUrl: 'http://localhost:9001' // Adjust to your backend URL
 };

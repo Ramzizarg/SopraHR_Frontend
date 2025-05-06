@@ -6,7 +6,8 @@ import { WorkstationComponent } from './workstation/workstation.component';
 import { LoginComponent } from './login/login.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from './auth-interceptor';
 import { HomeComponent } from './home/home.component';
 import { ForgetpasswordComponent } from './forgetpassword/forgetpassword.component';
 import { TeletravailComponent } from './teletravail/teletravail.component';
@@ -17,7 +18,9 @@ import { PlanningComponent } from './planning/planning.component';
 import { AuthService } from './login/AuthService';
 import { AuthGuard } from './login/AuthGuard';
 import { ReservationComponent } from './reservation/reservation.component';
-5 
+import { ApiTesterComponent } from './reservation/api-tester.component';
+import { ReservationDeskComponent } from './reservation-desk/reservation-desk.component';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -29,7 +32,8 @@ import { ReservationComponent } from './reservation/reservation.component';
     ResetPasswordComponent,
     PlanningComponent,
     ReservationComponent,
-    PlanningComponent
+    ApiTesterComponent,
+    ReservationDeskComponent
   ],
   imports: [
     BrowserModule,
@@ -41,7 +45,11 @@ import { ReservationComponent } from './reservation/reservation.component';
     CommonModule,
     BrowserAnimationsModule
   ],
-  providers: [AuthService, AuthGuard],
+  providers: [
+    AuthService, 
+    AuthGuard,
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

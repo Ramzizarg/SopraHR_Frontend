@@ -1,21 +1,20 @@
 <!DOCTYPE html>
+<!-- Main Container -->
+<div class="app-container">
+
   <!-- Loading Overlay -->
   <div class="loading-overlay" *ngIf="isLoading">
     <div class="loading-spinner"></div>
     <span class="loading-text">Loading...</span>
   </div>
 
-  <!-- Sidebar -->
-  <div class="sidebar" [class.hidden]="!isSidebarVisible">
+  <!-- Sidebar - only visible for managers -->
+  <div class="sidebar" [class.hidden]="!isManager">
     <div class="sidebar-header">
       <div class="sidebar-title">
-        <i class="fas fa-desk"></i>
+        <img src="assets/Sopra.png" alt="Sopra logo" class="sidebar-logo" />
         Desk Booking
       </div>
-      <button id="closeSidebarButton" class="secondary-button" (click)="toggleSidebar()" 
-              aria-label="Close sidebar" title="Close sidebar">
-        <i class="fas fa-times"></i>
-      </button>
     </div>
     <div class="button-container">
       <button id="createPlanButton" class="primary-button" (click)="createPlan()" [disabled]="plans.length >= 1"
@@ -52,15 +51,9 @@
     </div>
   </div>
 
-  <!-- Open Sidebar Button -->
-  <button id="openSidebarButton" class="primary-button" *ngIf="!isSidebarVisible" (click)="toggleSidebar()"
-          aria-label="Open sidebar" title="Open sidebar">
-    <i class="fas fa-bars"></i>
-  </button>
-
   <!-- Main Content -->
-  <div class="main-content-wrapper">
-    <div id="designContainer" #designContainer [class.shifted]="!isSidebarVisible">
+  <div class="main-content-wrapper" [class.centered]="!isManager">
+    <div id="designContainer" #designContainer>
       <div *ngIf="!currentPlan" class="empty-state">
         <i class="fas fa-drafting-compass"></i>
         <h3>No Plan Created</h3>
@@ -81,18 +74,40 @@
         <div *ngFor="let desk of plan.desks" class="desk"
              [ngStyle]="{'left.px': desk.left, 'top.px': desk.top, 'transform': 'rotate(' + desk.rotation + 'deg)'}"
              [class.selected]="desk === selectedDesk"
-             [class.available]="desk.status === 'available'"
-             [class.reserved]="desk.status === 'reserved'"
+             [class.available]="desk.available"
+             [class.reserved]="!desk.available"
              (click)="selectDesk(desk, $event)"
              (mousedown)="!isPlanConfirmed && startDeskDragging($event, desk)"
              (dblclick)="!isPlanConfirmed && rotateDesk(desk)"
              (contextmenu)="!isPlanConfirmed && onDeskContextMenu($event, desk)">
+          <!-- Remove desk button - only shown when not confirmed -->
+          <div *ngIf="!isPlanConfirmed" class="desk-remove-button" (click)="removeDesk(desk, $event)" title="Remove desk">
+            <i class="fas fa-times"></i>
+          </div>
           <div class="desk-booking-info" *ngIf="isPlanConfirmed">
-            <ng-container *ngIf="desk.status === 'available'">
-              Available
+            <!-- Day view - simple availability -->
+            <ng-container *ngIf="viewMode === 'day'">
+              <ng-container *ngIf="desk.available">
+                Available
+              </ng-container>
+              <ng-container *ngIf="!desk.available">
+                {{desk.employeeName}}
+                <span *ngIf="desk.duration === '4'">Half day</span>
+                <span *ngIf="desk.duration === '8'">Full day</span>
+              </ng-container>
             </ng-container>
-            <ng-container *ngIf="desk.status === 'reserved'">
-              {{ desk.employeeName }} - {{ desk.duration === '8' ? 'Full day' : 'Half day' }}
+            <!-- Week view - status for each day -->
+            <ng-container *ngIf="viewMode === 'week'">
+              <div class="week-status">
+                <div *ngFor="let date of weekDates" 
+                     class="status-indicator"
+                     [class.available]="isDeskAvailableOnDate(desk, date)"
+                     [class.reserved]="!isDeskAvailableOnDate(desk, date)"
+                     [title]="getDeskStatusForDate(desk, date)">
+                  <!-- Use short date format to display day of week -->
+                  <span>{{getDayInitial(date)}}</span>
+                </div>
+              </div>
             </ng-container>
           </div>
         </div>
@@ -110,7 +125,7 @@
     </div>
 
     <!-- Status Bar -->
-    <div class="status-bar" #statusBar [class.shifted]="!isSidebarVisible">
+    <div class="status-bar" #statusBar>
       <div class="status-item">
         <div class="status-indicator available"></div>
         <span>Available</span>
@@ -119,15 +134,16 @@
         <div class="status-indicator reserved"></div>
         <span>Reserved</span>
       </div>
-      <div class="status-item">
+      <!-- Only show these items for managers -->
+      <div class="status-item" *ngIf="isManager">
         <i class="fas fa-ruler"></i>
         <span id="planDimensions">Plan: {{currentPlan ? (currentPlan.width + 'x' + currentPlan.height) : '0x0'}}</span>
       </div>
-      <div class="status-item">
+      <div class="status-item" *ngIf="isManager">
         <i class="fas fa-chair"></i>
         <span id="deskCount">Desks: {{currentPlan ? currentPlan.desks.length : 0}}</span>
       </div>
-      <div class="status-item">
+      <div class="status-item" *ngIf="isManager">
         <i class="fas fa-wall"></i>
         <span id="wallCount">Walls: {{currentPlan ? currentPlan.walls.length : 0}}</span>
       </div>
@@ -142,12 +158,15 @@
             Week
           </button>
         </div>
-        <div class="date-navigation" *ngIf="viewMode === 'day'">
-          <button class="date-nav-button" (click)="previousDate()" [disabled]="!canGoToPreviousDate()">
+        <div class="date-navigation">
+          <button class="date-nav-button" (click)="previousDate()" [disabled]="viewMode === 'week' || !canGoToPreviousDate()">
             <i class="fas fa-chevron-left"></i>
           </button>
-          <span class="date-display">{{formatDate(currentDate)}}</span>
-          <button class="date-nav-button" (click)="nextDate()" [disabled]="!canGoToNextDate()">
+          <span class="date-display" *ngIf="viewMode === 'day'">{{formatDate(currentDate)}}</span>
+          <span class="date-display" *ngIf="viewMode === 'week'">
+            {{formatDate(weekDates[0])}} - {{formatDate(weekDates[weekDates.length-1])}}
+          </span>
+          <button class="date-nav-button" (click)="nextDate()" [disabled]="viewMode === 'week' || !canGoToNextDate()">
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
@@ -165,10 +184,6 @@
         </button>
       </div>
       <div class="booking-dialog-body">
-        <div class="form-group">
-          <label for="employeeName">Employee Name</label>
-          <input type="text" id="employeeName" [(ngModel)]="employeeName" placeholder="Enter employee name">
-        </div>
         <div class="form-group">
           <label for="bookingDuration">Duration</label>
           <select id="bookingDuration" [(ngModel)]="bookingDuration">
@@ -200,10 +215,9 @@
       </div>
       <div class="booking-dialog-footer">
         <button class="secondary-button" (click)="closeBookingDialog()">Cancel</button>
-        <button class="primary-button" (click)="confirmBooking()" [disabled]="!employeeName.trim()">
-          {{ selectedDeskForBooking?.status === 'reserved' ? 'Update' : 'Book' }}
+        <button class="primary-button" (click)="confirmBooking()">
+          {{ !selectedDeskForBooking?.available ? 'Update' : 'Book' }}
         </button>
       </div>
     </div>
   </div>
-

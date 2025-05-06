@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Renderer2, ViewChild, ElementRef } from '@angular/core';
 import * as XLSX from 'xlsx';
 import { AuthService } from '../login/AuthService';
 import { Router } from '@angular/router';
@@ -11,11 +11,61 @@ import { Router } from '@angular/router';
 export class HomeComponent implements OnInit {
   carouselData: { heading: string, strong: string }[] = [];
   isLoading: boolean = true;
+  isMobileMenuOpen: boolean = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  @ViewChild('navmenu') navMenu!: ElementRef;
+  @ViewChild('mobileNavToggle') mobileNavToggle!: ElementRef;
+
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private renderer: Renderer2
+  ) {
+    // Close mobile menu when clicking outside
+    this.renderer.listen('window', 'click', (e: Event) => {
+      if (
+        this.isMobileMenuOpen && 
+        this.navMenu && 
+        !this.navMenu.nativeElement.contains(e.target) &&
+        this.mobileNavToggle && 
+        !this.mobileNavToggle.nativeElement.contains(e.target)
+      ) {
+        this.closeMobileMenu();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadExcelData(); // Load Excel data on component init
+    
+    // Initialize mobile menu close on window resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 991 && this.isMobileMenuOpen) {
+        this.closeMobileMenu();
+      }
+    });
+  }
+  
+  // Toggle mobile menu
+  toggleMobileMenu(event: Event): void {
+    event.stopPropagation();
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    
+    if (this.navMenu) {
+      if (this.isMobileMenuOpen) {
+        this.renderer.addClass(this.navMenu.nativeElement, 'active');
+      } else {
+        this.renderer.removeClass(this.navMenu.nativeElement, 'active');
+      }
+    }
+  }
+  
+  // Close mobile menu
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen = false;
+    if (this.navMenu) {
+      this.renderer.removeClass(this.navMenu.nativeElement, 'active');
+    }
   }
 
   loadExcelData(): void {

@@ -1,0 +1,14 @@
+/* Fix for deprecated -ms-high-contrast media query */
+@media (forced-colors: active) {
+  /* Add styles here that should apply in high contrast mode */
+  .btn-primary, 
+  .btn-secondary,
+  .btn-success,
+  .btn-info,
+  .btn-warning, 
+  .btn-danger {
+    forced-color-adjust: none;
+  }
+  
+  /* Add more overrides as needed */
+}

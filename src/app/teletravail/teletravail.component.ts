@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Renderer2, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { TeletravailForm, TeletravailService, TeletravailResponse } from './TeletravailService';
 import Swal from 'sweetalert2';
@@ -26,11 +26,52 @@ export class TeletravailComponent implements OnInit {
   today: string = ''; // Added to track today's date for min restriction
   isDateDisabled: boolean = false;
   existingRequestDates: string[] = [];
+  
+  // Mobile menu properties
+  isMobileMenuOpen: boolean = false;
+  @ViewChild('navmenu') navMenu!: ElementRef;
+  @ViewChild('mobileNavToggle') mobileNavToggle!: ElementRef;
 
   constructor(
     private teletravailService: TeletravailService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private renderer: Renderer2
+  ) {
+    // Close mobile menu when clicking outside
+    this.renderer.listen('window', 'click', (e: Event) => {
+      if (
+        this.isMobileMenuOpen && 
+        this.navMenu && 
+        !this.navMenu.nativeElement.contains(e.target) &&
+        this.mobileNavToggle && 
+        !this.mobileNavToggle.nativeElement.contains(e.target)
+      ) {
+        this.closeMobileMenu();
+      }
+    });
+  }
+
+  // Toggle mobile menu
+  toggleMobileMenu(event: Event): void {
+    event.stopPropagation();
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    
+    if (this.navMenu) {
+      if (this.isMobileMenuOpen) {
+        this.renderer.addClass(this.navMenu.nativeElement, 'active');
+      } else {
+        this.renderer.removeClass(this.navMenu.nativeElement, 'active');
+      }
+    }
+  }
+  
+  // Close mobile menu
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen = false;
+    if (this.navMenu) {
+      this.renderer.removeClass(this.navMenu.nativeElement, 'active');
+    }
+  }
 
   ngOnInit(): void {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
@@ -43,6 +84,20 @@ export class TeletravailComponent implements OnInit {
     setInterval(() => this.calculateWeekDates(), 60000);
     this.loadCountries();
     this.loadExistingRequests();
+    
+    // Setup window resize event to handle responsive behavior
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 991 && this.isMobileMenuOpen) {
+        this.closeMobileMenu();
+      }
+    });
+    
+    // Initialize mobile menu styles
+    setTimeout(() => {
+      if (this.mobileNavToggle) {
+        this.renderer.setStyle(this.mobileNavToggle.nativeElement, 'display', window.innerWidth <= 991 ? 'block' : 'none');
+      }
+    }, 0);
   }
 
   private loadCountries(): void {

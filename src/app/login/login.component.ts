@@ -42,16 +42,26 @@ export class LoginComponent {
     this.authService.login(email, password, rememberMe).subscribe({
       next: () => {
         this.loading = true;
-        console.log('LoginComponent: Login successful, redirecting after 2 seconds');
+        console.log('LoginComponent: Login successful, navigating to home');
         setTimeout(() => {
           this.router.navigate(['/home']);
         }, 500);
       },
       error: (error) => {
         this.loading = false;
-        this.errorMessage = error.error?.errorMessage || 'Login failed. Please try again.';
+        // Handle various error formats
+        if (typeof error === 'string') {
+          this.errorMessage = error;
+        } else if (error instanceof Error) {
+          this.errorMessage = error.message || 'Login failed. Please try again.';
+        } else {
+          this.errorMessage = error.error?.message || 
+                            error.error?.error || 
+                            error.error?.errorMessage || 
+                            'Login failed. Please check your credentials and try again.';
+        }
+        console.error('Login error:', error);
       }
-      
     });
   }
 
