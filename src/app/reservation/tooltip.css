@@ -1,0 +1,46 @@
+/* Desk container - holds both desk and its tooltip */
+.desk-container {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 3;
+}
+
+/* New fixed position tooltip that doesn't rotate with the desk */
+.desk-info-tooltip {
+  position: absolute;
+  background: var(--card-background);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  z-index: 25;
+  color: var(--text-primary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  transform: translateX(-50%);
+}
+
+/* Show tooltip only when hovering the desk in the same container */
+.desk-container:hover .desk-info-tooltip {
+  opacity: 1;
+  animation: fadeInTooltip 0.2s ease;
+}
+
+.desk-info-tooltip.available {
+  border-color: var(--success-color);
+}
+
+.desk-info-tooltip.reserved {
+  border-color: var(--danger-color);
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@keyframes fadeInTooltip {
+  from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

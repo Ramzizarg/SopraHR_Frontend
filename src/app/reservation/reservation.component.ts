@@ -45,7 +45,7 @@ export interface Plan {
 @Component({
   selector: 'app-reservation',
   templateUrl: './reservation.component.html',
-  styleUrls: ['./reservation.component.css']
+  styleUrls: ['./reservation.component.css', './tooltip.css']
 })
 export class ReservationComponent implements OnInit {
   private currentUser: UserProfile | null = null;
@@ -64,12 +64,12 @@ export class ReservationComponent implements OnInit {
   public resizeHandles = ['top-left', 'top', 'top-right', 'left', 'right', 'bottom-left', 'bottom', 'bottom-right'];
 
   private readonly GRID_SIZE = 10;
-  private readonly INITIAL_WIDTH = 400;
-  private readonly INITIAL_HEIGHT = 300;
+  private readonly INITIAL_WIDTH = 1065; // Fixed plan width
+  private readonly INITIAL_HEIGHT = 570; // Fixed plan height
   private readonly DESK_WIDTH = 15;
   private readonly DESK_HEIGHT = 50;
   private readonly WALL_SIZE = 20;
-  private readonly KEYBOARD_MOVE_SPEED = 10;
+  private readonly KEYBOARD_MOVE_SPEED = 1; // Always use 1px movement for maximum precision
   private readonly MIN_PLAN_SIZE = 100;
 
   // Add new constant for minimum plan dimensions based on desk size
@@ -240,32 +240,37 @@ export class ReservationComponent implements OnInit {
     this.isLoading = true;
     this.reservationService.getPlans().subscribe({
       next: (apiPlans) => {
-        if (apiPlans.length > 0) {
-          // The backend should only have one plan according to business rule
-          const apiPlan = apiPlans[0];
-          
-          // Convert API plan to frontend plan format
-          const plan: Plan = {
-            id: apiPlan.id?.toString() || `plan-${++this.planCounter}`,
-            left: apiPlan.left || 50, // Use stored position if available
-            top: apiPlan.top || 50,   // Use stored position if available
-            width: apiPlan.width || this.INITIAL_WIDTH,
-            height: apiPlan.height || this.INITIAL_HEIGHT,
-            desks: [],
-            walls: []
-          };
-          
-          this.plans = [plan];
-          this.currentPlan = plan;
+        this.isLoading = false;
+        if (apiPlans && apiPlans.length > 0) {
+          // Convert API plans to UI plans with fixed position and size
+          this.plans = apiPlans.map(apiPlan => {
+            const plan: Plan = {
+              id: apiPlan.id?.toString() || `plan-${++this.planCounter}`,
+              left: 10, // Always fixed position
+              top: 10,  // Always fixed position
+              width: 1135, // Fixed width
+              height: 600, // Fixed height
+              desks: [],
+              walls: []
+            };
+            return plan;
+          });
+          this.currentPlan = this.plans[0];
           this.selectedPlan = null; // Don't automatically select the plan
           this.isPlanConfirmed = true; // Plans from server are always confirmed
           
           // Load desks and walls for this plan
-          this.loadDesksAndWalls(apiPlan.id!);
+          this.loadDesksAndWalls(apiPlans[0].id!);
         } else {
-          // No plans found, allow creating one if user is manager
+          // No plans found, but don't automatically create one
           if (this.authService.isManager()) {
-            this.createPlan();
+            // Show a message to the manager that they can create a plan
+            Swal.fire({
+              title: 'No Floor Plans Available',
+              text: 'You can create a new floor plan using the "Create New Plan" button.',
+              icon: 'info',
+              confirmButtonText: 'OK'
+            });
           } else {
             Swal.fire({
               title: 'No Floor Plans Available',
@@ -455,13 +460,13 @@ export class ReservationComponent implements OnInit {
           return;
         }
         
-        // Create a new plan if none exists
+        // Create a new plan if none exists - always with fixed dimensions and position
         const newPlan: ApiPlan = {
           name: 'New Floor Plan',
-          width: this.INITIAL_WIDTH,
-          height: this.INITIAL_HEIGHT,
-          left: 50, // Default position
-          top: 50   // Default position
+          width: 1135, // Fixed width
+          height: 600, // Fixed height
+          left: 10, // Fixed position
+          top: 10   // Fixed position
         };
         
         this.isLoading = true;
@@ -471,10 +476,10 @@ export class ReservationComponent implements OnInit {
             this.isLoading = false;
             const plan: Plan = {
               id: createdPlan.id?.toString() || `plan-${++this.planCounter}`,
-              left: createdPlan.left || 50, // Use stored position if available
-              top: createdPlan.top || 50,   // Use stored position if available
-              width: createdPlan.width || this.INITIAL_WIDTH,
-              height: createdPlan.height || this.INITIAL_HEIGHT,
+              left: 10, // Always use fixed position
+              top: 10,  // Always use fixed position
+              width: 1135, // Fixed width
+              height: 600, // Fixed height
               desks: [],
               walls: []
             };
@@ -839,6 +844,19 @@ export class ReservationComponent implements OnInit {
   public createDesk(plan: Plan, x: number, y: number): void {
     const newX = Math.round(Math.max(0, Math.min(x, plan.width - this.DESK_WIDTH)) / this.GRID_SIZE) * this.GRID_SIZE;
     const newY = Math.round(Math.max(0, Math.min(y, plan.height - this.DESK_HEIGHT)) / this.GRID_SIZE) * this.GRID_SIZE;
+  
+    // Check for overlap with existing desks before creating
+    if (this.checkDeskOverlap(plan, newX, newY)) {
+      // Show alert that desk can't be added due to overlap and instruct to remove existing desk first
+      Swal.fire({
+        title: 'Cannot Add Desk',
+        text: 'Cannot add a desk on top of another desk. If you want to add a desk here, remove the existing desk first.',
+        icon: 'warning',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+  
     const desk: Desk = {
       id: Date.now(),
       left: newX,
@@ -958,6 +976,8 @@ export class ReservationComponent implements OnInit {
       event.stopPropagation();
       this.clearSelections();
       this.selectedDesk = desk;
+      // Focus the container to ensure keyboard events work properly
+      this.designContainer.nativeElement.focus();
     }
   }
 
@@ -1031,11 +1051,13 @@ export class ReservationComponent implements OnInit {
   }
 
   public selectWall(wall: Wall, event: MouseEvent): void {
-      if (this.isPlanConfirmed) return;
+    if (this.isPlanConfirmed) return;
     event.preventDefault();
     event.stopPropagation();
     this.clearSelections();
     this.selectedWall = wall;
+    // Focus the container to ensure keyboard events work properly
+    this.designContainer.nativeElement.focus();
   }
 
   private setupKeyboardListeners(): void {
@@ -1124,178 +1146,21 @@ export class ReservationComponent implements OnInit {
   }
 
   public startPlanDragging(event: MouseEvent, plan: Plan): void {
-    if (this.isPlanConfirmed) return;
+    // Disable plan dragging to maintain fixed position
     event.preventDefault();
     event.stopPropagation();
     
-    this.activePlan = plan;
-    this.selectedPlan = plan;
-
-    this.isDragging = true;
-    this.startX = event.clientX - plan.left;
-    this.startY = event.clientY - plan.top;
-
-    const container = this.designContainer.nativeElement;
-    const containerRect = container.getBoundingClientRect();
-
-    const moveSubscription = fromEvent(document, 'mousemove').subscribe((e: Event) => {
-      if (!this.isDragging || !this.selectedPlan) return;
-      const mouseEvent = e as MouseEvent;
-      
-      let newLeft = mouseEvent.clientX - this.startX;
-      let newTop = mouseEvent.clientY - this.startY;
-
-      newLeft = Math.round(newLeft / this.GRID_SIZE) * this.GRID_SIZE;
-      newTop = Math.round(newTop / this.GRID_SIZE) * this.GRID_SIZE;
-
-      newLeft = Math.max(0, Math.min(newLeft, containerRect.width - this.selectedPlan.width));
-      newTop = Math.max(0, Math.min(newTop, containerRect.height - this.selectedPlan.height));
-
-      this.selectedPlan.left = newLeft;
-      this.selectedPlan.top = newTop;
-    });
-
-    const upSubscription = fromEvent(document, 'mouseup').subscribe(() => {
-      this.isDragging = false;
-      moveSubscription.unsubscribe();
-      upSubscription.unsubscribe();
-    });
+    // Show message to inform user that plan position is fixed
+    console.log('Plan position is fixed at left=10, top=10');
   }
 
   public startPlanResizing(event: MouseEvent, plan: Plan, handle: string): void {
-    if (this.isPlanConfirmed) return;
+    // Disable plan resizing to maintain fixed dimensions
     event.preventDefault();
     event.stopPropagation();
     
-    this.activePlan = plan;
-    this.selectedPlan = plan;
-
-    this.isResizing = true;
-    this.resizeHandle = handle;
-    this.startX = event.clientX;
-    this.startY = event.clientY;
-
-    const container = this.designContainer.nativeElement;
-    const containerRect = container.getBoundingClientRect();
-    const initialWidth = plan.width;
-    const initialHeight = plan.height;
-    const initialLeft = plan.left;
-    const initialTop = plan.top;
-
-    // Find the rightmost and bottommost desk positions
-    let maxDeskRight = 0;
-    let maxDeskBottom = 0;
-    plan.desks.forEach(desk => {
-      maxDeskRight = Math.max(maxDeskRight, desk.left + this.DESK_WIDTH);
-      maxDeskBottom = Math.max(maxDeskBottom, desk.top + this.DESK_HEIGHT);
-    });
-
-    // Add padding to ensure desks remain visible
-    const minRequiredWidth = maxDeskRight + 10;
-    const minRequiredHeight = maxDeskBottom + 10;
-
-    const moveSubscription = fromEvent(document, 'mousemove').subscribe((e: Event) => {
-      if (!this.isResizing || !this.selectedPlan) return;
-      const mouseEvent = e as MouseEvent;
-      let deltaX = mouseEvent.clientX - this.startX;
-      let deltaY = mouseEvent.clientY - this.startY;
-
-      deltaX = Math.round(deltaX / this.GRID_SIZE) * this.GRID_SIZE;
-      deltaY = Math.round(deltaY / this.GRID_SIZE) * this.GRID_SIZE;
-
-      let newWidth = initialWidth;
-      let newHeight = initialHeight;
-      let newLeft = initialLeft;
-      let newTop = initialTop;
-
-      // Calculate new dimensions based on handle
-      switch (handle) {
-        case 'right':
-          newWidth = Math.max(Math.max(this.MIN_PLAN_WIDTH, minRequiredWidth), Math.min(initialWidth + deltaX, containerRect.width - this.selectedPlan.left));
-          break;
-        case 'bottom':
-          newHeight = Math.max(Math.max(this.MIN_PLAN_HEIGHT, minRequiredHeight), Math.min(initialHeight + deltaY, containerRect.height - this.selectedPlan.top));
-          break;
-        case 'bottom-right':
-          newWidth = Math.max(Math.max(this.MIN_PLAN_WIDTH, minRequiredWidth), Math.min(initialWidth + deltaX, containerRect.width - this.selectedPlan.left));
-          newHeight = Math.max(Math.max(this.MIN_PLAN_HEIGHT, minRequiredHeight), Math.min(initialHeight + deltaY, containerRect.height - this.selectedPlan.top));
-          break;
-        case 'left':
-          const newWidthL = Math.max(this.MIN_PLAN_SIZE, Math.min(initialWidth - deltaX, initialLeft + initialWidth));
-          newLeft = initialLeft + (initialWidth - newWidthL);
-          newWidth = newWidthL;
-          break;
-        case 'top':
-          const newHeightT = Math.max(this.MIN_PLAN_SIZE, Math.min(initialHeight - deltaY, initialTop + initialHeight));
-          newTop = initialTop + (initialHeight - newHeightT);
-          newHeight = newHeightT;
-          break;
-        case 'top-left':
-          const newWidthTL = Math.max(this.MIN_PLAN_SIZE, Math.min(initialWidth - deltaX, initialLeft + initialWidth));
-          const newHeightTL = Math.max(this.MIN_PLAN_SIZE, Math.min(initialHeight - deltaY, initialTop + initialHeight));
-          newLeft = initialLeft + (initialWidth - newWidthTL);
-          newTop = initialTop + (initialHeight - newHeightTL);
-          newWidth = newWidthTL;
-          newHeight = newHeightTL;
-          break;
-        case 'top-right':
-          const newHeightTR = Math.max(this.MIN_PLAN_SIZE, Math.min(initialHeight - deltaY, initialTop + initialHeight));
-          newTop = initialTop + (initialHeight - newHeightTR);
-          newWidth = Math.max(this.MIN_PLAN_SIZE, Math.min(initialWidth + deltaX, containerRect.width - this.selectedPlan.left));
-          newHeight = newHeightTR;
-          break;
-        case 'bottom-left':
-          const newWidthBL = Math.max(this.MIN_PLAN_SIZE, Math.min(initialWidth - deltaX, initialLeft + initialWidth));
-          newHeight = Math.max(this.MIN_PLAN_SIZE, Math.min(initialHeight + deltaY, containerRect.height - this.selectedPlan.top));
-          newLeft = initialLeft + (initialWidth - newWidthBL);
-          newWidth = newWidthBL;
-          break;
-        case 'left':
-          newWidth = Math.max(this.MIN_PLAN_SIZE, Math.min(initialWidth - deltaX, initialLeft + initialWidth));
-          newLeft = initialLeft + (initialWidth - newWidth);
-          break;
-      }
-      
-      // Update plan dimensions
-      this.selectedPlan.width = newWidth;
-      this.selectedPlan.height = newHeight;
-      this.selectedPlan.left = newLeft;
-      this.selectedPlan.top = newTop;
-
-      // Adjust desk positions to stay within the new plan boundaries
-      this.selectedPlan.desks.forEach(desk => {
-        // Calculate new desk position
-        let newDeskLeft = desk.left;
-        let newDeskTop = desk.top;
-
-        // If desk would be outside the new plan boundaries, move it inside
-        if (newDeskLeft + this.DESK_WIDTH > newWidth) {
-          newDeskLeft = Math.max(0, newWidth - this.DESK_WIDTH);
-        }
-        if (newDeskTop + this.DESK_HEIGHT > newHeight) {
-          newDeskTop = Math.max(0, newHeight - this.DESK_HEIGHT);
-        }
-
-        // Update desk position
-        desk.left = newDeskLeft;
-        desk.top = newDeskTop;
-      });
-
-      // Adjust wall positions to stay within the new plan boundaries
-      this.selectedPlan.walls.forEach(wall => {
-        wall.left = Math.min(wall.left, newWidth - wall.width);
-        wall.top = Math.min(wall.top, newHeight - wall.height);
-        if (wall.left < 0) wall.left = 0;
-        if (wall.top < 0) wall.top = 0;
-      });
-    });
-
-    const upSubscription = fromEvent(document, 'mouseup').subscribe(() => {
-      this.isResizing = false;
-      this.resizeHandle = '';
-      moveSubscription.unsubscribe();
-      upSubscription.unsubscribe();
-    });
+    // Show message to inform user that plan dimensions are fixed
+    console.log('Plan dimensions are fixed at 1065x570');
   }
 
   public startDeskDragging(event: MouseEvent, desk: Desk): void {
@@ -1361,17 +1226,27 @@ export class ReservationComponent implements OnInit {
       }
     } else {
       // In design mode, context menu is for removing desks
-      if (confirm('Do you want to remove this desk?')) {
-        // Remove the desk from the current plan
-        if (this.currentPlan) {
-          this.currentPlan.desks = this.currentPlan.desks.filter(d => d !== desk);
-          
-          // Clear selection if the removed desk was selected
-          if (this.selectedDesk === desk) {
-            this.selectedDesk = null;
+      // Use SweetAlert instead of basic confirm dialog
+      Swal.fire({
+        title: 'Remove Desk',
+        text: 'Do you want to remove this desk?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, remove it',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Remove the desk from the current plan
+          if (this.currentPlan) {
+            this.currentPlan.desks = this.currentPlan.desks.filter(d => d !== desk);
+            
+            // Clear selection if the removed desk was selected
+            if (this.selectedDesk === desk) {
+              this.selectedDesk = null;
+            }
           }
         }
-      }
+      });
     }
   }
 
@@ -2132,7 +2007,7 @@ export class ReservationComponent implements OnInit {
     
     if (reservation) {
       const duration = reservation.duration === '8' ? 'Full day' : 'Half day';
-      return `${reservation.employeeName || ''} - ${duration} on ${this.formatDate(date)}`;
+      return `${reservation.employeeName || ''}, ${duration} on ${this.formatDate(date)}`;
     }
     
     return `${this.formatDate(date)}`;
@@ -2221,5 +2096,194 @@ export class ReservationComponent implements OnInit {
     element.style.display = 'none';
     void element.offsetHeight; // Trigger reflow
     element.style.display = '';
+  }
+
+  // Handle keyboard movement for selected desk or wall
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardNavigation(event: KeyboardEvent): void {
+    // Only allow keyboard movement when not in confirmed mode
+    if (this.isPlanConfirmed || !this.currentPlan) {
+      return;
+    }
+
+    // Check if we have a selected desk
+    if (this.selectedDesk) {
+      this.handleDeskKeyboardMovement(event);
+    } 
+    // Otherwise check if we have a selected wall
+    else if (this.selectedWall) {
+      this.handleWallKeyboardMovement(event);
+    }
+  }
+  
+  // Handle keyboard movement for desks
+  private handleDeskKeyboardMovement(event: KeyboardEvent): void {
+    if (!this.selectedDesk || !this.currentPlan) return;
+    
+    // Get current desk position
+    const desk = this.selectedDesk;
+    let { left, top } = desk;
+    
+    // Always use the most precise movement (1px)
+    const moveAmount = this.KEYBOARD_MOVE_SPEED;
+
+    // Move based on arrow keys
+    switch (event.key) {
+      case 'ArrowLeft':
+        left = Math.max(0, left - moveAmount);
+        event.preventDefault();
+        break;
+      case 'ArrowRight':
+        // Ensure desk stays within plan boundaries
+        left = Math.min(this.currentPlan.width - this.DESK_WIDTH, left + moveAmount);
+        event.preventDefault();
+        break;
+      case 'ArrowUp':
+        top = Math.max(0, top - moveAmount);
+        event.preventDefault();
+        break;
+      case 'ArrowDown':
+        // Ensure desk stays within plan boundaries
+        top = Math.min(this.currentPlan.height - this.DESK_HEIGHT, top + moveAmount);
+        event.preventDefault();
+        break;
+      case 'r':
+      case 'R':
+        // Rotate desk when 'r' key is pressed
+        this.rotateDesk(desk);
+        event.preventDefault();
+        break;
+      default:
+        // For other keys, do nothing
+        return;
+    }
+
+    // Apply the new position to the desk
+    desk.left = left;
+    desk.top = top;
+
+    // Show visual feedback that the desk was moved
+    this.showDeskMovementFeedback();
+  }
+  
+  // Handle keyboard movement for walls
+  private handleWallKeyboardMovement(event: KeyboardEvent): void {
+    if (!this.selectedWall || !this.currentPlan) return;
+    
+    // Get current wall position
+    const wall = this.selectedWall;
+    let { left, top, width, height } = wall;
+    
+    // Always use the most precise movement (1px)
+    const moveAmount = this.KEYBOARD_MOVE_SPEED;
+
+    // Move based on arrow keys
+    switch (event.key) {
+      case 'ArrowLeft':
+        left = Math.max(0, left - moveAmount);
+        event.preventDefault();
+        break;
+      case 'ArrowRight':
+        // Ensure wall stays within plan boundaries
+        left = Math.min(this.currentPlan.width - width, left + moveAmount);
+        event.preventDefault();
+        break;
+      case 'ArrowUp':
+        top = Math.max(0, top - moveAmount);
+        event.preventDefault();
+        break;
+      case 'ArrowDown':
+        // Ensure wall stays within plan boundaries
+        top = Math.min(this.currentPlan.height - height, top + moveAmount);
+        event.preventDefault();
+        break;
+      default:
+        // For other keys, do nothing
+        return;
+    }
+
+    // Apply the new position to the wall
+    wall.left = left;
+    wall.top = top;
+
+    // Show visual feedback that the wall was moved
+    this.showWallMovementFeedback();
+  }
+
+  // Show visual feedback when a desk is moved via keyboard
+  private showDeskMovementFeedback(): void {
+    if (!this.selectedDesk) return;
+    
+    // Add a temporary class to the selected desk element to show movement
+    const deskElements = document.querySelectorAll('.desk');
+    deskElements.forEach(element => {
+      if (element.classList.contains('selected')) {
+        element.classList.add('keyboard-moved');
+        // No longer using the precise-mode visual indicator
+        // as per user's request
+        
+        // Remove the movement class after animation completes
+        setTimeout(() => {
+          element.classList.remove('keyboard-moved');
+        }, 300);
+      }
+    });
+  }
+  
+  // Show visual feedback when a wall is moved via keyboard
+  private showWallMovementFeedback(): void {
+    if (!this.selectedWall) return;
+    
+    // Add a temporary class to the selected wall element to show movement
+    const wallElements = document.querySelectorAll('.wall');
+    wallElements.forEach(element => {
+      if (element.classList.contains('selected')) {
+        element.classList.add('keyboard-moved');
+        
+        // Remove the movement class after animation completes
+        setTimeout(() => {
+          element.classList.remove('keyboard-moved');
+        }, 300);
+      }
+    });
+  }
+  
+  // Helper method to round dimensions for display
+  public roundDimension(value: number): number {
+    return Math.round(value);
+  }
+  
+  // Check if a new desk would overlap with any existing desks
+  private checkDeskOverlap(plan: Plan, newX: number, newY: number): boolean {
+    // Define the bounds of the new desk
+    const newDeskBounds = {
+      left: newX,
+      right: newX + this.DESK_WIDTH,
+      top: newY,
+      bottom: newY + this.DESK_HEIGHT
+    };
+    
+    // Check against each existing desk
+    for (const existingDesk of plan.desks) {
+      // Calculate rotation-adjusted bounds for existing desk
+      // For simplicity, we'll use a conservative approximation that
+      // doesn't account for rotation (since rotation complicates collision detection)
+      const existingDeskBounds = {
+        left: existingDesk.left,
+        right: existingDesk.left + this.DESK_WIDTH,
+        top: existingDesk.top,
+        bottom: existingDesk.top + this.DESK_HEIGHT
+      };
+      
+      // Check for overlap (standard AABB collision detection)
+      if (newDeskBounds.left < existingDeskBounds.right &&
+          newDeskBounds.right > existingDeskBounds.left &&
+          newDeskBounds.top < existingDeskBounds.bottom &&
+          newDeskBounds.bottom > existingDeskBounds.top) {
+        return true; // Overlap detected
+      }
+    }
+    
+    return false; // No overlap
   }
 }

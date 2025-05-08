@@ -10,12 +10,7 @@
 
   <!-- Sidebar - only visible for managers -->
   <div class="sidebar" [class.hidden]="!isManager">
-    <div class="sidebar-header">
-      <div class="sidebar-title">
-        <img src="assets/Sopra.png" alt="Sopra logo" class="sidebar-logo" />
-        Desk Booking
-      </div>
-    </div>
+    <!-- Sidebar header removed -->
     <div class="button-container">
       <button id="createPlanButton" class="primary-button" (click)="createPlan()" [disabled]="plans.length >= 1"
               aria-label="Create new plan" title="Create new plan">
@@ -46,7 +41,7 @@
     <div class="sidebar-footer">
       <div class="help-text">
         <i class="fas fa-info-circle"></i>
-        <span>Tip: Double-click on a desk to rotate it</span>
+        <span>Tip: Right-click on plan to add desk</span>
       </div>
     </div>
   </div>
@@ -66,53 +61,63 @@
            (click)="selectPlan(plan, $event)"
            (contextmenu)="createDeskAtPosition($event, plan)"
            (mousedown)="startPlanDragging($event, plan)">
-        <!-- Plan Resize Handles -->
-        <div *ngFor="let handle of resizeHandles" class="plan-resize-handle {{handle}}"
-             (mousedown)="startPlanResizing($event, plan, handle)">
-        </div>
-        <!-- Desks -->
-        <div *ngFor="let desk of plan.desks" class="desk"
-             [ngStyle]="{'left.px': desk.left, 'top.px': desk.top, 'transform': 'rotate(' + desk.rotation + 'deg)'}"
-             [class.selected]="desk === selectedDesk"
-             [class.available]="desk.available"
-             [class.reserved]="!desk.available"
-             (click)="selectDesk(desk, $event)"
-             (mousedown)="!isPlanConfirmed && startDeskDragging($event, desk)"
-             (dblclick)="!isPlanConfirmed && rotateDesk(desk)"
-             (contextmenu)="!isPlanConfirmed && onDeskContextMenu($event, desk)">
-          <!-- Remove desk button - only shown when not confirmed -->
-          <div *ngIf="!isPlanConfirmed" class="desk-remove-button" (click)="removeDesk(desk, $event)" title="Remove desk">
-            <i class="fas fa-times"></i>
-          </div>
-          <div class="desk-booking-info" *ngIf="isPlanConfirmed">
-            <!-- Day view - simple availability -->
-            <ng-container *ngIf="viewMode === 'day'">
-              <ng-container *ngIf="desk.available">
-                Available
-              </ng-container>
-              <ng-container *ngIf="!desk.available">
-                {{desk.employeeName}}
-                <span *ngIf="desk.duration === '4'">Half day</span>
-                <span *ngIf="desk.duration === '8'">Full day</span>
-              </ng-container>
-            </ng-container>
-            <!-- Week view - status for each day -->
-            <ng-container *ngIf="viewMode === 'week'">
-              <div class="week-status">
-                <div *ngFor="let date of weekDates" 
-                     class="status-indicator"
-                     [class.available]="isDeskAvailableOnDate(desk, date)"
-                     [class.reserved]="!isDeskAvailableOnDate(desk, date)"
-                     [title]="getDeskStatusForDate(desk, date)">
-                  <!-- Use short date format to display day of week -->
-                  <span>{{getDayInitial(date)}}</span>
-                </div>
+         <!-- Plan resize handles removed - using fixed dimensions -->
+         <!-- Desks with hover-triggered tooltips -->
+        <ng-container *ngIf="currentPlan">
+          <!-- Each desk with its own tooltip in a wrapper -->
+          <div *ngFor="let desk of currentPlan.desks" class="desk-container">
+            <!-- The desk element itself -->
+            <div class="desk"
+                 [ngStyle]="{'left.px': desk.left, 'top.px': desk.top, 'transform': 'rotate(' + desk.rotation + 'deg)'}"
+                 [class.selected]="desk === selectedDesk"
+                 [class.available]="desk.available"
+                 [class.reserved]="!desk.available"
+                 [attr.data-desk-id]="desk.id"
+                 (click)="selectDesk(desk, $event)"
+                 (mousedown)="!isPlanConfirmed && startDeskDragging($event, desk)"
+                 (dblclick)="!isPlanConfirmed && rotateDesk(desk)">
+                 
+              <!-- Remove desk button - only shown when not confirmed -->
+              <div *ngIf="!isPlanConfirmed" class="desk-remove-button" (click)="removeDesk(desk, $event)" title="Remove desk">
+                <i class="fas fa-times"></i>
               </div>
-            </ng-container>
-          </div>
+            </div>
+
+            <!-- Tooltip specifically linked to its desk via the container -->
+            <div *ngIf="isPlanConfirmed" class="desk-info-tooltip"
+                 [ngStyle]="{'left.px': desk.left + 8, 'top.px': desk.top - 48}"
+                 [class.available]="desk.available"
+                 [class.reserved]="!desk.available">
+                 
+              <!-- Day view - simple availability -->
+              <ng-container *ngIf="viewMode === 'day'">
+                <ng-container *ngIf="desk.available">
+                  Available
+                </ng-container>
+                <ng-container *ngIf="!desk.available">
+                  {{desk.employeeName}}, 
+                  <span *ngIf="desk.duration === '4'">Half day</span>
+                  <span *ngIf="desk.duration === '8'">Full day</span>
+                </ng-container>
+              </ng-container>
+              
+              <!-- Week view - status for each day -->
+              <ng-container *ngIf="viewMode === 'week'">
+                <div class="week-status">
+                  <div *ngFor="let date of weekDates" 
+                       class="status-indicator"
+                       [class.available]="isDeskAvailableOnDate(desk, date)"
+                       [class.reserved]="!isDeskAvailableOnDate(desk, date)"
+                       [title]="getDeskStatusForDate(desk, date)">
+                    <span>{{getDayInitial(date)}}</span>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
         </div>
+        </ng-container>
         <!-- Walls -->
-        <div *ngFor="let wall of plan.walls" class="wall"
+        <div *ngFor="let wall of currentPlan?.walls" class="wall"
              [ngStyle]="{'left.px': wall.left, 'top.px': wall.top, 'width.px': wall.width, 'height.px': wall.height}"
              [class.selected]="wall === selectedWall"
              (contextmenu)="!isPlanConfirmed && onWallContextMenu($event, wall)"
@@ -137,7 +142,7 @@
       <!-- Only show these items for managers -->
       <div class="status-item" *ngIf="isManager">
         <i class="fas fa-ruler"></i>
-        <span id="planDimensions">Plan: {{currentPlan ? (currentPlan.width + 'x' + currentPlan.height) : '0x0'}}</span>
+        <span id="planDimensions">Plan: {{currentPlan ? (roundDimension(currentPlan.width) + 'x' + roundDimension(currentPlan.height)) : '0x0'}}</span>
       </div>
       <div class="status-item" *ngIf="isManager">
         <i class="fas fa-chair"></i>
@@ -178,21 +183,32 @@
   <div class="booking-dialog" *ngIf="showBookingDialog">
     <div class="booking-dialog-content">
       <div class="booking-dialog-header">
-        <h3>Book Desk</h3>
-        <button class="close-button" (click)="closeBookingDialog()">
-          <i class="fas fa-times"></i>
+        <h3>{{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'Update Reservation' : 'Book Desk' }}</h3>
+        <button class="close-button" (click)="closeBookingDialog()" aria-label="Close dialog">
+          <i class="fas fa-xmark"></i>
         </button>
       </div>
       <div class="booking-dialog-body">
+        <!-- Status indicator -->
+        <div class="desk-status-indicator" *ngIf="selectedDeskForBooking">
+          <div class="status-indicator-label">Desk {{selectedDeskForBooking.id}}</div>
+          <div class="status-indicator-badge" 
+               [class.available]="selectedDeskForBooking.available" 
+               [class.reserved]="!selectedDeskForBooking.available">
+            {{selectedDeskForBooking.available ? 'Available' : 'Reserved'}}{{!selectedDeskForBooking.available && selectedDeskForBooking.employeeName ? ', ' + selectedDeskForBooking.employeeName : ''}}
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="bookingDuration">Duration</label>
           <select id="bookingDuration" [(ngModel)]="bookingDuration">
-            <option value="4">Half Day</option>
-            <option value="8">Full Day</option>
+            <option value="4">Half Day (4h)</option>
+            <option value="8">Full Day (8h)</option>
           </select>
         </div>
+
         <div class="form-group" *ngIf="viewMode === 'week'">
-          <label>Select Dates</label>
+          <label>Select Date</label>
           <div class="booking-week-days">
             <button *ngFor="let date of bookingWeekDates" 
                     class="booking-day-button"
@@ -207,16 +223,19 @@
               </span>
             </button>
           </div>
-          <div class="booking-hint">
+          <div class="booking-hint" *ngIf="viewMode === 'week'">
             <i class="fas fa-info-circle"></i>
-            <span>Click to select multiple days for booking</span>
+            <span>Select dates for your reservation</span>
           </div>
         </div>
       </div>
       <div class="booking-dialog-footer">
-        <button class="secondary-button" (click)="closeBookingDialog()">Cancel</button>
+        <button class="secondary-button" (click)="closeBookingDialog()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
         <button class="primary-button" (click)="confirmBooking()">
-          {{ !selectedDeskForBooking?.available ? 'Update' : 'Book' }}
+          <i class="fas fa-{{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'edit' : 'check' }}"></i>
+          {{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'Update' : 'Book' }}
         </button>
       </div>
     </div>
