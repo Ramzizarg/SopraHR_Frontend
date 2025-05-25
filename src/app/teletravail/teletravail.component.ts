@@ -1,20 +1,49 @@
 import { Component, OnInit, Renderer2, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { TeletravailForm, TeletravailService, TeletravailResponse } from './TeletravailService';
+import { TeletravailForm, TeletravailService, TeletravailResponse, TeletravailStatus, StatusUpdateRequest } from './TeletravailService';
+import { AuthService } from '../login/AuthService';
+import { ProfileService } from '../services/profile.service';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-teletravail',
   templateUrl: './teletravail.component.html',
-  styleUrls: ['./teletravail.component.css']
+  styleUrls: ['./teletravail.component.css', '../shared/header-footer.css']
 })
 export class TeletravailComponent implements OnInit {
+  // Contact modal properties
+  isContactModalOpen = false;
+  // Make TeletravailStatus enum available in the template
+  TeletravailStatus = TeletravailStatus;
+  // Form fields
   travailType: string = '';
   teletravailDate: string = '';
   travailMaison: string = '';
   selectedPays: string = '';
   selectedGouvernorat: string = '';
   reason: string = '';
+  rejectionReason: string = '';
+
+  // Role-based access
+  isManager: boolean = false;
+  isTeamLeader: boolean = false;
+
+  // Request management
+  userRequests: TeletravailResponse[] = [];
+  teamRequests: TeletravailResponse[] = [];
+  allRequests: TeletravailResponse[] = [];
+  selectedRequest: TeletravailResponse | null = null;
+  isSubmitting: boolean = false;
+  statusColors = {
+    [TeletravailStatus.PENDING]: 'bg-warning',
+    [TeletravailStatus.APPROVED]: 'bg-success',
+    [TeletravailStatus.REJECTED]: 'bg-danger'
+  };
+  statusLabels = {
+    [TeletravailStatus.PENDING]: 'En attente',
+    [TeletravailStatus.APPROVED]: 'Approuvé',
+    [TeletravailStatus.REJECTED]: 'Refusé'
+  };
 
   countries: string[] = [];
   filteredGouvernorats: string[] = [];
@@ -26,16 +55,23 @@ export class TeletravailComponent implements OnInit {
   today: string = ''; // Added to track today's date for min restriction
   isDateDisabled: boolean = false;
   existingRequestDates: string[] = [];
-  
+
   // Mobile menu properties
   isMobileMenuOpen: boolean = false;
   @ViewChild('navmenu') navMenu!: ElementRef;
   @ViewChild('mobileNavToggle') mobileNavToggle!: ElementRef;
 
+  // Profile photo properties
+  isProfilePopupOpen: boolean = false;
+  profilePhotoUrl: string | null = null;
+  currentUser: any = null;
+
   constructor(
     private teletravailService: TeletravailService,
+    private authService: AuthService,
     private router: Router,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private profileService: ProfileService
   ) {
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -80,10 +116,26 @@ export class TeletravailComponent implements OnInit {
       return;
     }
     console.log('TeletravailComponent: Loading page with token');
+    
+    // Check user roles
+    this.isManager = this.authService.isManager();
+    this.isTeamLeader = this.authService.isTeamLeader();
+    
+    // No need to set default view since we removed tabs
+    // Just loading all required data based on user role
+    
     this.calculateWeekDates();
     setInterval(() => this.calculateWeekDates(), 60000);
     this.loadCountries();
-    this.loadExistingRequests();
+    this.loadRequests();
+    
+    // Set up user info and profile photo
+    this.authService.currentUser.subscribe((user) => {
+      if (user) {
+        this.currentUser = user;
+        this.fetchProfilePhoto(user.id);
+      }
+    });
     
     // Setup window resize event to handle responsive behavior
     window.addEventListener('resize', () => {
@@ -116,9 +168,11 @@ export class TeletravailComponent implements OnInit {
     });
   }
 
-  private loadExistingRequests(): void {
+  private loadRequests(): void {
+    // Always load user requests for date validation in the form
     this.teletravailService.getUserRequests().subscribe({
       next: (requests) => {
+        this.userRequests = requests;
         this.existingRequestDates = requests
           .filter(r => {
             const date = new Date(r.teletravailDate);
@@ -147,8 +201,74 @@ export class TeletravailComponent implements OnInit {
         });
       }
     });
+    
+    // Load team requests for team leaders
+    if (this.isTeamLeader || this.isManager) {
+      this.teletravailService.getTeamRequests().subscribe({
+        next: (requests) => {
+          this.teamRequests = requests;
+          console.log('Team requests loaded:', this.teamRequests.length);
+        },
+        error: (err) => {
+          console.error('Failed to load team requests:', err);
+          this.handleApiError(err, 'Impossible de charger les demandes de l\'équipe.');
+        }
+      });
+    }
+    
+    // Load all requests for managers
+    if (this.isManager) {
+      this.teletravailService.getAllRequests().subscribe({
+        next: (requests) => {
+          this.allRequests = requests;
+          console.log('All requests loaded:', this.allRequests.length);
+        },
+        error: (err) => {
+          console.error('Failed to load all requests:', err);
+          this.handleApiError(err, 'Impossible de charger toutes les demandes.');
+        }
+      });
+    }
   }
-
+  
+  private handleApiError(err: any, defaultMessage: string): void {
+    let errorMessage = defaultMessage;
+    if (err.status === 401) {
+      errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+      this.logout();
+    } else if (err.status === 403) {
+      errorMessage = 'Vous n\'avez pas les permissions nécessaires pour cette action.';
+    } else if (err.status === 0) {
+      errorMessage = 'Serveur inaccessible. Vérifiez votre connexion.';
+    }
+    Swal.fire({
+      icon: 'error',
+      title: 'Erreur',
+      text: errorMessage,
+      confirmButtonText: 'OK'
+    });
+  }
+  
+  private updateRequestInLists(updatedRequest: TeletravailResponse): void {
+    // Update in user requests list
+    const userIndex = this.userRequests.findIndex(r => r.id === updatedRequest.id);
+    if (userIndex !== -1) {
+      this.userRequests[userIndex] = updatedRequest;
+    }
+    
+    // Update in team requests list
+    const teamIndex = this.teamRequests.findIndex(r => r.id === updatedRequest.id);
+    if (teamIndex !== -1) {
+      this.teamRequests[teamIndex] = updatedRequest;
+    }
+    
+    // Update in all requests list
+    const allIndex = this.allRequests.findIndex(r => r.id === updatedRequest.id);
+    if (allIndex !== -1) {
+      this.allRequests[allIndex] = updatedRequest;
+    }
+  }
+  
   calculateWeekDates(): void {
     const today = new Date();
     this.today = this.formatDate(today); // Set today's date
@@ -314,7 +434,54 @@ export class TeletravailComponent implements OnInit {
     }
   }
 
+  // Tab navigation removed - no longer needed
+  
+  openStatusModal(request: TeletravailResponse): void {
+    this.selectedRequest = request;
+    this.rejectionReason = '';
+  }
+  
+  updateRequestStatus(status: TeletravailStatus): void {
+    if (!this.selectedRequest) return;
+    
+    const update: StatusUpdateRequest = {
+      status: status,
+      rejectionReason: status === TeletravailStatus.REJECTED ? this.rejectionReason : undefined
+    };
+    
+    this.teletravailService.updateRequestStatus(this.selectedRequest.id, update).subscribe({
+      next: (updatedRequest) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès',
+          text: `La demande a été ${status === TeletravailStatus.APPROVED ? 'approuvée' : 'refusée'} avec succès.`,
+          confirmButtonText: 'OK'
+        });
+        
+        // Update the request in the appropriate list
+        this.updateRequestInLists(updatedRequest);
+        this.selectedRequest = null;
+        this.rejectionReason = '';
+      },
+      error: (err) => {
+        console.error(`Failed to ${status === TeletravailStatus.APPROVED ? 'approve' : 'reject'} request:`, err);
+        this.handleApiError(err, `Impossible de ${status === TeletravailStatus.APPROVED ? 'approuver' : 'refuser'} la demande.`);
+      }
+    });
+  }
+  
+  getStatusClass(status: TeletravailStatus): string {
+    return this.statusColors[status] || 'bg-secondary';
+  }
+  
+  getStatusLabel(status: TeletravailStatus): string {
+    return this.statusLabels[status] || 'Inconnu';
+  }
+  
   onSubmit(): void {
+    // Set isSubmitting flag to true when the form is being submitted
+    this.isSubmitting = true;
+    
     const requiresLocation = this.travailMaison === 'non';
     const requiresReason = this.travailType !== 'reguliere';
 
@@ -326,6 +493,7 @@ export class TeletravailComponent implements OnInit {
         confirmButtonText: 'OK',
         timer: 3000,
       });
+      this.isSubmitting = false;
       return;
     }
 
@@ -337,6 +505,7 @@ export class TeletravailComponent implements OnInit {
         confirmButtonText: 'OK',
         timer: 3000,
       });
+      this.isSubmitting = false;
       return;
     }
 
@@ -348,6 +517,7 @@ export class TeletravailComponent implements OnInit {
         confirmButtonText: 'OK',
         timer: 3000,
       });
+      this.isSubmitting = false;
       return;
     }
 
@@ -364,6 +534,7 @@ export class TeletravailComponent implements OnInit {
 
     this.teletravailService.submitRequest(formData).subscribe({
       next: (response) => {
+        this.isSubmitting = false;
         Swal.fire({
           icon: 'success',
           title: 'Succès',
@@ -372,10 +543,11 @@ export class TeletravailComponent implements OnInit {
           timer: 3000,
         }).then(() => {
           this.resetForm();
-          this.loadExistingRequests();
+          this.loadRequests();
         });
       },
       error: (err) => {
+        this.isSubmitting = false;
         console.error('Failed to submit teletravail request:', err);
         Swal.fire({
           icon: 'error',
@@ -412,5 +584,53 @@ export class TeletravailComponent implements OnInit {
     this.reason = '';
     this.filteredGouvernorats = [];
     this.isDateDisabled = false;
+  }
+  
+  // Contact modal methods
+  openContactModal() {
+    this.isContactModalOpen = true;
+    document.body.classList.add('modal-open');
+  }
+
+  closeContactModal() {
+    this.isContactModalOpen = false;
+    document.body.classList.remove('modal-open');
+  }
+
+  sendContactMessage() {
+    // Here you would implement actual message sending functionality
+    // For now, we'll just close the modal and show an alert
+    alert('Votre message a été envoyé. Nous vous contacterons bientôt.');
+    this.closeContactModal();
+  }
+
+  // Profile photo methods
+  toggleProfilePopup(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isProfilePopupOpen = !this.isProfilePopupOpen;
+  }
+
+  closeProfilePopup() {
+    this.isProfilePopupOpen = false;
+  }
+
+  /**
+   * Fetches the user's profile photo from the server
+   * @param userId The ID of the user
+   */
+  private fetchProfilePhoto(userId: number): void {
+    this.profileService.getUserProfilePhoto(userId).subscribe({
+      next: (response) => {
+        console.log('Profile photo fetched successfully:', response);
+        if (response && response.photoUrl) {
+          this.profilePhotoUrl = response.photoUrl;
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching profile photo:', error);
+        // No need to show an alert for this error as it's not user-initiated
+      }
+    });
   }
 }

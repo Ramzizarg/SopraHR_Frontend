@@ -1,0 +1,772 @@
+/* Header and Navigation Styles */
+.header {
+  background: linear-gradient(135deg, #3c4a67 0%, #1e293b 100%);
+  padding: 15px 0;
+  transition: all 0.5s;
+  z-index: 997;
+  width: 100%;
+  position: relative;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+/* Responsive header adjustments */
+@media (max-width: 1199px) {
+  .header {
+    padding: 12px 0;
+  }
+  
+  .logo-container {
+    max-width: 550px !important;
+  }
+  
+  .sopra-logo {
+    max-height: 120px !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .header {
+    padding: 10px 0;
+  }
+  
+  .logo-container {
+    max-width: 450px !important;
+  }
+  
+  .sopra-logo {
+    max-height: 100px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .header {
+    padding: 8px 0;
+  }
+  
+  .logo-container {
+    max-width: 320px !important;
+  }
+  
+  .sopra-logo {
+    max-height: 80px !important;
+  }
+  
+  .notification-icon, .user-profile {
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 576px) {
+  .header {
+    padding: 6px 0;
+  }
+  
+  .logo-container {
+    max-width: 230px !important;
+  }
+  
+  .sopra-logo {
+    max-height: 70px !important;
+  }
+  
+  .notification-icon, .user-profile {
+    font-size: 0.85em;
+  }
+  
+  .mobile-nav-toggle {
+    font-size: 24px;
+  }
+}
+
+.header .btn-logout,
+.btn-logout,
+.btn.btn-logout,
+.header .logout-button,
+.logout-button,
+.btn.logout-button {
+  background-color: #7b1dbd !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  padding: 8px 14px !important;
+  font-size: 0.9em !important;
+  border: none !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  text-transform: uppercase !important;
+  margin-right: 5px !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 8px rgba(123, 29, 189, 0.25) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Logout Button Text Styling - Highly Specific */
+.header .btn-logout .btn-text,
+.btn-logout .btn-text,
+.btn.btn-logout .btn-text,
+.header .logout-button .btn-text,
+.logout-button .btn-text,
+.btn.logout-button .btn-text,
+button.logout-button .btn-text,
+.sidebar-logout-container .logout-button .btn-text,
+.logout-container .logout-button .btn-text {
+  font-size: 0.85em !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  display: inline-block !important;
+  font-family: inherit !important;
+}
+
+.header .btn-logout:hover,
+.btn-logout:hover,
+.btn.btn-logout:hover,
+.header .logout-button:hover,
+.logout-button:hover,
+.btn.logout-button:hover {
+  background-color: #8e2ed6 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(123, 29, 189, 0.35) !important;
+}
+
+.header .logo {
+  transition: 0.3s;
+  margin-right: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.container-fluid {
+  width: 100%;
+  padding-right: 0;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+  max-width: 100%;
+}
+
+.container-fluid.container-lg {
+  max-width: 1140px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding-right: 0 !important;
+  overflow: visible !important;
+}
+
+.header .logo-container {
+  width: 230px !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-right: 20px !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  left: -92px !important;
+}
+
+.sopra-logo {
+  width: 100% !important;
+  max-height: 140px !important;
+  object-fit: contain !important;
+  height: auto;
+  filter: brightness(0) invert(1);
+  transition: all 0.3s ease;
+  padding: 5px 0;
+  max-width: none !important;
+}
+
+.sopra-logo:hover {
+  transform: scale(1.05);
+  filter: brightness(0) invert(1) drop-shadow(0 0 3px rgb(255, 255, 255));
+}
+
+/* Basic layout alignment without changing nav link design */
+.main-nav {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* User Controls Positioning */
+.user-controls {
+  margin-left: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  position: absolute !important;
+  right: -86px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  padding-right: 0 !important;
+  z-index: 998 !important;
+}
+
+.contact-icon,
+.notification-icon,
+.user-profile {
+  color: #ffffff !important;
+  font-size: 1.2rem !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 4px !important;
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.contact-icon:hover,
+.notification-icon:hover,
+.user-profile:hover {
+  transform: scale(1.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.contact-icon i,
+.notification-icon i,
+.user-profile i {
+  font-size: 1.4rem;
+}
+
+/* Responsive logo styles to ensure consistency across components */
+@media (max-width: 1200px) {  
+  .sopra-logo {
+    max-width: 260px;
+  }
+}
+
+@media (max-width: 991px) {
+  .sopra-logo {
+    max-width: 180px !important;
+  }
+}
+
+@media (max-width: 575px) {
+  .header .logo img {
+    max-width: 110px;
+  }
+}
+
+/* Navigation Styling */
+.main-nav {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 auto;
+  flex: 1;
+  padding-right: 20px;
+}
+
+.nav-links-container {
+  display: flex;
+  gap: 25px;
+  justify-content: center;
+  align-items: center;
+  padding: 0 15px;
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .nav-links-container {
+    gap: 5px;
+  }
+  
+  .nav-link {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}
+
+.nav-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 6px 12px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 6px;
+  margin: 0 2px;
+}
+
+.nav-link i {
+  font-size: 1em;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 3px;
+  background: white;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #ffffff;
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.4));
+}
+
+.nav-link:hover i,
+.nav-link.active i {
+  opacity: 1;
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6));
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 70%;
+}
+
+/* User Controls */
+.user-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.logout-container {
+  margin-right: 15px;
+}
+
+/* Mobile Navigation Styles */
+.mobile-nav-toggle {
+  color: #ffffff;
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 0;
+  transition: 0.5s;
+  position: relative;
+  z-index: 9999;
+}
+
+.mobile-nav-active {
+  overflow: hidden;
+}
+
+.mobile-nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+}
+
+.mobile-nav-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-nav {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  padding: 15px 20px;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+@media (max-width: 576px) {
+  .sidebar-nav {
+    width: 85%;
+    right: -85%;
+    padding: 12px 15px;
+  }
+}
+
+.sidebar-nav.active {
+  right: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar-logo {
+  height: 40px;
+  width: auto;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  padding: 12px 15px;
+  color: #1e293b;
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.nav-item i {
+  font-size: 18px;
+  margin-right: 10px;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.nav-item:hover, .nav-item.active {
+  background-color: #f1f5f9;
+  color: #3b82f6;
+}
+
+.nav-item:hover i, .nav-item.active i {
+  color: #3b82f6;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background-color: #e9ecef;
+  margin: 15px 0;
+}
+
+.sidebar-logout-container {
+  margin-top: 10px;
+  padding: 0 15px;
+}
+
+@media (max-width: 768px) {
+  .notification-icon {
+    position: relative;
+    right: 10px;
+    margin-left: 0;
+  }
+  
+  .user-profile {
+    position: relative;
+    right: 5px;
+    margin-left: 5px;
+  }
+  
+  /* Mobile menu toggle button gets less margin */
+  .d-lg-none.ms-1 {
+    margin-left: 0.5rem !important;
+  }
+}
+
+.notification-icon {
+  color: #ffffff;
+  font-size: 22px;
+  transition: all 0.3s ease;
+}
+
+.notification-icon:hover {
+  color: var(--accent-color, #9c27b0);
+  transform: scale(1.1);
+}
+
+.user-profile {
+  color: #fff;
+  font-size: 20px;
+  transition: color 0.3s ease;
+}
+
+.user-profile:hover {
+  color: var(--accent-color);
+}
+
+/* Footer Styles */
+.footer {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dark-background {
+  background: linear-gradient(135deg, #3c4a67 0%, #1e293b 100%);
+}
+
+.footer .footer-top {
+  padding-bottom: 15px;
+}
+
+.footer .footer-top h4 {
+  font-size: 16px;
+  font-weight: bold;
+  position: relative;
+  padding-bottom: 12px;
+  color: #ffffff;
+}
+
+.footer .footer-top .footer-links {
+  margin-bottom: 15px;
+}
+
+.footer .footer-top .footer-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer .footer-top .footer-links ul i {
+  padding-right: 2px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  line-height: 0;
+}
+
+.footer .footer-top .footer-links ul li {
+  padding: 5px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer .footer-top .footer-links ul li:first-child {
+  padding-top: 0;
+}
+
+.footer .footer-top .footer-links ul a {
+  color: rgba(255, 255, 255, 0.7);
+  transition: 0.3s;
+  display: inline-block;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.footer .footer-top .footer-links ul a:hover {
+  color: #ffffff;
+}
+
+.footer .footer-top .social-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 16px;
+  margin-right: 10px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.footer .footer-top .social-links a:hover {
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.footer .sitename {
+  color: #ffffff;
+}
+
+/* Responsive footer padding */
+@media (max-width: 991px) {
+  .footer .footer-top {
+    padding-bottom: 12px;
+  }
+  
+  .footer-about {
+    padding-left: 30px;
+  }
+}
+
+@media (max-width: 767px) {
+  .footer .footer-top {
+    padding-bottom: 10px;
+  }
+  
+  .footer-about {
+    padding-left: 15px;
+    padding-top: 3px;
+  }
+  
+  .footer .footer-top .footer-links {
+    margin-bottom: 10px;
+  }
+  
+  .footer .footer-top .footer-links ul li {
+    padding: 3px 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .footer .footer-top {
+    padding-bottom: 8px;
+  }
+  
+  .footer-about {
+    padding-left: 10px;
+  }
+  
+  .footer .footer-top .social-links a {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    margin-right: 6px;
+  }
+}
+
+/* Footer section positioning */
+.footer-about {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding-top: 5px;
+  padding-left: 50px;
+}
+
+.footer-about .logo {
+  margin-left: 0;
+  justify-content: flex-start;
+}
+
+.footer-about .social-links {
+  justify-content: flex-start;
+  margin-top: 2px !important;
+}
+
+/* Standardized footer logo styling */
+.footer-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Responsive Footer Adjustments */
+@media (max-width: 991px) {
+  .footer-about {
+    padding-left: 15px;
+    text-align: center;
+    align-items: center;
+  }
+  
+  .footer-about .social-links {
+    justify-content: center;
+  }
+  
+  .footer-logo {
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .footer .footer-top .footer-links ul li {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 767px) {
+  .footer-about, .footer-links, .footer-logo {
+    text-align: center;
+    align-items: center;
+    padding-left: 0;
+    margin-bottom: 20px;
+  }
+  
+  .footer-about .logo {
+    justify-content: center;
+  }
+  
+  .footer-about .sitename {
+    margin-left: 0 !important;
+  }
+}
+
+.footer-logo .logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.footer-company-logo {
+  max-width: 140px;
+  height: auto;
+  display: block;
+  filter: brightness(1.05);
+  transition: transform 0.3s ease;
+}
+
+.footer-company-logo:hover {
+  transform: scale(1.05);
+}
+
+.copyright-text {
+  margin-top: 5px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
+  text-align: center;
+  padding: 5px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+}
+
+.copyright-text .sitename {
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.8px;
+}
+
+.scroll-top {
+  position: fixed;
+  visibility: hidden;
+  opacity: 0;
+  right: 15px;
+  bottom: 15px;
+  z-index: 99999;
+  background: #e03a3c;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  transition: all 0.4s;
+  color: white;
+}
+
+.scroll-top i {
+  font-size: 24px;
+  color: #ffffff;
+  line-height: 0;
+}
+
+.scroll-top:hover {
+  background: #7b1dbd;
+  color: #ffffff;
+}
+
+.scroll-top.active {
+  visibility: visible;
+  opacity: 1;
+}

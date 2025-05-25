@@ -1,6 +1,9 @@
 :host {
   display: block;
   min-height: 100vh;
+  --accent-color: #7b1dbd;
+  --accent-color-rgb: 123, 29, 189;
+  --contrast-color: #ffffff;
   --primary-color: #3b82f6;
   --primary-hover: #2563eb;
   --secondary-color: #64748b;
@@ -29,6 +32,222 @@
   color: var(--text-primary);
   overflow-x: hidden;
   position: relative;
+}
+
+/* Responsive Header Styles */
+.header {
+  padding: 15px 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  background-color: transparent;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  box-shadow: none;
+  width: 100%;
+}
+
+.header .container {
+  padding-right: 0;
+}
+
+.header .logo {
+  padding: 0;
+  margin: 0;
+  justify-content: flex-start;
+  margin-right: auto;
+  order: 0;
+}
+
+.logo-container {
+  width: 230px;
+  max-width: 100%;
+}
+
+.sopra-logo {
+  width: 100%;
+  height: auto;
+  filter: brightness(0) invert(1);
+  transition: all 0.3s ease;
+  padding: 5px 0;
+}
+
+.sopra-logo:hover {
+  transform: scale(1.05);
+  filter: brightness(0) invert(1) drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+  margin: 0 20px;
+}
+
+.nav-links-container {
+  display: flex;
+  gap: 25px;
+  justify-content: center;
+  align-items: center;
+  padding: 0 15px;
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .nav-links-container {
+    gap: 5px;
+  }
+  
+  .nav-link {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}
+
+.navmenu ul {
+  display: flex;
+  list-style: none;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-link {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  color: var(--contrast-color);
+  font-weight: 700;
+  padding: 6px 12px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 6px;
+  margin: 0 2px;
+}
+
+.nav-link i {
+  font-size: 1em;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.navmenu .nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 3px;
+  background: white;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #ffffff;
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.4));
+}
+
+.nav-link:hover i,
+.nav-link.active i {
+  opacity: 1;
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6));
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 3px;
+  background: white;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 70%;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+  padding-right: 0;
+  position: absolute;
+  right: 0;
+}
+
+.user-profile {
+  color: #fff;
+  font-size: 20px;
+  transition: color 0.3s ease;
+}
+
+.user-profile:hover {
+  color: var(--accent-color);
+}
+
+.logout-container {
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.btn-logout {
+  background-color: var(--accent-color);
+  color: var(--contrast-color);
+  font-weight: 600;
+  padding: 8px 16px;
+  font-size: 0.9em;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-left: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(var(--accent-color-rgb), 0.25);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+
+.btn-logout:hover {
+  background-color: #8e2ed6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-logout:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-toggle {
+  display: none; /* Hide on desktop */
+  font-size: 24px;
+  line-height: 1;
+  color: #ffffff;
+  transition: 0.3s;
+  position: relative;
+  margin-left: 10px;
+  z-index: 9999;
+  background-color: transparent;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-nav-toggle:hover {
+  background-color: transparent;
+  opacity: 0.8;
 }
 
 :host::before {
@@ -61,11 +280,6 @@
   opacity: 0.5;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 
 body {
   font-family: 'Inter', sans-serif;
@@ -106,10 +320,28 @@ body::after {
   opacity: 0.7;
 }
 
-.app-container {
-  position: relative;
-  min-height: 100vh;
+html {
+  scroll-behavior: smooth;
+}
+
+body.reservation-page {
+  padding-top: 0;
+  margin: 0;
   display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+  will-change: scroll;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-container {
+  display: flex;
+  position: relative;
+  flex: 1;
+  overflow: hidden;
   flex-direction: column;
   padding: 0.5rem; /* Reduced container padding */
   gap: 1rem; /* Reduced gap */
@@ -119,28 +351,36 @@ body::after {
   position: relative;
   width: 100%;
   height: 100%;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease-out;
   display: flex;
   flex-direction: column;
   align-items: center; /* Center horizontally */
   justify-content: center; /* Center vertically */
   padding: 0.25rem; /* Minimal padding */
   gap: 0.5rem; /* Reduced gap */
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  contain: layout style;
 }
 
 /* For managers (with sidebar visible) */
 .main-content-wrapper:not(.centered) #designContainer {
   margin-left: auto;
   margin-right: auto;
-  width: calc(100% - 240px); /* Fixed width */
+  width: 1150px; /* Fixed width based on plan dimensions */
   position: relative;
   left: -90px; /* Reduced left offset to move right */
+}
+
+/* Add spacing for all main-content-wrapper variants */
+.main-content-wrapper {
+  margin-top: 2rem; /* Consistent space between header and all content */
 }
 
 .main-content-wrapper:not(.centered) .status-bar {
   margin-left: auto;
   margin-right: auto;
-  width: calc(100% - 240px); /* Fixed width */
+  width: 1150px; /* Fixed width to match design container */
   position: relative;
   left: -90px; /* Reduced left offset to move right */
 }
@@ -149,20 +389,21 @@ body::after {
 .main-content-wrapper.centered {
   align-items: center;
   justify-content: center; /* Center vertically too */
-  display: flex;
   height: 95vh; /* Use almost full viewport height */
+  margin-top: 2rem; /* Increased space between header and content */
+  margin-bottom: 2.5rem; /* Space between content and footer */
 }
 
 .main-content-wrapper.centered #designContainer {
   margin-left: auto;
   margin-right: auto;
-  width: calc(100% - 3rem); /* Wider since there's no sidebar */
+  width: 1150px; /* Fixed width to match manager view */
 }
 
 .main-content-wrapper.centered .status-bar {
   margin-left: auto;
   margin-right: auto;
-  width: calc(100% - 3rem); /* Match the design container width */
+  width: 1150px; /* Fixed width to match design container */
 }
 
 .design-container {
@@ -179,22 +420,26 @@ body::after {
 
 #designContainer {
   position: relative;
-  width: calc(100% - 220px - 2rem); /* Adjusted width for manager view */
-  height: calc(100vh - 2rem - 80px); /* Slightly larger height */
-  max-height: calc(100vh - 2rem - 80px);
+  width: 1150px; /* Fixed width - same as the plan width */
+  height: 600px; /* Increased height for better visibility */
+  display: flex;
+  justify-content: center;
+  align-items: center; /* This centers the empty-state vertically */
   background-color: var(--card-background);
   border-radius: 0.75rem;
   box-shadow: var(--shadow-xl);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease-out, margin 0.2s ease-out;
   padding: 0.5rem; /* Reduced padding */
-  margin: 0 auto; /* Center horizontally */
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(10px);
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.95);
-  /* Force redraw on height changes */
+  /* Optimizations for smoother performance */
   backface-visibility: hidden;
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  contain: content;
+  /* Add consistent zoom behavior */
+  transform-origin: center center;
 }
 
 /* For non-manager users, hide sidebar but keep design container size */
@@ -204,23 +449,6 @@ body::after {
   visibility: hidden;
   opacity: 0;
 }
-
-/* Remove duplicate styles for .main-content-wrapper.centered (already defined above) */
-/* .main-content-wrapper.centered {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-} */
-
-/* Remove duplicate styles for .main-content-wrapper.centered #designContainer (already defined above) */
-/* .main-content-wrapper.centered #designContainer {
-  margin-left: auto;
-  margin-right: auto;
-} */
 
 /* Remove duplicate styles for .main-content-wrapper.centered .status-bar (already defined above) */
 /* .main-content-wrapper.centered .status-bar {
@@ -232,29 +460,33 @@ body::after {
 #designContainer.shifted {
   --content-width: calc(100% - 3rem - 3rem);
   --sidebar-width: 0;
-  margin-left: 4.5rem;
+  margin-left: 240px; /* Match sidebar width + padding */
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.2s ease-out, margin-left 0.2s ease-out;
 }
 
 .sidebar {
-  position: fixed !important; /* Ensure fixed positioning */
-  top: 0;
+  position: absolute; /* Changed from fixed to absolute for scroll behavior */
+  top: 76px; /* Header height to position below header */
   left: 0;
-  width: 220px; /* Reduced width */
-  height: 100vh;
-  background-color: transparent;
+  width: 220px; /* Maintained width */
+  height: calc(100vh - 76px - 50px); /* Adjust for header and footer heights */
+  background-color: transparent; /* Transparent background */
   border-right: none;
-  padding: 1rem; /* Reduced padding */
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* Reduced gap */
-  transition: none; /* Removed transition for better stability */
-  z-index: 9999; /* Increased z-index to ensure it stays on top */
-  overflow: hidden; /* Hide both horizontal and vertical scrollbars */
+  gap: 1rem;
+  z-index: 999; /* Keep high z-index but below modal overlays */
+  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
   box-shadow: none;
+  backdrop-filter: none;
   will-change: transform; /* Performance optimization */
   backface-visibility: hidden; /* Prevents flickering */
-  transform: translateZ(0); /* Forces hardware acceleration */
-  -webkit-transform: translateZ(0); /* For Safari support */
+  transform: translate3d(0, 0, 0); /* Forces hardware acceleration with 3D transform */
+  -webkit-transform: translate3d(0, 0, 0); /* For Safari support */
+  contain: layout style paint; /* Containment for better performance */
 }
 
 .sidebar-header {
@@ -353,7 +585,7 @@ body::after {
   width: 200px; /* Reduced container width */
 }
 
-button {
+button:not(.logout-button) {
   padding: 0.75rem 1rem; /* Reduced padding */
   border: none;
   border-radius: 0.75rem;
@@ -369,7 +601,7 @@ button {
   width: 100%; /* Full width of container */
 }
 
-button:not(:disabled):hover {
+button:not(.logout-button):not(:disabled):hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
@@ -556,19 +788,26 @@ button:hover:not(:disabled) i {
   width: 400px;
   height: 300px;
   background-color: #b1dff1;
-  border: 2px solid transparent;
-  overflow: hidden;
-  cursor: move;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border: 2px solid #64b5f6;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   z-index: 2;
   top: 0;
   left: 0;
   transform-origin: center center;
-  transition: all 0.2s ease;
+  transition: transform 0.3s ease, left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease;
   will-change: transform, left, top, width, height;
   -webkit-user-select: none;
   user-select: none;
   touch-action: none;
+  /* Plan will scale appropriately based on parent container */
+  max-width: 100%;
+  max-height: 100%;
+  /* Ensure smooth scaling with hardware acceleration */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
+  transform: translate3d(0, 0, 0);
 }
 
 .plan.active {
@@ -958,20 +1197,74 @@ button:hover:not(:disabled) i {
   position: relative;
   width: var(--content-width, calc(100% - 300px - 3rem));
   background: rgba(255, 255, 255, 0.95);
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 0.75rem;
   box-shadow: var(--shadow-xl);
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   align-items: center;
+  justify-content: space-between;
   transition: all 0.3s ease;
   border: 1px solid var(--border-color);
   z-index: 100;
   flex-wrap: nowrap;
   white-space: nowrap;
-  overflow-x: auto;
+  overflow: visible;
   backdrop-filter: blur(10px);
   margin-left: var(--sidebar-width, 340px);
+  margin-bottom: 2rem; /* Added space between status bar and footer */
+  max-width: calc(100% - 2.5rem); /* Ensure the status bar stays within screen boundaries */
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 9px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 1;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-indicator.available {
+  background-color: #10b981;
+}
+
+.status-indicator.reserved {
+  background-color: #ef4444;
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.status-item-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  margin-right: 0.4rem;
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  padding-right: 0.4rem;
 }
 
 .status-bar.shifted {
@@ -985,7 +1278,167 @@ button:hover:not(:disabled) i {
   display: flex;
   align-items: center;
   margin-left: auto;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  max-width: none;
+  overflow: visible;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+/* View mode toggle styles */
+.view-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0;
+  margin-right: 0.5rem;
+  background: var(--background-color);
+  padding: 0.15rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+  transform: scale(0.9);
+}
+
+.view-mode-button {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 3px 6px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  font-size: 10px;
+  justify-content: center;
+}
+
+.view-mode-button i {
+  font-size: 0.85rem;
+  margin-right: 3px;
+}
+
+.view-mode-button.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.view-mode-button:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Date navigation styles */
+.date-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0;
+  padding: 0.25rem 0.5rem;
+  background: var(--background-color);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  min-width: fit-content;
+  max-width: 100%;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.date-display {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 120px;
+  text-align: center;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-left: 2px solid #f59e0b;
+  padding-left: 0.5rem;
+}
+
+.date-nav-button {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.date-nav-button.small {
+  width: 22px;
+  height: 22px;
+  font-size: 9px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+}
+
+.date-nav-button.small:hover:not([disabled]) {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.date-nav-button:hover:not([disabled]) {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.date-nav-button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* View mode toggle position adjustment */
+.view-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 1rem; /* Add margin to the right to push it left */
+}
+
+.view-mode-button {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--background-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.view-mode-button:hover {
+  background: var(--card-background);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.view-mode-button.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
 }
 
 .status-item {
@@ -1007,6 +1460,42 @@ button:hover:not(:disabled) i {
   font-size: 1rem;
   color: var(--text-primary);
   transition: all 0.2s ease;
+}
+
+/* Status indicator styles */
+.status-indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+.status-indicator.available {
+  background-color: #22c55e; /* Green for available */
+  box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+}
+
+.status-indicator.reserved {
+  background-color: #ef4444; /* Red for reserved */
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+}
+
+/* Count badge styles */
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0 0.25rem;
+  border-radius: 1rem;
+  margin-left: 0.5rem;
+  box-shadow: var(--shadow-xs);
 }
 
 .status-item:hover {
@@ -1073,18 +1562,25 @@ button:hover:not(:disabled) i {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: 0;
-  padding: 0.5rem;
+  margin-left: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: var(--background-color);
   border-radius: 0.75rem;
   border: 1px solid var(--border-color);
   min-width: fit-content;
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.date-navigation:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .date-nav-button {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   background: var(--card-background);
   border: 1px solid var(--border-color);
@@ -1094,16 +1590,18 @@ button:hover:not(:disabled) i {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   flex-shrink: 0;
   padding: 0;
+  box-shadow: var(--shadow-xs);
 }
 
 .date-nav-button:hover:not(:disabled) {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
-  transform: scale(1.1);
+  transform: scale(1.05) translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .date-nav-button:disabled {
@@ -1114,45 +1612,28 @@ button:hover:not(:disabled) i {
 
 .date-display {
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
-  min-width: 120px;
+  min-width: 130px;
   text-align: center;
-  padding: 0 0.5rem;
+  padding: 0.25rem 0.75rem;
   white-space: nowrap;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--card-background);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .main-content-wrapper {
-    padding: 0.75rem;
-  }
-
-  #designContainer {
-    --content-width: calc(100% - 3rem);
-    --sidebar-width: 0;
-    margin-left: 4.5rem;
-    padding: 0.75rem;
-  }
-
-  .status-bar {
-    --content-width: calc(100% - 3rem);
-    --sidebar-width: 0;
-    margin-left: 4.5rem;
-    padding: 0.5rem 0.75rem;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .status-item {
-    width: 100%;
-    justify-content: space-between;
-  }
+.date-display:hover {
+  background: var(--card-hover-background, #f8fafc);
+  box-shadow: var(--shadow-xs);
 }
+
+/* Responsive styles removed for standardization */
 
 /* Loading Overlay */
 .loading-overlay {
@@ -1190,11 +1671,16 @@ button:hover:not(:disabled) i {
 }
 
 /* Empty State */
-.empty-state {
+.booking-dialog-content {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.95);
+  transition: transform 0.3s ease;
+}
+
+.booking-dialog.show .booking-dialog-content {
+  transform: translate(-50%, -50%) scale(1);
   text-align: center;
   color: var(--text-secondary);
 }
@@ -1237,21 +1723,70 @@ button:hover:not(:disabled) i {
   color: var(--primary-color);
 }
 
-/* Responsive Design */
+/* Responsive Design - Maintain fixed size with scaling on smaller screens */
+@media (max-width: 1200px) {
+  .main-content-wrapper:not(.centered) #designContainer,
+  .main-content-wrapper:not(.centered) .status-bar {
+    left: -60px; /* Reduce offset for medium screens */
+  }
+  
+  /* Add a container to enable horizontal scrolling if needed */
+  .main-content-wrapper {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 992px) {
+  .main-content-wrapper:not(.centered) #designContainer,
+  .main-content-wrapper:not(.centered) .status-bar {
+    left: -30px; /* Further reduce offset for smaller screens */
+  }
+  
+  .sidebar {
+    width: 180px; /* Slightly narrower sidebar */
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     width: 100%;
     max-width: 300px;
   }
 
-  #designContainer {
-    --content-width: calc(100% - 3rem);
-    --sidebar-width: 0;
+  /* Fixed size maintained, but centered */
+  #designContainer, .status-bar {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    left: 0 !important; /* Remove left offset completely */
   }
+  
+  /* Scale down for mobile when width is too small */
+  .main-content-wrapper {
+    transform-origin: center top;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    display: flex;
+  }
+  
+  /* Mobile-specific plan scaling */
+  .plan {
+    transform-origin: center center;
+  }
+}
 
-  .status-bar {
-    --content-width: calc(100% - 3rem);
-    --sidebar-width: 0;
+/* Small screens (mobile) */
+@media (max-width: 576px) {
+  /* Apply scaling transform for very small screens */
+  .main-content-wrapper {
+    transform: scale(0.8);
+    height: auto;
+    padding-bottom: 2rem;
+  }
+  
+  /* Keep desk size proportional */
+  .desk {
+    transform-origin: center center;
   }
 }
 
@@ -1307,6 +1842,14 @@ button:hover:not(:disabled) i {
   top: 0;
   left: 0;
   width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.booking-dialog.show {
+  opacity: 1;
+  visibility: visible;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
@@ -1328,31 +1871,43 @@ button:hover:not(:disabled) i {
 .booking-dialog-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 1.5rem;
+  position: relative;
+  padding: 0 10px;
 }
 
 .close-button {
   background: transparent;
-  border: none;
-  width: 32px;
-  height: 32px;
+  border: 1px solid var(--border-color);
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #e53e3e;
+  color: var(--text-secondary);
   transition: all 0.2s ease;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  box-shadow: var(--shadow-xs);
+  opacity: 0.8;
 }
 
 .close-button:hover {
-  background-color: rgba(229, 62, 62, 0.1);
-  color: #c53030;
+  background-color: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: var(--shadow-sm);
 }
 
 .close-button i {
-  font-size: 16px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .booking-dialog-header h3 {
@@ -1511,6 +2066,7 @@ button:hover:not(:disabled) i {
   transition: all 0.2s ease;
   position: relative;
   height: 60px;
+  width: 200%;
 }
 
 .booking-day-button:hover:not(:disabled) {
@@ -1525,20 +2081,185 @@ button:hover:not(:disabled) i {
   font-weight: 500;
 }
 
-.booking-day-name {
+.booking-day-button.user-reserved {
+  background-color: rgba(0, 102, 204, 0.15);
+  border-color: #0066cc;
+  position: relative;
+}
+
+.booking-day-button.user-reserved:hover {
+  background-color: rgba(0, 102, 204, 0.25);
+}
+
+.booking-day-button.desk-reserved {
+  background-color: rgba(221, 51, 51, 0.15);
+  border-color: #dd3333;
+  position: relative;
+  opacity: 0.8;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.booking-day-button.own-reservation {
+  background-color: rgba(236, 72, 153, 0.15);
+  border-color: #ec4899;
+  cursor: pointer;
+  position: relative;
+}
+
+.booking-day-button.own-reservation::after {
+  content: 'Your Booking';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ec4899;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(236, 72, 153, 0.3);
+  white-space: nowrap;
+}
+
+.booking-day-button.own-reservation:hover {
+  background-color: rgba(236, 72, 153, 0.25);
+  box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.4);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}
+
+.reserved-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #0066cc;
   font-size: 0.8rem;
+}
+
+.desk-reserved-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #dd3333;
+  font-size: 0.8rem;
+}
+
+.user-reservation-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #339933;
+  font-size: 0.8rem;
+}
+
+/* Make own reservations appear clearly different */
+.booking-day-button.own-reservation {
+  background-color: #e6ffe6;
+  border-color: #339933;
+  color: #006600;
+  cursor: pointer;
+}
+
+/* Booking actions section with deselect button */
+.booking-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.action-button {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: #f0f0f0;
+  border-color: #ccc;
+}
+
+.action-button i {
+  margin-right: 5px;
+  color: #777;
+}
+
+.booking-info {
+  margin: 10px 0;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.booking-info p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.booking-info .warning {
+  color: #dd3333;
+  font-weight: 500;
+}
+
+.booking-info .success {
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* Dialog loading overlay styles */
+.dialog-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.dialog-loading-overlay .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spinner 0.8s linear infinite;
+  margin-bottom: 15px;
+}
+
+.dialog-loading-overlay p {
+  color: var(--text-primary);
+  font-weight: 500;
+  margin: 10px 0 0;
+}
+
+.booking-day-name {
+  font-size: 0.95rem;
+  font-weight: 500;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+  margin-bottom: 4px;
 }
 
 .booking-week-days {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  row-gap: 1rem;
 }
 
 .booking-hint {
@@ -1572,6 +2293,329 @@ button:hover:not(:disabled) i {
 
 .desk.reserved::before {
   background: var(--danger-color);
+}
+
+/* === Contact Modal Styles === */
+.contact-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+.contact-modal.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.contact-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.contact-modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 680px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  transition: all 0.3s ease;
+  z-index: 10000;
+}
+
+.contact-modal.active .contact-modal-content {
+  transform: scale(1);
+}
+
+.contact-modal-header {
+  background: linear-gradient(135deg, #7b1dbd, #9e4ad7);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contact-modal-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.contact-modal-header h4::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  background-color: white;
+  border-radius: 2px;
+  margin-right: 8px;
+}
+
+.contact-modal .close-button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  opacity: 0.8;
+  padding: 0;
+  margin: 0;
+}
+
+.contact-modal .close-button:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.contact-modal-body {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .contact-modal-body {
+    flex-direction: row;
+  }
+}
+
+.contact-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.contact-item i {
+  font-size: 18px;
+  color: #7b1dbd;
+  margin-top: 2px;
+}
+
+.contact-item span {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.5;
+}
+
+.contact-form {
+  flex: 2;
+}
+
+.contact-form h5 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #555;
+}
+
+.form-group label.required::after {
+  content: '*';
+  color: #ff0000;
+  margin-left: 4px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-control:focus {
+  border-color: #7b1dbd;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(123, 29, 189, 0.1);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-note {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.form-required-note {
+  font-size: 12px;
+  color: #777;
+  display: flex;
+  align-items: center;
+}
+
+.form-required-note span {
+  color: #ff0000;
+  margin-right: 4px;
+}
+
+/* Contact Icon */
+.contact-icon {
+  color: white;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-icon:hover {
+  color: #f8f8f8;
+  transform: scale(1.1);
+}
+
+.contact-modal .send-button {
+  background: rgba(123, 29, 189, 0.85);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(123, 29, 189, 0.2);
+  min-width: unset;
+  width: auto !important;
+  max-width: fit-content;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-modal .send-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.6s ease;
+}
+
+.contact-modal .send-button i {
+  margin-right: 8px;
+  font-size: 13px;
+}
+
+.contact-modal .send-button:hover {
+  background: rgba(123, 29, 189, 0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(123, 29, 189, 0.25);
+}
+
+.contact-modal .send-button:hover::before {
+  left: 100%;
+}
+
+.contact-modal .send-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(123, 29, 189, 0.2);
+  background: rgba(123, 29, 189, 1);
+}
+
+.form-required-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: #777;
+  margin-top: 15px;
+}
+
+.form-required-note span {
+  color: #7b1dbd;
+  font-weight: bold;
+}
+
+/* For very small screens */
+@media (max-width: 480px) {
+  .contact-modal-content {
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .contact-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .contact-item, .form-control, .send-button {
+    font-size: 12px;
+  }
+  
+  .contact-modal-header h4 {
+    font-size: 16px;
+  }
+}
+
+/* Ensure modal doesn't overflow on very small screens */
+body.modal-open {
+  overflow: hidden;
 }
 
 .desk-booking-info {
@@ -1771,6 +2815,43 @@ button:hover:not(:disabled) i {
   font-size: 0.875rem;
 }
 
+/* Form group styling for booking dialog */
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  display: block;
+  text-align: left;
+  width: 100%;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.375rem;
+  background-color: #fff;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 /* Week separator with gradient */
 .booking-week-days::after {
   content: '';
@@ -1834,34 +2915,6 @@ button:hover:not(:disabled) i {
   }
 }
 
-.btn-logout {
-  background-color: var(--accent-color);
-  color: var(--contrast-color);
-  font-weight: 600;
-  padding: 8px 16px;
-  font-size: 0.9em;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-transform: uppercase;
-  margin-left: 20px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-logout:hover {
-  background-color: #d13a3a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.btn-logout:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
-}
 
 /* Week view availability indicators */
 .week-status {
@@ -1964,6 +3017,54 @@ button:hover:not(:disabled) i {
   box-shadow: 0 0 10px rgba(255, 193, 7, 0.8); /* Yellow glow for precise mode */
   outline: 1px dashed rgba(255, 193, 7, 0.6);
   cursor: crosshair;
+}
+
+/* Empty State Styling */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 500px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px dashed var(--primary-color);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.empty-state:hover {
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-hover);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  opacity: 0.8;
+}
+
+.empty-state h3 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 400px;
 }
 
 /* Navigation Link Styles */

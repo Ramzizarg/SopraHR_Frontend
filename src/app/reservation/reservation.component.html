@@ -1,6 +1,115 @@
 <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Réservations</title>
+  <meta name="description" content="Réservation de postes chez Sopra HR">
+  <meta name="keywords" content="Réservation, Desk, Sopra HR">
+
+  <!-- Favicons -->
+  <link href="../../assets/img/Sopra.png" rel="icon">
+  <link href="../../assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head>
+
+<body class="reservation-page">
+  <!-- Header -->
+  <header id="header" class="header sticky-top">
+    <div class="container-fluid container-lg">
+      <div class="d-flex align-items-center justify-content-between">
+
+        <!-- Logo (visible on all screens) -->
+        <a href="/home" class="logo d-flex align-items-center">
+          <div class="logo-container" style="max-width: 650px; height: auto;">
+            <img src="../../assets/img/sopra_hr.png" 
+                alt="Sopra HR Software" 
+                loading="eager"
+                class="sopra-logo img-fluid"
+                style="max-height: 140px; object-fit: contain;">
+          </div>
+        </a>
+        
+        <!-- Main Navigation - shown on desktop, hidden on mobile -->
+        <div class="main-nav d-none d-lg-flex">
+          <div class="nav-links-container d-flex align-items-center">
+            <a href="/home" class="nav-link"><i class="bi bi-house-door me-1"></i>Page d'accueil</a>
+            <a href="/teletravail" class="nav-link"><i class="bi bi-laptop me-1"></i>Télétravail</a>
+            <a href="/reservation" class="nav-link active"><i class="bi bi-calendar-check me-1"></i>Réservations</a>
+            <a href="/planning" class="nav-link"><i class="bi bi-calendar-week me-1"></i>Planning</a>
+          </div>
+        </div>
+        
+        <!-- User Controls -->
+        <div class="user-controls d-flex align-items-center">
+          <div class="logout-container me-2 d-none d-lg-block">
+            <button class="logout-button" (click)="logout()"><i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span></button>
+          </div>
+          <a href="javascript:void(0)" class="contact-icon ms-2" (click)="openContactModal()">
+            <i class="bi bi-envelope-fill"></i>
+          </a>
+          <a href="/notifications" class="notification-icon ms-2">
+            <i class="bi bi-bell-fill"></i>
+          </a>
+          <app-profile-header></app-profile-header>
+          
+          <!-- Mobile menu toggle button -->
+          <a href="javascript:void(0)" class="d-lg-none ms-3">
+            <i #mobileNavToggle class="mobile-nav-toggle bi" style="color: #ffffff !important;"
+               [class.bi-list]="!isMobileMenuOpen" 
+               [class.bi-x-lg]="isMobileMenuOpen"
+               (click)="toggleMobileMenu($event)"></i>
+          </a>
+        </div>
+        
+      </div>
+      
+      <!-- Mobile Nav Menu (Removed duplicate) -->
+    </div>
+    
+    <!-- GitHub-style Mobile Navigation Sidebar -->
+    <div class="mobile-nav-overlay d-lg-none" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu($event)"></div>
+    <aside #navmenu class="sidebar-nav d-lg-none" [class.active]="isMobileMenuOpen">
+      <div class="sidebar-header">
+        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Sopra HR Software" class="sidebar-logo">
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="/home" class="nav-item">
+          <i class="bi bi-house-door"></i>
+          <span>Page d'accueil</span>
+        </a>
+        <a href="/teletravail" class="nav-item">
+          <i class="bi bi-laptop"></i>
+          <span>Télétravail</span>
+        </a>
+        <a href="/reservation" class="nav-item active">
+          <i class="bi bi-calendar-check"></i>
+          <span>Réservations</span>
+        </a>
+        <a href="/planning" class="nav-item">
+          <i class="bi bi-calendar-week"></i>
+          <span>Planning</span>
+        </a>
+        <div class="sidebar-divider"></div>
+        
+        <div class="sidebar-logout-container">
+          <button class="logout-button" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span>
+          </button>
+        </div>
+      </nav>
+    </aside>
+  </header>
+
 <!-- Main Container -->
-<div class="app-container">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" *ngIf="isLoading">
@@ -74,6 +183,7 @@
                  [class.reserved]="!desk.available"
                  [attr.data-desk-id]="desk.id"
                  (click)="selectDesk(desk, $event)"
+                 (contextmenu)="selectDesk(desk, $event)"
                  (mousedown)="!isPlanConfirmed && startDeskDragging($event, desk)"
                  (dblclick)="!isPlanConfirmed && rotateDesk(desk)">
                  
@@ -131,47 +241,60 @@
 
     <!-- Status Bar -->
     <div class="status-bar" #statusBar>
-      <div class="status-item">
-        <div class="status-indicator available"></div>
-        <span>Available</span>
+      <div class="status-left">
+        <div class="status-item-group">
+          <div class="status-item">
+            <div class="status-indicator available"></div>
+            <span>Libre</span>
+            <span class="count-badge">{{getAvailableDeskCount()}}</span>
+          </div>
+          <div class="status-item">
+            <div class="status-indicator reserved"></div>
+            <span>Réservé</span>
+            <span class="count-badge">{{getReservedDeskCount()}}</span>
+          </div>
+        </div>
+        
+        <div class="status-item-group">
+          <!-- Show desk count for all users -->
+          <div class="status-item">
+            <i class="fas fa-chair"></i>
+            <span id="deskCount">{{currentPlan ? currentPlan.desks.length : 0}}</span>
+          </div>
+          <!-- Only show these for managers -->
+          <ng-container *ngIf="isManager">
+            <div class="status-item">
+              <i class="fas fa-wall"></i>
+              <span id="wallCount">{{currentPlan ? currentPlan.walls.length : 0}}</span>
+            </div>
+            <div class="status-item">
+              <i class="fas fa-ruler"></i>
+              <span id="planDimensions">{{currentPlan ? (roundDimension(currentPlan.width) + 'x' + roundDimension(currentPlan.height)) : '0x0'}}</span>
+            </div>
+          </ng-container>
+        </div>
       </div>
-      <div class="status-item">
-        <div class="status-indicator reserved"></div>
-        <span>Reserved</span>
-      </div>
-      <!-- Only show these items for managers -->
-      <div class="status-item" *ngIf="isManager">
-        <i class="fas fa-ruler"></i>
-        <span id="planDimensions">Plan: {{currentPlan ? (roundDimension(currentPlan.width) + 'x' + roundDimension(currentPlan.height)) : '0x0'}}</span>
-      </div>
-      <div class="status-item" *ngIf="isManager">
-        <i class="fas fa-chair"></i>
-        <span id="deskCount">Desks: {{currentPlan ? currentPlan.desks.length : 0}}</span>
-      </div>
-      <div class="status-item" *ngIf="isManager">
-        <i class="fas fa-wall"></i>
-        <span id="wallCount">Walls: {{currentPlan ? currentPlan.walls.length : 0}}</span>
-      </div>
-      <div class="status-bar-right">
+      
+      <div class="status-right">
         <div class="view-mode-toggle">
           <button class="view-mode-button" [class.active]="viewMode === 'day'" (click)="toggleViewMode()">
             <i class="fas fa-calendar-day"></i>
-            Day
+            Jour
           </button>
           <button class="view-mode-button" [class.active]="viewMode === 'week'" (click)="toggleViewMode()">
             <i class="fas fa-calendar-week"></i>
-            Week
+            Sem.
           </button>
         </div>
         <div class="date-navigation">
-          <button class="date-nav-button" (click)="previousDate()" [disabled]="viewMode === 'week' || !canGoToPreviousDate()">
+          <button class="date-nav-button small" (click)="previousDate()" [disabled]="viewMode === 'week' || !canGoToPreviousDate()">
             <i class="fas fa-chevron-left"></i>
           </button>
           <span class="date-display" *ngIf="viewMode === 'day'">{{formatDate(currentDate)}}</span>
           <span class="date-display" *ngIf="viewMode === 'week'">
             {{formatDate(weekDates[0])}} - {{formatDate(weekDates[weekDates.length-1])}}
           </span>
-          <button class="date-nav-button" (click)="nextDate()" [disabled]="viewMode === 'week' || !canGoToNextDate()">
+          <button class="date-nav-button small" (click)="nextDate()" [disabled]="viewMode === 'week' || !canGoToNextDate()">
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
@@ -180,8 +303,13 @@
   </div>
 
   <!-- Booking Dialog -->
-  <div class="booking-dialog" *ngIf="showBookingDialog">
-    <div class="booking-dialog-content">
+  <div class="booking-dialog" [class.show]="showBookingDialog" *ngIf="showBookingDialog || isLoading">
+    <div class="booking-dialog-content" [class.loading]="isLoading">
+      <!-- Dialog loading overlay -->
+      <div class="dialog-loading-overlay" *ngIf="isLoading">
+        <div class="loading-spinner"></div>
+        <p>Loading desk availability...</p>
+      </div>
       <div class="booking-dialog-header">
         <h3>{{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'Update Reservation' : 'Book Desk' }}</h3>
         <button class="close-button" (click)="closeBookingDialog()" aria-label="Close dialog">
@@ -209,23 +337,53 @@
 
         <div class="form-group" *ngIf="viewMode === 'week'">
           <label>Select Date</label>
+          <div class="booking-info" *ngIf="selectedDeskForBooking">
+            <p *ngIf="deskReservationDates.size > 0" class="warning">
+              <i class="fas fa-exclamation-triangle"></i> 
+              This desk is already reserved on {{deskReservationDates.size}} date(s)
+            </p>
+            <p *ngIf="deskReservationDates.size === 0" class="success">
+              <i class="fas fa-check-circle"></i>
+              All dates are available for booking
+            </p>
+          </div>
           <div class="booking-week-days">
             <button *ngFor="let date of bookingWeekDates" 
                     class="booking-day-button"
                     [class.selected]="isSelectedBookingDate(date)"
                     [class.today]="isToday(date)"
                     [class.past]="isPastDate(date)"
-                    [disabled]="isPastDate(date)"
+                    [class.user-reserved]="isUserReservedDate(date)"
+                    [class.desk-reserved]="isDeskReservedOnDate(date) && !isCurrentUserReservation(date)"
+                    [class.own-reservation]="isCurrentUserReservation(date)"
+                    [disabled]="isPastDate(date) || (isDeskReservedOnDate(date) && !isCurrentUserReservation(date))"
+                    [title]="isDeskReservedOnDate(date) ? (isCurrentUserReservation(date) ? 'Your reservation - click to update' : 'This desk is already reserved by another user. You cannot select this date.') : ''"
                     (click)="toggleBookingDate(date)">
               <span class="booking-day-name">{{formatDate(date)}}</span>
+              <!-- Show checkmark for selected dates -->
               <span class="booking-day-status" *ngIf="isSelectedBookingDate(date)">
                 <i class="fas fa-check"></i>
+              </span>
+              <!-- Show user icon for your own reservations that are not selected -->
+              <span class="user-reservation-indicator" *ngIf="isCurrentUserReservation(date) && !isSelectedBookingDate(date)">
+                <i class="fas fa-user"></i>
+              </span>
+              <!-- Only show lock icon for reservations by OTHER users -->
+              <span class="desk-reserved-indicator" *ngIf="isDeskReservedOnDate(date) && !isCurrentUserReservation(date)">
+                <i class="fas fa-lock"></i>
               </span>
             </button>
           </div>
           <div class="booking-hint" *ngIf="viewMode === 'week'">
             <i class="fas fa-info-circle"></i>
             <span>Select dates for your reservation</span>
+          </div>
+          
+          <!-- Deselect All button that appears only when dates are selected -->
+          <div class="booking-actions" *ngIf="selectedBookingDates.size > 0">
+            <button class="action-button" (click)="deselectAllDates()">
+              <i class="fas fa-times-circle"></i> Deselect All
+            </button>
           </div>
         </div>
       </div>
@@ -240,3 +398,109 @@
       </div>
     </div>
   </div>
+
+  <!-- Footer -->
+<footer id="footer" class="footer dark-background">
+  <div class="container footer-top">
+    <div class="row gy-4">
+      <div class="col-lg-4 col-md-6 footer-about">
+        <a href="/home" class="logo d-flex align-items-center">
+          <span class="sitename" style="margin-left: 25px;">Sopra HR</span>
+        </a>
+        <div class="social-links d-flex mt-4">
+          <a href="https://x.com/sopraHR" class="twitter"><i class="bi bi-twitter-x"></i></a>
+          <a href="https://www.facebook.com/SopraHR/?ref=br_rs" class="facebook"><i class="bi bi-facebook"></i></a>
+          <a href="https://www.instagram.com/soprahr/" class="instagram"><i class="bi bi-instagram"></i></a>
+          <a href="https://www.linkedin.com/company/soprahr/" class="linkedin"><i class="bi bi-linkedin"></i></a>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 footer-links text-center ps-lg-5">
+        <h4>Useful Links</h4>
+        <ul>
+          <li><a href="/home">Page d'accueil</a></li>
+          <li><a href="/teletravail">Télétravail</a></li>
+          <li><a href="/reservation">Réservations de Postes</a></li>
+          <li><a href="/planning">Planning</a></li>
+          <li><a href="javascript:void(0)" (click)="openContactModal()">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4 col-md-6 footer-logo text-end ps-lg-5">
+        <div class="logo-container">
+          <img src="../../assets/img/Sopra_preview.png" alt="Company Logo" loading="lazy" class="footer-company-logo">
+          <p class="copyright-text">© 2025 <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
+        </div>
+        <div class="credits">
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Scroll Top -->
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+<!-- Contact Modal -->  
+<div class="contact-modal" [class.active]="isContactModalOpen">
+  <div class="contact-modal-overlay" (click)="closeContactModal()"></div>
+  <div class="contact-modal-content">
+    <div class="contact-modal-header">
+      <h4>Contactez l'équipe support</h4>
+      <button class="close-button" (click)="closeContactModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="contact-modal-body">
+      <div class="contact-info">
+        <div class="contact-item">
+          <i class="bi bi-envelope-fill"></i>
+          <span>support&#64;sopraHR.com</span>
+        </div>
+        <div class="contact-item">
+          <i class="bi bi-telephone-fill"></i>
+          <span>+33 (0)1 57 00 09 80</span>
+        </div>
+        <div class="contact-item">
+          <i class="bi bi-geo-alt-fill"></i>
+          <span>Tour Manhattan, 5/6 Place de l'Iris, 92095 Paris La Défense</span>
+        </div>
+      </div>
+      <div class="contact-form">
+        <h5>Formulaire de contact interne</h5>
+        
+        <div class="form-group">
+          <label for="priority">Priorité</label>
+          <select id="priority" class="form-control form-select">
+            <option value="normal">🟢 Normal</option>
+            <option value="high">🟠 Élevée</option>
+            <option value="urgent">🔴 Urgente</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="subject" class="required">Sujet</label>
+          <input type="text" id="subject" class="form-control" placeholder="Titre de votre demande">
+        </div>
+        
+        <div class="form-group">
+          <label for="message" class="required">Description</label>
+          <textarea id="message" class="form-control" rows="4" placeholder="Décrivez votre problème ou demande en détail..."></textarea>
+          <div class="form-note">Veuillez inclure autant de détails que possible pour faciliter le traitement de votre demande.</div>
+        </div>
+        
+        <div class="form-actions">
+          <div class="form-required-note">
+            <span>*</span> Champs obligatoires
+          </div>
+          <button class="send-button" (click)="sendContactMessage()">
+            <i class="bi bi-send"></i> Soumettre la demande
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, forkJoin } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../login/AuthService';
 
@@ -198,6 +198,18 @@ export class ReservationService {
   }
 
   // Reservation API methods
+  
+  // Update only the duration of an existing reservation
+  updateReservationDuration(reservationId: number, duration: string): Observable<Reservation> {
+    return this.http.patch<Reservation>(
+      `${this.apiUrl}/reservations/${reservationId}/duration`, 
+      { duration: duration },
+      { headers: this.getHeaders() }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+  
   getUserReservations(): Observable<Reservation[]> {
     return this.http.get<Reservation[]>(`${this.apiUrl}/reservations/user`, 
       { headers: this.getHeaders() })
@@ -220,6 +232,76 @@ export class ReservationService {
       { headers: this.getHeaders() })
       .pipe(
         catchError(this.handleError)
+      );
+  }
+  
+  getAllReservationsInDateRange(startDate: string, endDate: string): Observable<Reservation[]> {
+    // Changed to use a different endpoint format to avoid the 'daterange' path parameter that's causing conversion errors
+    // The error suggests the Spring backend is trying to convert 'daterange' to a Long ID
+    return this.http.get<Reservation[]>(
+      `${this.apiUrl}/reservations?startDate=${startDate}&endDate=${endDate}`, 
+      { headers: this.getHeaders() })
+      .pipe(
+        catchError(error => {
+          console.error('Error fetching reservations in date range:', error);
+          
+          // Fall back to fetching individual days if the range endpoint fails
+          if (error.status === 500 || error.status === 404) {
+            console.log('Falling back to fetching individual days');
+            // Parse the dates
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            // Create an array of all dates in the range
+            const dates: string[] = [];
+            const currentDate = new Date(start);
+            while (currentDate <= end) {
+              const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+              dates.push(dateStr);
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // Create an array of observables for each date
+            const requests = dates.map(date => 
+              this.getReservationsByDate(date)
+            );
+            
+            // Fetch all and combine results
+            return forkJoin(requests).pipe(
+              map((results: Reservation[][]) => {
+                // Flatten the array of arrays
+                return results.reduce((acc: Reservation[], curr: Reservation[]) => acc.concat(curr), [] as Reservation[]);
+              })
+            );
+          }
+          
+          return this.handleError(error);
+        })
+      );
+  }
+  
+  getReservationsByDateAndDesk(deskId: number, startDate: string, endDate: string): Observable<Reservation[]> {
+    console.log(`Fetching reservations for desk ${deskId} from ${startDate} to ${endDate}`);
+    
+    // Using the existing getReservationsByDate endpoint since the specific desk/daterange endpoint might not exist
+    return this.getAllReservationsInDateRange(startDate, endDate)
+      .pipe(
+        map(reservations => {
+          console.log(`Got ${reservations.length} total reservations from server`);
+          console.log('Raw reservation data:', JSON.stringify(reservations));
+          
+          // Filter to only include reservations for this specific desk
+          const filteredReservations = reservations.filter(res => res.deskId === deskId);
+          
+          console.log(`Found ${filteredReservations.length} reservations for desk ${deskId}:`, 
+                     filteredReservations.map(r => r.bookingDate).join(', '));
+          
+          return filteredReservations;
+        }),
+        catchError(error => {
+          console.error('Error fetching reservations:', error);
+          return this.handleError(error);
+        })
       );
   }
 
@@ -282,23 +364,7 @@ export class ReservationService {
       // Check if this is an issue with the token format
       const token = this.authService.getToken();
       if (token) {
-        try {
-          // Try to decode the token to see if it's properly formed
-          const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const payload = JSON.parse(window.atob(base64));
-          console.log('Token payload:', payload);
-          console.log('Token exp:', payload.exp ? new Date(payload.exp * 1000).toISOString() : 'No expiration');
-          console.log('Current time:', new Date().toISOString());
-          
-          if (payload.exp && payload.exp * 1000 < Date.now()) {
-            console.error('Token is expired - redirecting to login');
-            this.authService.logout();
-            window.location.href = '/login';
-          }
-        } catch (e) {
-          console.error('Error decoding token:', e);
-        }
+        console.log('Token is present but the request still failed');
       }
     }
     
@@ -309,9 +375,26 @@ export class ReservationService {
       errorMsg = `Error: ${error.error.message}`;
     } else {
       // Server-side error
-      errorMsg = error.error?.message || 
-                error.error?.error || 
-                `Error Code: ${error.status}, Message: ${error.message}`;
+      if (error.status === 403) {
+        // Handle permission errors with better UX
+        const isPlansEndpoint = error.url?.includes('/plans');
+        
+        if (isPlansEndpoint) {
+          // Plans-specific 403 error - likely a permissions issue
+          errorMsg = 'You don\'t have permission to modify floor plans. This action requires manager privileges.';
+        } else {
+          // Generic 403 error
+          errorMsg = 'Access denied. Your current role doesn\'t have permission to perform this action.';
+        }
+      } else if (error.status === 409 && error.url?.includes('/plans')) {
+        // Conflict for plans - could be the "only one floor plan" business rule
+        errorMsg = 'Only one floor plan can exist at a time. Please delete the existing plan before creating a new one.';
+      } else {
+        // Generic error handling
+        errorMsg = error.error?.message ||
+                  error.error?.error ||
+                  `Unable to complete request. Please try again or contact support if the problem persists.`;
+      }
     }
     
     return throwError(() => new Error(errorMsg));

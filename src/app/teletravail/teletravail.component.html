@@ -22,36 +22,89 @@
 
 <body class="teletravail-page">
   <!-- Header -->
-  <header id="header" class="header d-flex align-items-center sticky-top">
-    <div class="container position-relative d-flex align-items-center">
-      <!-- Mobile menu toggle button positioned FIRST for proper layering -->
-      <div class="mobile-menu-container d-block d-lg-none">
-        <button #mobileNavToggle type="button" class="mobile-nav-toggle" 
-               [class.active]="isMobileMenuOpen"
-               (click)="toggleMobileMenu($event)">
-          <i class="bi" [class.bi-list]="!isMobileMenuOpen" [class.bi-x-lg]="isMobileMenuOpen"></i>
-        </button>
+  <header id="header" class="header sticky-top">
+    <div class="container-fluid container-lg">
+      <div class="d-flex align-items-center justify-content-between">
+
+        <!-- Logo (visible on all screens) -->
+        <a href="/home" class="logo d-flex align-items-center">
+          <div class="logo-container" style="max-width: 650px; height: auto;">
+            <img src="../../assets/img/sopra_hr.png" 
+                alt="Sopra HR Software" 
+                loading="eager"
+                class="sopra-logo img-fluid"
+                style="max-height: 140px; object-fit: contain;">
+          </div>
+        </a>
+        
+        <!-- Main Navigation - shown on desktop, hidden on mobile -->
+        <div class="main-nav d-none d-lg-flex">
+          <div class="nav-links-container d-flex align-items-center">
+            <a href="/home" class="nav-link"><i class="bi bi-house-door me-1"></i>Page d'accueil</a>
+            <a href="/teletravail" class="nav-link active"><i class="bi bi-laptop me-1"></i>Télétravail</a>
+            <a href="/reservation" class="nav-link"><i class="bi bi-calendar-check me-1"></i>Réservations</a>
+            <a href="/planning" class="nav-link"><i class="bi bi-calendar-week me-1"></i>Planning</a>
+          </div>
+        </div>
+        
+        <!-- User Controls -->
+        <div class="user-controls d-flex align-items-center">
+          <div class="logout-container me-2 d-none d-lg-block">
+            <button class="logout-button" (click)="logout()"><i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span></button>
+          </div>
+          <a href="javascript:void(0)" class="contact-icon ms-2" (click)="openContactModal()">
+            <i class="bi bi-envelope-fill"></i>
+          </a>
+          <a href="/notifications" class="notification-icon ms-2">
+            <i class="bi bi-bell-fill"></i>
+          </a>
+          <app-profile-header></app-profile-header>
+          
+          <!-- Mobile menu toggle button -->
+          <a href="javascript:void(0)" class="d-lg-none ms-3">
+            <i #mobileNavToggle class="mobile-nav-toggle bi" style="color: #ffffff !important;"
+               [class.bi-list]="!isMobileMenuOpen" 
+               [class.bi-x-lg]="isMobileMenuOpen"
+               (click)="toggleMobileMenu($event)"></i>
+          </a>
+        </div>
+        
       </div>
-      
-      <a href="/home" class="logo d-flex align-items-center me-auto">
-        <img src="../../assets/img/Sopra_Steria_logo.svg.png" 
-             alt="Company Logo" 
-             loading="eager"
-             style="transform: scale(1.5); max-width: 150px; height: auto;">
-      </a>
-      <nav #navmenu id="navmenu" class="navmenu" [class.active]="isMobileMenuOpen">
-        <ul>
-          <li><a href="/home" class="nav-link"><i class="bi bi-house-door me-2"></i>Page d'accueil</a></li>
-          <li><a href="/teletravail" class="nav-link active"><i class="bi bi-laptop me-2"></i>Télétravail</a></li>
-          <li><a href="/reservation" class="nav-link"><i class="bi bi-calendar-check me-2"></i>Réservations de Postes</a></li>
-          <li><a href="/planning" class="nav-link"><i class="bi bi-calendar-week me-2"></i>Planning</a></li>
-          <li>
-            <button class="btn btn-logout" (click)="logout()"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
-          </li>
-        </ul>
-        <!-- No need for internal close button as we have the toggle outside -->
-      </nav>
     </div>
+    
+    <!-- GitHub-style Mobile Navigation Sidebar -->
+    <div class="mobile-nav-overlay d-lg-none" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu($event)"></div>
+    <aside #navmenu class="sidebar-nav d-lg-none" [class.active]="isMobileMenuOpen">
+      <div class="sidebar-header">
+        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Sopra HR Software" class="sidebar-logo">
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="/home" class="nav-item">
+          <i class="bi bi-house-door"></i>
+          <span>Page d'accueil</span>
+        </a>
+        <a href="/teletravail" class="nav-item active">
+          <i class="bi bi-laptop"></i>
+          <span>Télétravail</span>
+        </a>
+        <a href="/reservation" class="nav-item">
+          <i class="bi bi-calendar-check"></i>
+          <span>Réservations</span>
+        </a>
+        <a href="/planning" class="nav-item">
+          <i class="bi bi-calendar-week"></i>
+          <span>Planning</span>
+        </a>
+        <div class="sidebar-divider"></div>
+        
+        <div class="sidebar-logout-container">
+          <button class="logout-button" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span>
+          </button>
+        </div>
+      </nav>
+    </aside>
   </header>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -59,8 +112,17 @@
   <!-- Ensure proper spacing in mobile view -->
 
   <div class="main-content">
+    <!-- Navigation link to planning -->
+    <div class="mb-4 text-end">
+      <a routerLink="/planning">
+        <i class="bi bi-calendar-week me-1"></i> Voir Planning
+      </a>
+    </div>
+    
+    <!-- User Request Form (shown to all users) -->
     <section class="form-container">
-      <h2 class="form-title">Demande de Télétravail</h2>
+      <h2 class="form-title"><i class="fas fa-laptop-house me-2"></i>Demande de Télétravail</h2>
+      <div class="small text-muted text-center mb-3">Remplissez le formulaire ci-dessous pour soumettre votre demande</div>
       <form #teletravailForm="ngForm" (ngSubmit)="onSubmit()" class="teletravail-form">
         <!-- Type and Date Row -->
         <div class="form-row">
@@ -74,12 +136,17 @@
                 <option value="reguliere">Régulière</option>
                 <option value="exceptionnelle">Exceptionnelle</option>
               </select>
+              <small *ngIf="travailType === 'reguliere'" class="form-text text-muted mt-1">
+                <i class="fas fa-info-circle me-1"></i> Les demandes régulières s'appliquent à votre planning habituel
+              </small>
             </div>
           </div>
 
           <div class="form-group">
             <label for="teletravailDate" class="form-label">
               <i class="fas fa-calendar-alt"></i> Date souhaitée
+              <span class="date-badge ms-2" *ngIf="teletravailDate">{{teletravailDate | date:'EEE d MMM'}}</span>
+              <span class="date-badge date-badge-empty ms-2" *ngIf="!teletravailDate">Non sélectionnée</span>
             </label>
             <div class="input-icon">
               <input 
@@ -157,12 +224,158 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" class="submit-btn" [disabled]="!teletravailForm.valid">
-          <span>Suivant</span>
-          <i class="fas fa-paper-plane"></i>
+        <div class="form-status-indicator">
+          <span class="form-status" *ngIf="!teletravailForm.valid">
+            <i class="fas fa-circle-info"></i> Veuillez remplir tous les champs requis
+          </span>
+          <span class="form-status form-status-complete" *ngIf="teletravailForm.valid && !isSubmitting">
+            <i class="fas fa-check-circle"></i> Formulaire complet
+          </span>
+        </div>
+        <button type="submit" class="submit-btn" [disabled]="!teletravailForm.valid || isSubmitting">
+          <i class="fas fa-paper-plane"></i> Soumettre la demande
         </button>
       </form>
     </section>
+    
+    <!-- Note at the top of form view directing to planning -->
+    <div class="alert alert-info mb-4">
+      <i class="bi bi-info-circle-fill me-2"></i>
+      Consultez vos demandes de télétravail dans le <a routerLink="/planning" class="alert-link">Planning</a>.
+    </div>
+    
+    <!-- Team Leader View (shown if user is team leader or manager) -->
+    <section class="requests-container" *ngIf="isTeamLeader || isManager">
+      <h2 class="section-title">Demandes de télétravail de l'équipe</h2>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col">Employé</th>
+              <th scope="col">Date</th>
+              <th scope="col">Type</th>
+              <th scope="col">Lieu</th>
+              <th scope="col">Statut</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="teamRequests.length === 0">
+              <td colspan="6" class="text-center">Aucune demande trouvée</td>
+            </tr>
+            <tr *ngFor="let request of teamRequests">
+              <td>{{ request.userName || 'Employé #' + request.userId }}</td>
+              <td>{{ request.teletravailDate | date:'dd/MM/yyyy' }}</td>
+              <td>{{ request.travailType === 'reguliere' ? 'Régulière' : 'Exceptionnelle' }}</td>
+              <td>
+                {{ request.travailMaison === 'oui' ? 'Domicile' : 
+                   (request.selectedPays + ' - ' + request.selectedGouvernorat) }}
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(request.status)">
+                  {{ getStatusLabel(request.status) }}
+                </span>
+              </td>
+              <td>
+                <button *ngIf="request.status === 'PENDING'" class="btn btn-sm btn-success me-1" 
+                        (click)="openStatusModal(request)" data-bs-toggle="modal" data-bs-target="#statusModal">
+                  <i class="bi bi-check-circle me-1"></i> Valider
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+    <!-- Manager View (shown if user is manager) -->
+    <section class="requests-container" *ngIf="isManager">
+      <h2 class="section-title">Toutes les demandes de télétravail</h2>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col">Employé</th>
+              <th scope="col">Équipe</th>
+              <th scope="col">Date</th>
+              <th scope="col">Type</th>
+              <th scope="col">Lieu</th>
+              <th scope="col">Statut</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="allRequests.length === 0">
+              <td colspan="7" class="text-center">Aucune demande trouvée</td>
+            </tr>
+            <tr *ngFor="let request of allRequests">
+              <td>{{ request.userName || 'Employé #' + request.userId }}</td>
+              <td>{{ request.teamName || 'Équipe #' + request.teamId }}</td>
+              <td>{{ request.teletravailDate | date:'dd/MM/yyyy' }}</td>
+              <td>{{ request.travailType === 'reguliere' ? 'Régulière' : 'Exceptionnelle' }}</td>
+              <td>
+                {{ request.travailMaison === 'oui' ? 'Domicile' : 
+                   (request.selectedPays + ' - ' + request.selectedGouvernorat) }}
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(request.status)">
+                  {{ getStatusLabel(request.status) }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-primary me-1" 
+                        (click)="openStatusModal(request)" data-bs-toggle="modal" data-bs-target="#statusModal">
+                  <i class="bi bi-pencil-square me-1"></i> Modifier
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+    <!-- Status Update Modal -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="statusModalLabel">Modifier le statut de la demande</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" *ngIf="selectedRequest">
+            <p>
+              <strong>Employé:</strong> {{ selectedRequest.userName || 'Employé #' + selectedRequest.userId }}<br>
+              <strong>Date:</strong> {{ selectedRequest.teletravailDate | date:'dd/MM/yyyy' }}<br>
+              <strong>Type:</strong> {{ selectedRequest.travailType === 'reguliere' ? 'Régulière' : 'Exceptionnelle' }}<br>
+              <strong>Lieu:</strong> {{ selectedRequest.travailMaison === 'oui' ? 'Domicile' : 
+                              (selectedRequest.selectedPays + ' - ' + selectedRequest.selectedGouvernorat) }}
+            </p>
+            
+            <div class="mb-3">
+              <label for="statusSelect" class="form-label">Nouveau statut</label>
+              <div class="d-flex gap-2">
+                <button class="btn btn-success w-50" (click)="updateRequestStatus(TeletravailStatus.APPROVED)" data-bs-dismiss="modal">
+                  <i class="bi bi-check-circle me-1"></i> Approuver
+                </button>
+                <button class="btn btn-danger w-50" data-bs-toggle="collapse" data-bs-target="#rejectionReasonCollapse" aria-expanded="false">
+                  <i class="bi bi-x-circle me-1"></i> Refuser
+                </button>
+              </div>
+            </div>
+            
+            <div class="collapse" id="rejectionReasonCollapse">
+              <div class="mb-3">
+                <label for="rejectionReason" class="form-label">Raison du refus</label>
+                <textarea id="rejectionReason" class="form-control" rows="3" [(ngModel)]="rejectionReason" placeholder="Veuillez indiquer la raison du refus"></textarea>
+              </div>
+              <button class="btn btn-primary" (click)="updateRequestStatus(TeletravailStatus.REJECTED)" data-bs-dismiss="modal">
+                <i class="bi bi-send me-1"></i> Confirmer le refus
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
  
@@ -180,19 +393,19 @@
           <a href="https://www.linkedin.com/company/soprahr/" class="linkedin"><i class="bi bi-linkedin"></i></a>
         </div>
       </div>
-      <div class="col-lg-4 col-md-6 footer-links text-center">
+      <div class="col-lg-4 col-md-6 footer-links text-center ps-lg-5">
         <h4>Useful Links</h4>
         <ul>
           <li><a href="/home">Page d'accueil</a></li>
           <li><a href="/teletravail">Télétravail</a></li>
           <li><a href="/reservation">Réservations de Postes</a></li>
           <li><a href="/planning">Planning</a></li>
-          <li><a href="/contact">Contact Us</a></li>
+          <li><a href="javascript:void(0)" (click)="openContactModal()">Contact Us</a></li>
         </ul>
       </div>
-      <div class="col-lg-4 col-md-6 footer-logo text-center">
+      <div class="col-lg-4 col-md-6 footer-logo text-end ps-lg-5">
         <div class="logo-container">
-          <img src="../../assets/img/Sopra.png" alt="Company Logo" loading="lazy" class="footer-company-logo">
+          <img src="../../assets/img/Sopra_preview.png" alt="Company Logo" loading="lazy" class="footer-company-logo">
           <p class="copyright-text">© 2025 <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
         </div>
         <div class="credits">
@@ -208,6 +421,66 @@
 
  
 
+  <!-- Contact Modal -->  
+  <div class="contact-modal" [class.active]="isContactModalOpen">
+    <div class="contact-modal-overlay" (click)="closeContactModal()"></div>
+    <div class="contact-modal-content">
+      <div class="contact-modal-header">
+        <h4>Contactez l'équipe support</h4>
+        <button class="close-button" (click)="closeContactModal()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="contact-modal-body">
+        <div class="contact-info">
+          <div class="contact-item">
+            <i class="bi bi-envelope-fill"></i>
+            <span>support&#64;sopraHR.com</span>
+          </div>
+          <div class="contact-item">
+            <i class="bi bi-telephone-fill"></i>
+            <span>+33 (0)1 57 00 09 80</span>
+          </div>
+          <div class="contact-item">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>Tour Manhattan, 5/6 Place de l'Iris, 92095 Paris La Défense</span>
+          </div>
+        </div>
+        <div class="contact-form">
+          <h5>Formulaire de contact interne</h5>
+          
+          <div class="form-group">
+            <label for="priority">Priorité</label>
+            <select id="priority" class="form-control form-select">
+              <option value="normal">🟢 Normal</option>
+              <option value="high">🟠 Élevée</option>
+              <option value="urgent">🔴 Urgente</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="subject" class="required">Sujet</label>
+            <input type="text" id="subject" class="form-control" placeholder="Titre de votre demande">
+          </div>
+          
+          <div class="form-group">
+            <label for="message" class="required">Description</label>
+            <textarea id="message" class="form-control" rows="4" placeholder="Décrivez votre problème ou demande en détail..."></textarea>
+            <div class="form-note">Veuillez inclure autant de détails que possible pour faciliter le traitement de votre demande.</div>
+          </div>
+          
+          <div class="form-actions">
+            <div class="form-required-note">
+              <span>*</span> Champs obligatoires
+            </div>
+            <button class="send-button" (click)="sendContactMessage()">
+              <i class="bi bi-send"></i> Soumettre la demande
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

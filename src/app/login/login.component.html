@@ -5,7 +5,12 @@
       <img src="../../assets/img/images (1).png" alt="Logo" class="logo" style="display: block; margin: 0 auto; width: 40%;" />
       <h1>Login</h1>
 
-      <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <!-- Improved error message with alert styling -->
+      <div class="alert alert-danger alert-dismissible fade show" role="alert" *ngIf="errorMessage">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        {{ errorMessage }}
+        <button type="button" class="btn-close" (click)="clearError()" aria-label="Close"></button>
+      </div>
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <div class="form-field">

@@ -22,94 +22,234 @@
 
 <body class="index-page">
 
-  <header id="header" class="header d-flex align-items-center sticky-top">
-    <div class="container position-relative d-flex align-items-center">
+  <header id="header" class="header sticky-top">
+    <div class="container-fluid container-lg">
+      <div class="d-flex align-items-center justify-content-between">
 
-      <a href="/home" class="logo d-flex align-items-center me-auto">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <!-- <img src="assets/img/logo.png" alt=""> -->
-          <img src="../../assets/img/Sopra_Steria_logo.svg.png" 
-               alt="Company Logo" 
-               loading="eager"
-               style="transform: scale(1.5); max-width: 150px; height: auto;">
+        <!-- Logo (visible on all screens) -->
+        <a href="/home" class="logo d-flex align-items-center">
+          <div class="logo-container" style="max-width: 650px; height: auto;">
+            <img src="../../assets/img/sopra_hr.png" 
+                alt="Sopra HR Software" 
+                loading="eager"
+                class="sopra-logo img-fluid"
+                style="max-height: 140px; object-fit: contain;">
+          </div>
         </a>
-      <nav #navmenu id="navmenu" class="navmenu" [class.active]="isMobileMenuOpen">
-        <ul>
-          <li><a href="/home" class="nav-link active"><i class="bi bi-house-door me-2"></i>Page d'accueil</a></li>
-          <li><a href="/teletravail" class="nav-link"><i class="bi bi-laptop me-2"></i>Télétravail</a></li>
-          <li><a href="/reservation" class="nav-link"><i class="bi bi-calendar-check me-2"></i>Réservations de Postes</a></li>
-          <li><a href="/planning" class="nav-link"><i class="bi bi-calendar-week me-2"></i>Planning</a></li>
-          <li>
-            <button class="btn btn-logout" (click)="logout()"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
-          </li>
-        </ul>
-        <!-- No need for internal close button as we have the toggle outside -->
-      </nav>
-      <!-- Mobile menu toggle button -->
-      <i #mobileNavToggle class="mobile-nav-toggle d-xl-none bi" 
-         [class.bi-list]="!isMobileMenuOpen" 
-         [class.bi-x-lg]="isMobileMenuOpen"
-         (click)="toggleMobileMenu($event)"></i>
+        
+        <!-- Main Navigation - shown on desktop, hidden on mobile -->
+        <div class="main-nav d-none d-lg-flex">
+          <div class="nav-links-container d-flex align-items-center">
+            <a href="/home" class="nav-link"><i class="bi bi-house-door me-1"></i>Page d'accueil</a>
+            <a href="/teletravail" class="nav-link"><i class="bi bi-laptop me-1"></i>Télétravail</a>
+            <a href="/reservation" class="nav-link"><i class="bi bi-calendar-check me-1"></i>Réservations</a>
+            <a href="/planning" class="nav-link"><i class="bi bi-calendar-week me-1"></i>Planning</a>
+          </div>
+        </div>
+        
+        <!-- User Controls -->
+        <div class="user-controls d-flex align-items-center">
+          <div class="logout-container me-3 d-none d-lg-block">
+            <button class="btn btn-logout" (click)="logout()"><i class="bi bi-box-arrow-right"></i> <span class="btn-text">Déconnexion</span></button>
+          </div>
+          <a href="javascript:void(0)" class="contact-icon me-2" (click)="openContactModal()">
+            <i class="bi bi-envelope-fill"></i>
+          </a>
+          <a href="/notifications" class="notification-icon ms-2">
+            <i class="bi bi-bell-fill"></i>
+          </a>
+          <app-profile-header></app-profile-header>
+          
+          <!-- Mobile menu toggle button -->
+          <a href="javascript:void(0)" class="d-lg-none ms-3">
+            <i #mobileNavToggle class="mobile-nav-toggle bi" 
+              [class.bi-list]="!isMobileMenuOpen" 
+              [class.bi-x-lg]="isMobileMenuOpen"
+              (click)="toggleMobileMenu($event)"></i>
+          </a>
+        </div>
+      </div>
     </div>
+
+    <!-- GitHub-style Mobile Navigation Sidebar -->
+    <div class="mobile-nav-overlay d-lg-none" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu($event)"></div>
+    <aside class="sidebar-nav d-lg-none" [class.active]="isMobileMenuOpen">
+      <div class="sidebar-header">
+        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Sopra HR Software" class="sidebar-logo">
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="/home" class="nav-item active">
+          <i class="bi bi-house-door"></i>
+          <span>Page d'accueil</span>
+        </a>
+        <a href="/teletravail" class="nav-item">
+          <i class="bi bi-laptop"></i>
+          <span>Télétravail</span>
+        </a>
+        <a href="/reservation" class="nav-item">
+          <i class="bi bi-calendar-check"></i>
+          <span>Réservations</span>
+        </a>
+        <a href="/planning" class="nav-item">
+          <i class="bi bi-calendar-week"></i>
+          <span>Planning</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+        
+        <div class="sidebar-logout-container">
+          <button class="btn btn-logout" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </nav>
+    </aside>
   </header>
 
   <main class="main">
 
-<!-- Hero Section -->
-<section id="hero" class="hero section dark-background" aria-labelledby="hero-heading">
-  <div id="hero-carousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000" aria-label="Hero Carousel">
-    <div class="carousel-inner">
-      <!-- Loop through the carouselData and dynamically create slides -->
-      <div *ngFor="let data of carouselData; let i = index" class="carousel-item" [class.active]="i === 0">
-        <img src="../../assets/img/hero-carousel/hero-carousel-{{i + 1}}.jpg" alt="Slide {{i + 1}}" loading="lazy" class="d-block w-100">
-        <div class="container">
-          <h2>{{ data.heading || 'Chargement...' }}</h2>
-          <p><strong>{{ data.strong || 'Chargement...' }}</strong></p>
+<!-- Hero Section with Image Carousel -->
+<section id="hero" class="hero-section">
+  <!-- Background Image Carousel with All Available Images -->
+  <div id="heroCarousel" class="hero-carousel">
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/52ybs552.png')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/rd7n3e8v.png')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/hero-carousel-3.jpg')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/CTA---Experts.png')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/oj9o7t48.png')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/1452a097-ed8a-4a81-bb21-cc9f4d90cd8b.png')"></div>
+    <div class="carousel-item active" style="background-image: url('assets/img/hero-carousel/2603552b-366d-4aca-8639-2ce1d5edf74b.png')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/39060919-fa65-452c-84e3-49bbaf8bfacc.png')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/9004a558-0621-4343-8140-76d5240152aa.png')"></div>
+    <div class="carousel-item" style="background-image: url('assets/img/hero-carousel/d97e684e-5a09-44ad-8e31-c02dcb8e44b5.png')"></div>
+  </div>
+  
+  <!-- Fixed Overlay - Will Stay on Top of All Images -->
+  <div class="hero-overlay">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="vision-content">
+            <h1 class="vision-title">Chez Sopra HR, nous sommes une famille unie pour votre réussite</h1>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="welcome-message welcome-message-right">
+            <h2 class="greeting">👋 {{ greeting }}, {{ currentUser?.firstName || 'Utilisateur' }}!</h2>
+            <p class="date-display">{{ formattedDate }}</p>
+            <p class="motivational-quote">{{ motivationalQuote }}</p>
+          </div>
         </div>
       </div>
     </div>
-  
-    <!-- Controls -->
-    <button class="carousel-control-prev" type="button" data-bs-target="#hero-carousel" data-bs-slide="prev" aria-label="Previous Slide">
-      <span class="carousel-control-prev-icon bi bi-chevron-left" aria-hidden="true"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#hero-carousel" data-bs-slide="next" aria-label="Next Slide">
-      <span class="carousel-control-next-icon bi bi-chevron-right" aria-hidden="true"></span>
-    </button>
-
-    <!-- Carousel Indicators -->
-    <ol class="carousel-indicators">
-      <li *ngFor="let data of carouselData; let i = index" [attr.data-bs-target]="'#hero-carousel'" [attr.data-bs-slide-to]="i" [class.active]="i === 0" [attr.aria-label]="'Slide ' + (i + 1)"></li>
-    </ol>
-
-  </div><!-- End Carousel -->
+  </div>
 </section>
 
 
     <!-- About Section -->
     <section class="about">
       <div class="container">
-        <div class="row align-items-center">
-          <div class="col-lg-6">
-            <div class="about-img">
-              <img src="assets/img/about.jpg" alt="About Us" class="img-fluid" loading="lazy">
+        <!-- Combined Work Status & Calendar in a single horizontal block -->
+        <div class="horizontal-status-block">
+          <!-- Today's Work Status Section -->
+          <div class="status-section work-status">
+            <h4 class="status-title"><i class="bi bi-calendar-check"></i> Statut de travail</h4>
+            
+            <!-- Telework status and content -->
+            <div *ngIf="workStatus === 'teletravail'">
+              <div class="badge-container">
+                <div class="status-badge teletravail">
+                  <i class="bi bi-house-fill"></i> Télétravail
+                </div>
+                <div class="date-badge">
+                  <i class="bi bi-calendar3"></i> {{today | date:'dd/MM'}}
+                </div>
+              </div>
+              
+              <div class="status-content">
+                <p class="status-info">Vous travaillez à distance aujourd'hui.</p>
+                <p class="location-info" *ngIf="teleworkAtHome">
+                  <i class="bi bi-geo-alt-fill"></i> Lieu: <strong>Domicile</strong>
+                </p>
+                <p class="location-info" *ngIf="!teleworkAtHome && workLocation">
+                  <i class="bi bi-geo-alt-fill"></i> Lieu: <strong>{{ workLocation }}</strong>
+                </p>
+              </div>
+            </div>
+            
+            <!-- Office status and content -->
+            <div *ngIf="workStatus === 'office' || workStatus === 'none'">
+              <div class="badge-container">
+                <div class="status-badge office">
+                  <i class="bi bi-building"></i> Bureau
+                </div>
+                <div class="date-badge">
+                  <i class="bi bi-calendar3"></i> {{today | date:'dd/MM'}}
+                </div>
+              </div>
+              
+              <div class="status-content">
+                <div class="desk-info" *ngIf="deskReservation">
+                  <p class="status-info">Réservation: <strong>Étage 3, Bureau #{{ deskReservation.seatNumber }}</strong></p>
+                </div>
+                <div class="no-desk-warning" *ngIf="!deskReservation">
+                  <div class="alert alert-danger small-alert">
+                    <i class="bi bi-info-circle-fill"></i> Vous n'avez pas réservé de bureau pour aujourd'hui.
+                  </div>
+                  <button class="btn btn-primary reserve-btn" routerLink="/reservation">
+                    <i class="bi bi-calendar-check"></i> Voir réservation
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Pending approval status and content -->
+            <div *ngIf="workStatus === 'pending'">
+              <div class="badge-container">
+                <div class="status-badge pending">
+                  <i class="bi bi-hourglass-split"></i> En attente
+                </div>
+                <div class="date-badge">
+                  <i class="bi bi-calendar3"></i> {{today | date:'dd/MM'}}
+                </div>
+              </div>
+              
+              <div class="status-content">
+                <p class="status-info">Votre demande de télétravail est en attente d'approbation.</p>
+                <div class="approval-status">
+                  <p><strong>Statut:</strong> En attente de validation </p>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-lg-6">
-            <div class="our-story">
-              <h4>Notre Histoire</h4>
-              <h3>Une Entreprise Innovante au Service de l'Emploi</h3>
-              <p>Nous sommes une entreprise spécialisée dans le recrutement et le placement de personnel qualifié. Notre mission est de connecter les talents aux opportunités qui correspondent à leurs compétences et aspirations.</p>
-              <ul>
-                <li><i class="bi bi-check-circle-fill"></i> Expertise dans le recrutement de profils techniques</li>
-                <li><i class="bi bi-check-circle-fill"></i> Accompagnement personnalisé des candidats</li>
-                <li><i class="bi bi-check-circle-fill"></i> Partenariats avec des entreprises leaders</li>
-                <li><i class="bi bi-check-circle-fill"></i> Processus de recrutement transparent et efficace</li>
-              </ul>
-              <div class="watch-video">
-                <a href="#" data-bs-toggle="modal" data-bs-target="#videoModal">
-                  <i class="bi bi-play-circle-fill"></i> Regarder notre vidéo de présentation
-                </a>
+          
+          <!-- Weekly Planning Overview Section -->
+          <div class="status-section weekly-calendar">
+            <h4 class="status-title"><i class="bi bi-calendar-week"></i> Planning hebdomadaire</h4>
+            
+            <div class="week-calendar">
+              <div class="weekdays-container">
+                <div class="weekday" *ngFor="let day of weekDays" [ngClass]="{'today': day.isToday}">
+                  <div class="day-header">
+                    <span class="day-name">{{ day.name }}</span>
+                    <span class="day-date">{{ day.date }}</span>
+                  </div>
+                  <div class="day-status" [ngClass]="day.status">
+                    <div class="status-emoji">
+                      <span *ngIf="day.status === 'teletravail'">🏠</span>
+                      <span *ngIf="day.status === 'office'">💼</span>
+                      <span *ngIf="day.status === 'pending'">⏳</span>
+                      <span *ngIf="day.status === 'none'">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="week-actions">
+                <button class="btn btn-primary" (click)="goToWeeklyPlanning()">
+                  <i class="bi bi-calendar-plus"></i> mon planning
+                </button>
               </div>
             </div>
           </div>
@@ -250,55 +390,7 @@
 
     
 
-    <!-- Clients Section -->
-    <section id="clients" class="clients section">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Clients</h2>
-      </div><!-- End Section Title -->
-
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-        <div class="row g-0 clients-wrap">
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-1.png" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-2.png" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-3.png" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-4.jpg" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-5.png" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-6.jpg" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-7.png" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-          <div class="col-xl-3 col-md-4 client-logo">
-            <img src="../../assets/img/clients/client-8.png" class="img-fluid" alt="" loading="lazy">
-          </div><!-- End Client Item -->
-
-        </div>
-
-      </div>
-
-    </section><!-- /Clients Section -->
+    <!-- Clients Section Removed -->
 
   </main>
   <footer id="footer" class="footer dark-background">
@@ -315,17 +407,17 @@
             <a href="https://www.linkedin.com/company/soprahr/" class="linkedin"><i class="bi bi-linkedin"></i></a>
           </div>
         </div>
-        <div class="col-lg-4 col-md-6 footer-links text-center">
+        <div class="col-lg-4 col-md-6 footer-links text-center ps-lg-5">
           <h4>Useful Links</h4>
           <ul>
             <li><a href="/home" class="active">Page d'accueil</a></li>
             <li><a href="/teletravail">Télétravail</a></li>
             <li><a href="/reservation">Réservations de Postes</a></li>
             <li><a href="/planning">Planning</a></li>
-            <li><a href="/contact">Contact Us</a></li>
+            <li><a href="javascript:void(0)" (click)="openContactModal()">Contact Us</a></li>
           </ul>
         </div>
-        <div class="col-lg-4 col-md-6 footer-logo text-center">
+        <div class="col-lg-4 col-md-6 footer-logo text-end ps-lg-5">
           <div class="logo-container">
             <img src="../../assets/img/Sopra.png" alt="Company Logo" loading="lazy" class="footer-company-logo">
             <p class="copyright-text">© 2025 <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
@@ -340,8 +432,66 @@
   <!-- Scroll Top -->
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
-
-   
+  <!-- Contact Modal -->
+  <div class="contact-modal" [class.active]="isContactModalOpen">
+    <div class="contact-modal-overlay" (click)="closeContactModal()"></div>
+    <div class="contact-modal-content">
+      <div class="contact-modal-header">
+        <h4>Contactez l'équipe support</h4>
+        <button class="close-button" (click)="closeContactModal()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="contact-modal-body">
+        <div class="contact-info">
+          <div class="contact-item">
+            <i class="bi bi-envelope-fill"></i>
+            <span>support&#64;sopraHR.com</span>
+          </div>
+          <div class="contact-item">
+            <i class="bi bi-telephone-fill"></i>
+            <span>+33 (0)1 57 00 09 80</span>
+          </div>
+          <div class="contact-item">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>Tour Manhattan, 5/6 Place de l'Iris, 92095 Paris La Défense</span>
+          </div>
+        </div>
+        <div class="contact-form">
+          <h5>Formulaire de contact interne</h5>
+          
+          <div class="form-group">
+            <label for="priority">Priorité</label>
+            <select id="priority" class="form-control form-select">
+              <option value="normal">🟢 Normal</option>
+              <option value="high">🟠 Élevée</option>
+              <option value="urgent">🔴 Urgente</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="subject" class="required">Sujet</label>
+            <input type="text" id="subject" class="form-control" placeholder="Titre de votre demande">
+          </div>
+          
+          <div class="form-group">
+            <label for="message" class="required">Description</label>
+            <textarea id="message" class="form-control" rows="4" placeholder="Décrivez votre problème ou demande en détail..."></textarea>
+            <div class="form-note">Veuillez inclure autant de détails que possible pour faciliter le traitement de votre demande.</div>
+          </div>
+          
+          <div class="form-actions">
+            <div class="form-required-note">
+              <span>*</span> Champs obligatoires
+            </div>
+            <button class="send-button" (click)="sendContactMessage()">
+              <i class="bi bi-send"></i> Soumettre la demande
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </body>
 

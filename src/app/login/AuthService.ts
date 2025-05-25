@@ -81,6 +81,25 @@ export class AuthService {
     const user = this.currentUserSubject.value;
     return !!user && (user.role === 'MANAGER' || user.role === 'ROLE_MANAGER');
   }
+  
+  isTeamLeader(): boolean {
+    const user = this.currentUserSubject.value;
+    return !!user && (user.role === 'TEAM_LEADER' || user.role === 'ROLE_TEAM_LEADER');
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.currentUserSubject.value;
+    if (!user || !user.role) return false;
+    
+    // Direct match
+    if (user.role === role) return true;
+    
+    // Handle both ROLE_ prefix convention and without prefix
+    const normalizedUserRole = user.role.startsWith('ROLE_') ? user.role : `ROLE_${user.role}`;
+    const normalizedRequestedRole = role.startsWith('ROLE_') ? role : `ROLE_${role}`;
+    
+    return normalizedUserRole === normalizedRequestedRole;
+  }
 
   loadUserProfile(): Observable<UserProfile> {
     console.log('Loading user profile with token:', this.getToken());
@@ -119,11 +138,30 @@ export class AuthService {
     let errorMsg: string;
     
     if (error.error instanceof ErrorEvent) {
-      errorMsg = `Error: ${error.error.message}`;
+      // Client-side error
+      errorMsg = `Une erreur s'est produite. Veuillez réessayer.`;
     } else {
-      errorMsg = error.error?.message || 
-                error.error?.error || 
-                `Error Code: ${error.status}, Message: ${error.message}`;
+      // Server-side error
+      // Handle specific error codes with user-friendly messages
+      switch (error.status) {
+        case 401:
+          errorMsg = `Identifiants incorrects. Veuillez vérifier votre email et mot de passe.`;
+          break;
+        case 403:
+          errorMsg = `Vous n'avez pas les permissions nécessaires pour accéder à cette ressource.`;
+          break;
+        case 404:
+          errorMsg = `Le service d'authentification n'est pas disponible. Veuillez réessayer plus tard.`;
+          break;
+        case 500:
+          errorMsg = `Une erreur est survenue sur le serveur. Veuillez réessayer plus tard.`;
+          break;
+        default:
+          // Only use technical details for unexpected errors
+          errorMsg = error.error?.message || 
+                    error.error?.error || 
+                    `Une erreur s'est produite lors de la connexion. Veuillez réessayer.`;
+      }
     }
     
     return throwError(() => new Error(errorMsg));

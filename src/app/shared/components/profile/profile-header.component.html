@@ -1,0 +1,59 @@
+<div class="user-profile-container position-relative">
+  <a href="javascript:void(0)" class="user-profile ms-3" (click)="toggleProfilePopup($event)">
+    <img *ngIf="profilePhotoUrl" [src]="profilePhotoUrl" alt="Profile" class="header-profile-image">
+    <i *ngIf="!profilePhotoUrl" class="bi bi-person-circle"></i>
+  </a>
+  
+  <!-- Modern Profile Popup -->
+  <div class="profile-popup" [class.active]="isProfilePopupOpen">
+    <div class="profile-popup-header">
+      <h5><i class="bi bi-person-badge me-2"></i>Mon Profil</h5>
+      <button class="close-button" (click)="closeProfilePopup()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    
+    <div class="profile-popup-body">
+      <!-- Top section with photo -->
+      <div class="profile-photo-container">
+        <input type="file" id="photoUpload" (change)="onFileSelected($event)" accept=".jpg,.jpeg,.png" class="d-none">
+        <label for="photoUpload" class="profile-photo-upload" [class.loading]="isUploadingPhoto">
+          <div class="profile-photo">
+            <img *ngIf="profilePhotoUrl && !isUploadingPhoto" [src]="profilePhotoUrl" alt="Photo de profil">
+            <i *ngIf="!profilePhotoUrl && !isUploadingPhoto" class="bi bi-person-circle"></i>
+            <div *ngIf="isUploadingPhoto" class="spinner-container">
+              <div class="spinner"></div>
+            </div>
+            <div class="upload-overlay">
+              <i class="bi bi-camera"></i>
+            </div>
+          </div>
+        </label>
+        
+        <div class="user-name-badge" *ngIf="currentUser">
+          <h6>{{currentUser.firstName}} {{currentUser.lastName}}</h6>
+          <div class="badge-container">
+            <span class="role-badge">{{currentUser.role}}</span>
+            <span class="team-badge" *ngIf="currentUser.team">{{currentUser.team}}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- User info with icons -->
+      <div class="profile-info">
+        <div class="info-item" *ngIf="currentUser">
+          <i class="bi bi-envelope"></i>
+          <span>{{currentUser.email}}</span>
+        </div>
+      </div>
+      
+      <!-- Action buttons -->
+      <div class="profile-actions">
+        <button class="action-btn" (click)="handlePasswordReset()">
+          <i class="bi bi-shield-lock"></i>
+          <span>Changer mot de passe</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

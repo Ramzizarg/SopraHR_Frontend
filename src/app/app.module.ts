@@ -19,7 +19,17 @@ import { AuthService } from './login/AuthService';
 import { AuthGuard } from './login/AuthGuard';
 import { ReservationComponent } from './reservation/reservation.component';
 import { ApiTesterComponent } from './reservation/api-tester.component';
-import { ReservationDeskComponent } from './reservation-desk/reservation-desk.component';
+import { SharedModule } from './shared/shared.module';
+import { ProfileService } from './services/profile.service';
+import { PasswordResetService } from './services/password-reset.service';
+import { SoundService } from './services/sound.service';
+
+// Import locale data
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+
+// Register the locale data
+registerLocaleData(localeFr);
 
 @NgModule({
   declarations: [
@@ -33,7 +43,6 @@ import { ReservationDeskComponent } from './reservation-desk/reservation-desk.co
     PlanningComponent,
     ReservationComponent,
     ApiTesterComponent,
-    ReservationDeskComponent
   ],
   imports: [
     BrowserModule,
@@ -43,11 +52,14 @@ import { ReservationDeskComponent } from './reservation-desk/reservation-desk.co
     ReactiveFormsModule,
     HttpClientModule,
     CommonModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    SharedModule
   ],
   providers: [
     AuthService, 
     AuthGuard,
+    PasswordResetService,
+    SoundService,
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]

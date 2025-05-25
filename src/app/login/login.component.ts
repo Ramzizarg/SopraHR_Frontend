@@ -49,16 +49,13 @@ export class LoginComponent {
       },
       error: (error) => {
         this.loading = false;
-        // Handle various error formats
-        if (typeof error === 'string') {
+        // Use the error message directly from our improved AuthService handler
+        if (error instanceof Error) {
+          this.errorMessage = error.message;
+        } else if (typeof error === 'string') {
           this.errorMessage = error;
-        } else if (error instanceof Error) {
-          this.errorMessage = error.message || 'Login failed. Please try again.';
         } else {
-          this.errorMessage = error.error?.message || 
-                            error.error?.error || 
-                            error.error?.errorMessage || 
-                            'Login failed. Please check your credentials and try again.';
+          this.errorMessage = 'Une erreur s\'est produite. Veuillez réessayer.';
         }
         console.error('Login error:', error);
       }
@@ -67,6 +64,11 @@ export class LoginComponent {
 
   navigateToForgetPassword() {
     this.router.navigate(['/forgot-password']);
+  }
+  
+  // Method to clear error message
+  clearError() {
+    this.errorMessage = null;
   }
 
   

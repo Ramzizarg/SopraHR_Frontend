@@ -22,59 +22,107 @@
 
 <body class="planning-page">
   <!-- Header -->
-  <header id="header" class="header d-flex align-items-center sticky-top">
-    <div class="container position-relative d-flex align-items-center">
+  <header id="header" class="header sticky-top">
+    <div class="container-fluid container-lg">
+      <div class="d-flex align-items-center justify-content-between">
 
-      <a href="/home" class="logo d-flex align-items-center me-auto">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <!-- <img src="assets/img/logo.png" alt=""> -->
-          <img src="../../assets/img/Sopra_Steria_logo.svg.png" 
-               alt="Company Logo" 
-               loading="eager"
-               style="transform: scale(1.5); max-width: 150px; height: auto;">
-      </a>
-      <nav #navmenu id="navmenu" class="navmenu" [class.active]="isMobileMenuOpen">
-        <ul>
-          <li><a href="/home" class="nav-link"><i class="bi bi-house-door me-2"></i>Page d'accueil</a></li>
-          <li><a href="/teletravail" class="nav-link"><i class="bi bi-laptop me-2"></i>Télétravail</a></li>
-          <li><a href="/reservation" class="nav-link"><i class="bi bi-calendar-check me-2"></i>Réservations de Postes</a></li>
-          <li><a href="/planning" class="nav-link active"><i class="bi bi-calendar-week me-2"></i>Planning</a></li>
-          <li>
-            <button class="btn btn-logout" (click)="logout()"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
-          </li>
-        </ul>
-        <!-- No need for internal close button as we have the toggle outside -->
-      </nav>
-      <!-- Mobile menu toggle button -->
-      <i #mobileNavToggle class="mobile-nav-toggle d-xl-none bi" 
-         [class.bi-list]="!isMobileMenuOpen" 
-         [class.bi-x-lg]="isMobileMenuOpen"
-         (click)="toggleMobileMenu($event)"></i>
+        <!-- Logo (visible on all screens) -->
+        <a href="/home" class="logo d-flex align-items-center">
+          <div class="logo-container" style="max-width: 650px; height: auto;">
+            <img src="../../assets/img/sopra_hr.png" 
+                alt="Sopra HR Software" 
+                loading="eager"
+                class="sopra-logo img-fluid"
+                style="max-height: 140px; object-fit: contain;">
+          </div>
+        </a>
+        
+        <!-- Main Navigation - shown on desktop, hidden on mobile -->
+        <div class="main-nav d-none d-lg-flex">
+          <div class="nav-links-container d-flex align-items-center">
+            <a href="/home" class="nav-link"><i class="bi bi-house-door me-1"></i>Page d'accueil</a>
+            <a href="/teletravail" class="nav-link"><i class="bi bi-laptop me-1"></i>Télétravail</a>
+            <a href="/reservation" class="nav-link"><i class="bi bi-calendar-check me-1"></i>Réservations</a>
+            <a href="/planning" class="nav-link active"><i class="bi bi-calendar-week me-1"></i>Planning</a>
+          </div>
+        </div>
+        
+        <!-- User Controls -->
+        <div class="user-controls d-flex align-items-center">
+          <div class="logout-container me-2 d-none d-lg-block">
+            <button class="logout-button" (click)="logout()"><i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span></button>
+          </div>
+          <a href="javascript:void(0)" class="contact-icon ms-2" (click)="openContactModal()">
+            <i class="bi bi-envelope-fill"></i>
+          </a>
+          <a href="/notifications" class="notification-icon ms-2">
+            <i class="bi bi-bell-fill"></i>
+          </a>
+          <app-profile-header></app-profile-header>
+          
+          <!-- Mobile menu toggle button -->
+          <a href="javascript:void(0)" class="d-lg-none ms-3">
+            <i #mobileNavToggle class="mobile-nav-toggle bi" style="color: #ffffff !important;"
+               [class.bi-list]="!isMobileMenuOpen" 
+               [class.bi-x-lg]="isMobileMenuOpen"
+               (click)="toggleMobileMenu($event)"></i>
+          </a>
+        </div>
+        
+      </div>
+      
+      <!-- Mobile Nav Menu (Removed duplicate) -->
     </div>
+    
+    <!-- GitHub-style Mobile Navigation Sidebar -->
+    <div class="mobile-nav-overlay d-lg-none" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu($event)"></div>
+    <aside #navmenu class="sidebar-nav d-lg-none" [class.active]="isMobileMenuOpen">
+      <div class="sidebar-header">
+        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Sopra HR Software" class="sidebar-logo">
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="/home" class="nav-item">
+          <i class="bi bi-house-door"></i>
+          <span>Page d'accueil</span>
+        </a>
+        <a href="/teletravail" class="nav-item">
+          <i class="bi bi-laptop"></i>
+          <span>Télétravail</span>
+        </a>
+        <a href="/reservation" class="nav-item">
+          <i class="bi bi-calendar-check"></i>
+          <span>Réservations</span>
+        </a>
+        <a href="/planning" class="nav-item active">
+          <i class="bi bi-calendar-week"></i>
+          <span>Planning</span>
+        </a>
+        <div class="sidebar-divider"></div>
+        
+        <div class="sidebar-logout-container">
+          <button class="logout-button" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span>
+          </button>
+        </div>
+      </nav>
+    </aside>
   </header>
 
-<!-- Planning Section -->
+<!-- Planning Section with minimal header -->
 <main class="main">
-  <section class="planning-section">
+  <section class="planning-section pt-4">
     <div class="container">
-      <div class="section-header">
-        <h2>Planning de Télétravail</h2>
-        <p>Visualisez et gérez votre planning de télétravail</p>
-      </div>
+
 
       <!-- Alerts -->
       <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
         <button type="button" class="btn-close" (click)="error = ''"></button>
       </div>
-
-      <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>{{ success }}
-        <button type="button" class="btn-close" (click)="success = ''"></button>
-      </div>
-
-      <!-- Statistics Summary Cards -->
-      <div class="stats-container">
+      
+      <!-- Statistics Summary Cards - Smaller and closer to header -->
+      <div class="compact-stats-container">
         <div class="stat-card">
           <i class="bi bi-calendar-check stat-icon"></i>
           <div class="stat-value">{{ planningEntries.length }}</div>
@@ -82,7 +130,7 @@
         </div>
         <div class="stat-card">
           <i class="bi bi-house-door stat-icon"></i>
-          <div class="stat-value">{{ getTeletravailCount() }}</div>
+          <div class="stat-value">{{ getApprovedCount() }}</div>
           <div class="stat-label">Jours en télétravail</div>
         </div>
         <div class="stat-card">
@@ -97,162 +145,178 @@
         </div>
       </div>
 
-      <!-- Date Filter -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-funnel me-2"></i>Filtres de date
-          </h5>
-          <div class="row g-3">
-            <div class="col-md-5">
-              <div class="input-group">
-                <span class="input-group-text">Du</span>
-                <input type="date" class="form-control" id="startDate" [(ngModel)]="startDate">
-              </div>
-            </div>
-            <div class="col-md-5">
-              <div class="input-group">
-                <span class="input-group-text">Au</span>
-                <input type="date" class="form-control" id="endDate" [(ngModel)]="endDate">
-              </div>
-            </div>
-            <div class="col-md-2 d-flex align-items-center">
-              <button class="btn btn-primary w-100" (click)="updateDateRange()">
-                <i class="bi bi-search me-1"></i>Filtrer
-              </button>
-              <button *ngIf="isManager" class="btn btn-outline-primary ms-2" (click)="toggleGenerationForm()" title="Générer un planning">
-                <i class="bi bi-calendar-plus"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Generation Form has been removed since teletravail requests are now created directly via the teletravail page -->
 
-      <!-- Generation Form -->
-      <div *ngIf="showGenerationForm" class="card mb-4">
-        <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-calendar-plus me-2"></i>Génération de Planning
-          </h5>
-          <div class="row g-3 mb-3">
-            <div class="col-md-4">
-              <div class="input-group">
-                <span class="input-group-text">Du</span>
-                <input type="date" class="form-control" id="genStartDate" [(ngModel)]="generationStartDate">
+      <!-- Planning Section (Calendar-Style) - Centered and Larger -->
+      <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9 mb-4 mx-auto">
+          <div class="card larger-calendar-card">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="bi bi-calendar-week me-2"></i>Planning de Télétravail
+              </h5>
+              
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-3">
+                  <!-- Show only current user toggle -->
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="showOnlyCurrentUser" 
+                      [(ngModel)]="showOnlyCurrentUser" (change)="filterEntries()">
+                    <label class="form-check-label" for="showOnlyCurrentUser">
+                      Afficher uniquement mes entrées
+                    </label>
+                  </div>
+                  
+                  <!-- Manager toggle to show team leaders only -->
+                  <div class="form-check form-switch" *ngIf="isManager">
+                    <input class="form-check-input" type="checkbox" id="showTeamLeadersOnly" 
+                      [(ngModel)]="showTeamLeadersOnly" (change)="toggleTeamLeadersOnly()">
+                    <label class="form-check-label" for="showTeamLeadersOnly">
+                      <i class="bi bi-people-fill me-1"></i>Afficher seulement les chefs d'équipe
+                    </label>
+                  </div>
+                </div>
+                
+                <button (click)="createNewTeletravailRequest()" class="btn btn-primary btn-sm">
+                  <i class="bi bi-plus-circle me-1"></i>Nouvelle demande
+                </button>
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="input-group">
-                <span class="input-group-text">Au</span>
-                <input type="date" class="form-control" id="genEndDate" [(ngModel)]="generationEndDate">
+              
+              <!-- Loading indicator -->
+              <div *ngIf="loading" class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2">Chargement des données...</p>
               </div>
-            </div>
-            <div class="col-md-4">
-              <div class="input-group">
-                <span class="input-group-text">ID Utilisateur</span>
-                <input type="number" class="form-control" id="userId" [(ngModel)]="selectedUserId" placeholder="ID de l'utilisateur">
-              </div>
-            </div>
-          </div>
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-primary" (click)="generatePlanning()">
-              <i class="bi bi-calendar-check me-2"></i>Générer depuis les demandes
-            </button>
-            <button class="btn btn-outline-primary" (click)="generateAutomaticPlanning()">
-              <i class="bi bi-magic me-2"></i>Générer planning automatique
-            </button>
-            <button class="btn btn-outline-secondary" (click)="toggleGenerationForm()">
-              <i class="bi bi-x-circle me-2"></i>Annuler
-            </button>
-          </div>
-        </div>
-      </div>
+              
+              <!-- No entries message removed as requested -->
+              
 
-      <!-- Planning Table -->
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-            <i class="bi bi-calendar-week me-2"></i>Planning de Télétravail
-          </h5>
-
-          <div *ngIf="loading" class="text-center p-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Chargement...</span>
-            </div>
-            <p class="mt-2">Chargement des données...</p>
-          </div>
-
-          <div *ngIf="!loading && planningEntries.length === 0" class="alert alert-info">
-            <i class="bi bi-info-circle-fill me-2"></i>Aucune entrée de planning trouvée pour cette période.
-          </div>
-
-          <div *ngIf="!loading && planningEntries.length > 0" class="table-responsive">
-            <table class="table table-hover table-striped">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Employé</th>
-                  <th>Lieu</th>
-                  <th>Type</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let entry of planningEntries" [ngClass]="{'table-success': entry.planningStatus === 'APPROVED', 'table-warning': entry.planningStatus === 'PLANNED', 'table-danger': entry.planningStatus === 'REJECTED'}">
-                  <td>{{ entry.planningDate | date:'dd/MM/yyyy' }}</td>
-                  <td>{{ entry.userName }}</td>
-                  <td>{{ entry.location }}</td>
-                  <td>
-                    <span class="badge" [ngClass]="{'bg-primary': entry.workType === 'Regular', 'bg-success': entry.workType === 'Exceptional', 'bg-secondary': entry.workType === 'Office'}">
-                      {{ entry.workType === 'Regular' ? 'Régulier' : (entry.workType === 'Exceptional' ? 'Exceptionnel' : 'Bureau') }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge" [ngClass]="{'bg-warning': entry.planningStatus === 'PLANNED', 'bg-success': entry.planningStatus === 'APPROVED', 'bg-danger': entry.planningStatus === 'REJECTED'}">
-                      {{ entry.planningStatus === 'PLANNED' ? 'En attente' : (entry.planningStatus === 'APPROVED' ? 'Approuvé' : 'Rejeté') }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="d-flex gap-1">
-                      <div *ngIf="isManager" class="dropdown">
-                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                          <i class="bi bi-sliders me-1"></i>Statut
-                        </button>
-                        <ul class="dropdown-menu">
-                          <li><a class="dropdown-item" (click)="updatePlanningStatus(entry.id, 'PLANNED')">
-                            <i class="bi bi-hourglass-split me-2"></i>Planifié
-                          </a></li>
-                          <li><a class="dropdown-item" (click)="updatePlanningStatus(entry.id, 'APPROVED')">
-                            <i class="bi bi-check-circle me-2"></i>Approuvé
-                          </a></li>
-                          <li><a class="dropdown-item" (click)="updatePlanningStatus(entry.id, 'REJECTED')">
-                            <i class="bi bi-x-circle me-2"></i>Rejeté
-                          </a></li>
-                        </ul>
+              <!-- Team Calendar View -->
+              <div class="team-calendar-container">
+                <!-- Calendar navigation -->
+                <div class="calendar-header mb-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="team-title-container">
+                      <div class="team-badge" [ngClass]="{'manager-badge': isManager && showAllUsers}">
+                        <i class="bi" [ngClass]="{'bi-people-fill': !(isManager && showAllUsers), 'bi-diagram-3-fill': isManager && showAllUsers}"></i>
                       </div>
-                      <button *ngIf="isManager || currentUserId === entry.userId" class="btn btn-sm btn-danger" (click)="deletePlanningEntry(entry.id)" title="Supprimer">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                      <a *ngIf="!isTeletravailEntry(entry) && currentUserId === entry.userId && canCreateTeletravail(entry)" 
-                         class="btn btn-sm btn-success" routerLink="/teletravail" [queryParams]="{date: entry.planningDate}" title="Créer une demande de télétravail">
-                        <i class="bi bi-laptop me-1"></i>Télétravail
-                      </a>
+                      <div class="team-title-content">
+                        <h5 class="team-title mb-0">{{ (isManager && showAllUsers) ? 'Manager' : (currentTeamName || 'Executive team') }}</h5>
+                        <small class="text-muted">
+                          <span *ngIf="isManager && showAllUsers">Vue globale : </span>
+                          <span *ngIf="!(isManager && showAllUsers)">Équipe </span>
+                          {{ uniqueEmployees.length }} utilisateur<span *ngIf="uniqueEmployees.length > 1">s</span>
+                        </small>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <div class="week-navigator">
+                      <button class="nav-arrow" (click)="showPreviousWeek()" [disabled]="isCurrentWeek">
+                        <i class="bi bi-chevron-left"></i>
+                      </button>
+                      <span class="date-range">
+                        {{ getFormattedDateRange() }}
+                      </span>
+                      <button class="nav-arrow" (click)="showNextWeek()" [disabled]="isNextWeek">
+                        <i class="bi bi-chevron-right"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Calendar grid -->
+                <div class="team-calendar">
+                  <div class="team-header">
+                    <div class="team-name-header">Employé</div>
+                    <div class="day-headers">
+                      <ng-container *ngFor="let day of getWeekDays(); let i = index">
+                        <div class="day-header">
+                          <div class="day-letter">{{ getDayLetter(i) }}</div>
+                          <div class="day-number">{{ day | date:'d' }}</div>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </div>
+                  
+                  <!-- Dynamic employee rows from backend data -->
+                  <div class="team-row" *ngFor="let employee of uniqueEmployees">
+                    <div class="team-member">
+                      <div class="member-avatar emoji-avatar">👤</div>
+                      <!-- Priority to employeeName from backend, fallback to userName or userId -->
+                      <div class="member-info">
+                        <div class="member-name">
+                          {{ employee.employeeName || employee.userName || 'Utilisateur #' + employee.userId }}
+                        </div>
+                        <div class="role-badge" *ngIf="employee.role">
+                          {{ getRoleLabel(employee.role) }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="day-cells">
+                      <ng-container *ngFor="let day of getWeekDays(); let i = index">
+                        <div class="day-cell">
+                          <!-- Get employee status for this specific day -->
+                          <ng-container *ngIf="getEmployeeStatusForDate(employee.userId, day) as status">
+                            <!-- Enhanced tooltips with click handlers for team leaders -->
+                            <i *ngIf="status === 'TELETRAVAIL'" 
+                               class="bi bi-house-door teletravail-icon tooltip-icon"
+                               [class.clickable]="isTeamLeader || isManager"
+                               [title]="(isTeamLeader || isManager) ? 'Cliquez pour annuler l\'approbation - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Télétravail - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, employee.userId, day, status)"></i>
+                            
+                            <i *ngIf="status === 'OFFICE'" 
+                               class="bi bi-building office-icon tooltip-icon"
+                               [title]="'Présence au bureau - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
+                            
+                            <i *ngIf="status === 'PENDING'" 
+                               class="bi bi-house-door teletravail-icon pending-icon tooltip-icon"
+                               [class.clickable]="isTeamLeader || isManager"
+                               [title]="(isTeamLeader || isManager) ? 'Cliquez pour approuver/refuser - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Demande en attente - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, employee.userId, day, status)"></i>
+                            
+                            <i *ngIf="status === 'VACATION'" 
+                               class="bi bi-umbrella beach-icon tooltip-icon"
+                               [title]="'Congé - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
+
+                            <i *ngIf="!status" 
+                               class="bi bi-building office-icon tooltip-icon"
+                               [title]="'Présence au bureau - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
+                          </ng-container>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </div>
+                  
+                  <!-- Show fallback message if no employees found -->
+                  <div *ngIf="uniqueEmployees.length === 0" class="text-center py-4">
+                    <div class="text-muted">Aucun employé trouvé pour cette période</div>
+                  </div>
+
+
+                </div>
+                
+                <!-- Legend -->
+                <div class="calendar-legend mt-3">
+                  <div class="legend-item">
+                    <i class="bi bi-house-door teletravail-icon"></i>
+                    <span>Télétravail</span>
+                  </div>
+                  <div class="legend-item">
+                    <i class="bi bi-building office-icon"></i>
+                    <span>Présentiel</span>
+                  </div>
+                  <div class="legend-item">
+                    <i class="bi bi-hourglass-split pending-icon"></i>
+                    <span>En attente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      
-      <!-- Add teletravail button -->
-      <div class="mt-3 d-flex justify-content-end">
-        <a class="btn btn-primary" routerLink="/teletravail">
-          <i class="bi bi-plus-circle me-2"></i>Nouvelle demande de télétravail
-        </a>
-      </div>
+      <!-- Data Visualization and Impact sections removed as requested -->
     </div>
   </section>
 </main>
@@ -271,20 +335,20 @@
           <a href="https://www.linkedin.com/company/soprahr/" class="linkedin"><i class="bi bi-linkedin"></i></a>
         </div>
       </div>
-      <div class="col-lg-4 col-md-6 footer-links text-center">
+      <div class="col-lg-4 col-md-6 footer-links text-center ps-lg-5">
         <h4>Useful Links</h4>
         <ul>
           <li><a href="/home">Page d'accueil</a></li>
           <li><a href="/teletravail">Télétravail</a></li>
           <li><a href="/reservation">Réservations de Postes</a></li>
-          <li><a href="/planning" class="active">Planning</a></li>
-          <li><a href="/contact">Contact Us</a></li>
+          <li><a href="/planning">Planning</a></li>
+          <li><a href="javascript:void(0)" (click)="openContactModal()">Contact Us</a></li>
         </ul>
       </div>
-      <div class="col-lg-4 col-md-6 footer-logo text-center">
+      <div class="col-lg-4 col-md-6 footer-logo text-end ps-lg-5">
         <div class="logo-container">
-          <img src="../../assets/img/Sopra.png" alt="Company Logo" loading="lazy" class="footer-company-logo">
-          <p class="copyright-text"> 2025 <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
+          <img src="../../assets/img/Sopra_preview.png" alt="Company Logo" loading="lazy" class="footer-company-logo">
+          <p class="copyright-text">© 2025 <span>Copyright</span> <strong class="px-1 sitename">Sopra HR</strong> <span>All Rights Reserved</span></p>
         </div>
         <div class="credits">
         </div>
@@ -295,6 +359,67 @@
 
 <!-- Scroll Top -->
 <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+<!-- Contact Modal -->  
+<div class="contact-modal" [class.active]="isContactModalOpen">
+  <div class="contact-modal-overlay" (click)="closeContactModal()"></div>
+  <div class="contact-modal-content">
+    <div class="contact-modal-header">
+      <h4>Contactez l'équipe support</h4>
+      <button class="close-button" (click)="closeContactModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="contact-modal-body">
+      <div class="contact-info">
+        <div class="contact-item">
+          <i class="bi bi-envelope-fill"></i>
+          <span>support&#64;sopraHR.com</span>
+        </div>
+        <div class="contact-item">
+          <i class="bi bi-telephone-fill"></i>
+          <span>+33 (0)1 57 00 09 80</span>
+        </div>
+        <div class="contact-item">
+          <i class="bi bi-geo-alt-fill"></i>
+          <span>Tour Manhattan, 5/6 Place de l'Iris, 92095 Paris La Défense</span>
+        </div>
+      </div>
+      <div class="contact-form">
+        <h5>Formulaire de contact interne</h5>
+        
+        <div class="form-group">
+          <label for="priority">Priorité</label>
+          <select id="priority" class="form-control form-select">
+            <option value="normal">🟢 Normal</option>
+            <option value="high">🟠 Élevée</option>
+            <option value="urgent">🔴 Urgente</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="subject" class="required">Sujet</label>
+          <input type="text" id="subject" class="form-control" placeholder="Titre de votre demande">
+        </div>
+        
+        <div class="form-group">
+          <label for="message" class="required">Description</label>
+          <textarea id="message" class="form-control" rows="4" placeholder="Décrivez votre problème ou demande en détail..."></textarea>
+          <div class="form-note">Veuillez inclure autant de détails que possible pour faciliter le traitement de votre demande.</div>
+        </div>
+        
+        <div class="form-actions">
+          <div class="form-required-note">
+            <span>*</span> Champs obligatoires
+          </div>
+          <button class="send-button" (click)="sendContactMessage()">
+            <i class="bi bi-send"></i> Soumettre la demande
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

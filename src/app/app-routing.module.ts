@@ -9,19 +9,20 @@ import { ApiTesterComponent } from './reservation/api-tester.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { PlanningComponent } from './planning/planning.component';
 import { AuthGuard } from './login/AuthGuard';
-import { ReservationDeskComponent } from './reservation-desk/reservation-desk.component';
 
 const routes: Routes = [
+  // Public routes - accessible without login
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'home', component: HomeComponent, canActivate: [AuthGuard]},
   { path: 'forgot-password', component: ForgetpasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
+  
+  // Protected routes - require authentication
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard]},
   { path: 'reservation', component: ReservationComponent, canActivate: [AuthGuard]},
-  { path: 'api-test', component: ApiTesterComponent},
-  {path: 'reset-password', component: ResetPasswordComponent}, 
+  { path: 'api-test', component: ApiTesterComponent, canActivate: [AuthGuard]},
   { path: 'planning', component: PlanningComponent, canActivate: [AuthGuard]},
   { path: 'teletravail', component: TeletravailComponent, canActivate: [AuthGuard]},
-  { path: 'reservationdesk', component: ReservationDeskComponent, canActivate: [AuthGuard]},
 
 
   { path: '**', redirectTo: 'login' },
