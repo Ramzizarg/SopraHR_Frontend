@@ -42,9 +42,15 @@ export class LoginComponent {
     this.authService.login(email, password, rememberMe).subscribe({
       next: () => {
         this.loading = true;
-        console.log('LoginComponent: Login successful, navigating to home');
+        // Check if user is admin and redirect accordingly
         setTimeout(() => {
-          this.router.navigate(['/home']);
+          if (this.authService.isAdmin()) {
+            console.log('LoginComponent: Admin user detected, navigating to users');
+            this.router.navigate(['/users']);
+          } else {
+            console.log('LoginComponent: Regular user, navigating to home');
+            this.router.navigate(['/home']);
+          }
         }, 500);
       },
       error: (error) => {

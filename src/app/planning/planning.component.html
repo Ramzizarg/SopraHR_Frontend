@@ -134,11 +134,6 @@
           <div class="stat-label">Jours en télétravail</div>
         </div>
         <div class="stat-card">
-          <i class="bi bi-check-circle stat-icon"></i>
-          <div class="stat-value">{{ getApprovedCount() }}</div>
-          <div class="stat-label">Demandes approuvées</div>
-        </div>
-        <div class="stat-card">
           <i class="bi bi-clipboard-data stat-icon"></i>
           <div class="stat-value">{{ getPendingCount() }}</div>
           <div class="stat-label">Demandes en attente</div>
@@ -156,14 +151,14 @@
                 <i class="bi bi-calendar-week me-2"></i>Planning de Télétravail
               </h5>
               
-              <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex justify-content-between align-items-start mb-3">
                 <div class="d-flex align-items-center gap-3">
                   <!-- Show only current user toggle -->
                   <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="showOnlyCurrentUser" 
                       [(ngModel)]="showOnlyCurrentUser" (change)="filterEntries()">
                     <label class="form-check-label" for="showOnlyCurrentUser">
-                      Afficher uniquement mes entrées
+                      Afficher mes entrées
                     </label>
                   </div>
                   
@@ -172,14 +167,29 @@
                     <input class="form-check-input" type="checkbox" id="showTeamLeadersOnly" 
                       [(ngModel)]="showTeamLeadersOnly" (change)="toggleTeamLeadersOnly()">
                     <label class="form-check-label" for="showTeamLeadersOnly">
-                      <i class="bi bi-people-fill me-1"></i>Afficher seulement les chefs d'équipe
+                      <i class="bi bi-people-fill me-1"></i>Afficher les chefs d'équipe
                     </label>
                   </div>
                 </div>
                 
-                <button (click)="createNewTeletravailRequest()" class="btn btn-primary btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Nouvelle demande
-                </button>
+                <!-- Search by employee name (available for managers and team leaders) -->
+                <div class="search-container" *ngIf="isManager || isTeamLeader">
+                  <div class="search-wrapper">
+                    <div class="search-icon">
+                      <i class="bi bi-search"></i>
+                    </div>
+                    <input type="text" class="search-input" placeholder="Rechercher un employé..." 
+                           [(ngModel)]="searchEmployeeName" (input)="filterEmployeesByName()">
+                    <div *ngIf="searchEmployeeName" class="search-clear" (click)="clearEmployeeSearch()">
+                      <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                  </div>
+                  <div *ngIf="searchEmployeeName && filteredEmployees.length > 0" class="search-results-count">
+                    {{ filteredEmployees.length }} résultat(s)
+                  </div>
+                </div>
+                
+
               </div>
               
               <!-- Loading indicator -->
@@ -240,9 +250,17 @@
                   </div>
                   
                   <!-- Dynamic employee rows from backend data -->
-                  <div class="team-row" *ngFor="let employee of uniqueEmployees">
-                    <div class="team-member">
-                      <div class="member-avatar emoji-avatar">👤</div>
+                  <div class="team-row" *ngFor="let employee of filteredEmployees" 
+                       [hidden]="(showOnlyCurrentUser && employee.userId !== currentUserId) || 
+                                (showTeamLeadersOnly && employee.role !== 'TEAM_LEADER')">
+                    <div class="team-member" [ngClass]="{'current-user': employee.userId === currentUserId}">
+
+                      <!-- User profile photo display with fallback to default avatar -->
+                      <img [src]="getUserProfilePhoto(employee.userId) || '/assets/images/default-avatar.svg'" 
+                           class="user-profile-photo" 
+                           alt="Photo de profil" 
+                           onerror="this.src='/assets/images/default-avatar.svg'">
+                      
                       <!-- Priority to employeeName from backend, fallback to userName or userId -->
                       <div class="member-info">
                         <div class="member-name">

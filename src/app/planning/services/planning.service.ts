@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map, of, catchError } from 'rxjs';
 import { PlanningResponse, PlanningGenerationRequest, TeletravailRequest, mapTeletravailToPlanningResponse } from '../models/planning.model';
 
 @Injectable({
@@ -133,6 +133,22 @@ export class PlanningService {
         map(response => {
           console.log('All users API response:', response);
           return response;
+        })
+      );
+  }
+  
+  /**
+   * Get user profile photo URL
+   * @param userId The ID of the user
+   * @returns Observable containing the photo URL
+   */
+  getUserProfilePhoto(userId: number): Observable<string | null> {
+    return this.http.get<{photoUrl: string}>(`${this.userApiUrl}/${userId}/profile-photo`)
+      .pipe(
+        map(response => response.photoUrl),
+        catchError(error => {
+          console.error('Error fetching profile photo:', error);
+          return of(null);
         })
       );
   }

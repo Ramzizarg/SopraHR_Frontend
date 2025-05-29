@@ -27,6 +27,8 @@ import { SoundService } from './services/sound.service';
 // Import locale data
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
+import { UsersComponent } from './backoffice/users/users.component';
+import { DashboardComponent } from './backoffice/dashboard/dashboard.component';
 
 // Register the locale data
 registerLocaleData(localeFr);
@@ -43,6 +45,8 @@ registerLocaleData(localeFr);
     PlanningComponent,
     ReservationComponent,
     ApiTesterComponent,
+    UsersComponent,
+    DashboardComponent,
   ],
   imports: [
     BrowserModule,

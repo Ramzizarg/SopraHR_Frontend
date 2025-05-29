@@ -1,0 +1,304 @@
+<div class="d-flex" [ngClass]="{'sidebar-collapsed-layout': !isSidebarOpen}">
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" (click)="toggleSidebar()"></div>
+  <!-- Sidebar -->
+  <div class="sidebar" [ngClass]="{'sidebar-mini': !isSidebarOpen}">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <img *ngIf="isSidebarOpen" src="assets/img/sopra_hr.png" alt="Sopra HR" class="sopra-logo">
+        <img *ngIf="!isSidebarOpen" src="assets/img/sopraa.png" alt="Sopra" class="sopra-icon">
+      </div>
+    </div>
+    
+    <div class="sidebar-menu">
+      <p class="menu-label">MENU</p>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" routerLink="/dashboard">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/users">
+            <i class="bi bi-people"></i>
+            <span>Utilisateurs</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/reservation">
+            <i class="bi bi-geo-alt"></i>
+            <span>Réservation</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/planning">
+            <i class="bi bi-calendar3"></i>
+            <span>Planning</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/teletravail">
+            <i class="bi bi-laptop"></i>
+            <span>Télétravail</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <button class="logout-button" (click)="logout()">
+        <i class="bi bi-power"></i>
+        <span>Déconnexion</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Header Bar -->
+    <div class="header-bar">
+      <div class="d-flex align-items-center">
+        <button class="menu-toggle" (click)="toggleSidebar()">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="search-bar">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm">
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="theme-toggle">
+          <i class="bi bi-moon"></i>
+        </div>
+        <div class="notification-icon">
+          <i class="bi bi-bell"></i>
+          <span class="notification-badge"></span>
+        </div>
+        <div class="user-profile" #profileElement (click)="toggleProfileDropdown()">
+          <img *ngIf="authService.currentUserValue?.profilePhotoUrl" [src]="authService.currentUserValue?.profilePhotoUrl" 
+            class="profile-image" alt="Profile photo" (error)="handleImageError($event)">
+          <div *ngIf="!authService.currentUserValue?.profilePhotoUrl" 
+            class="avatar-circle" 
+            [ngStyle]="{'background-color': authService.currentUserValue?.team === 'DEV' ? '#2563EB' : 
+                        authService.currentUserValue?.team === 'QA' ? '#16A34A' : 
+                        authService.currentUserValue?.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+            {{ authService.currentUserValue?.firstName?.charAt(0) || '' }}{{ authService.currentUserValue?.lastName?.charAt(0) || '' }}
+          </div>
+          
+          <!-- Profile Dropdown Menu -->
+          <div class="profile-dropdown" *ngIf="isProfileDropdownOpen" [class.show]="isProfileDropdownOpen">
+            <div class="profile-header">
+              <div class="profile-name">{{ authService.currentUserValue?.firstName }} {{ authService.currentUserValue?.lastName }}</div>
+              <div class="profile-email">{{ authService.currentUserValue?.email }}</div>
+            </div>
+            
+            <div class="profile-menu-items">
+              <a class="profile-menu-item" (click)="editProfile()">
+                <i class="bi bi-person"></i>
+                <span>Edit profile</span>
+              </a>
+              <a class="profile-menu-item" (click)="openAccountSettings()">
+                <i class="bi bi-gear"></i>
+                <span>Account settings</span>
+              </a>
+              <a class="profile-menu-item" (click)="getSupport()">
+                <i class="bi bi-info-circle"></i>
+                <span>Support</span>
+              </a>
+            </div>
+            
+            <div class="profile-divider"></div>
+            
+            <div class="profile-menu-items">
+              <a class="profile-menu-item sign-out" (click)="logout()">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Sign out</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <!-- Date and analytics refresh section -->
+      <div class="dashboard-header">
+        <div class="date-container">
+          <div class="date-badge">
+            <div class="date-line"></div>
+            <span>{{ formattedDate }}</span>
+          </div>
+        </div>
+        <button class="refresh-button" (click)="loadAnalyticsData()" [disabled]="isLoading">
+          <i class="bi" [ngClass]="{'bi-arrow-clockwise': !isLoading, 'bi-arrow-clockwise spin': isLoading}"></i>
+          <span>Actualiser</span>
+        </button>
+      </div>
+      
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p>Chargement des données analytiques...</p>
+      </div>
+      
+      <!-- Error message -->
+      <div *ngIf="error" class="error-container">
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ error }}
+        </div>
+      </div>
+      
+      <!-- Main dashboard content -->
+      <div *ngIf="!isLoading && !error && analytics" class="analytics-content">
+        <!-- Global metrics row -->
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-icon" style="background-color: #3B82F6;">
+              <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="metric-content">
+              <h3>Employés</h3>
+              <p class="metric-value">{{ analytics.totalEmployees }}</p>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon" style="background-color: #10B981;">
+              <i class="bi bi-building"></i>
+            </div>
+            <div class="metric-content">
+              <h3>Présence au bureau</h3>
+              <p class="metric-value">{{ analytics.officePresence }}</p>
+              <p class="metric-percentage" *ngIf="analytics.totalEmployees > 0">
+                {{ (analytics.officePresence / analytics.totalEmployees * 100) | number:'1.0-0' }}%
+              </p>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon" style="background-color: #6366F1;">
+              <i class="bi bi-laptop"></i>
+            </div>
+            <div class="metric-content">
+              <h3>Télétravail</h3>
+              <p class="metric-value">{{ analytics.remoteWork }}</p>
+              <p class="metric-percentage" *ngIf="analytics.totalEmployees > 0">
+                {{ (analytics.remoteWork / analytics.totalEmployees * 100) | number:'1.0-0' }}%
+              </p>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-icon" style="background-color: #F59E0B;">
+              <i class="bi bi-question-circle"></i>
+            </div>
+            <div class="metric-content">
+              <h3>Non défini</h3>
+              <p class="metric-value">{{ analytics.undefinedStatus }}</p>
+              <p class="metric-percentage" *ngIf="analytics.totalEmployees > 0">
+                {{ (analytics.undefinedStatus / analytics.totalEmployees * 100) | number:'1.0-0' }}%
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Team distribution and weekly occupancy -->
+        <div class="charts-row">
+          <!-- Team distribution -->
+          <div class="chart-card">
+            <div class="card-header">
+              <h3>Distribution par équipe</h3>
+            </div>
+            <div class="card-body">
+              <div class="team-distribution">
+                <div *ngFor="let team of analytics.teamDistribution" class="team-item">
+                  <div class="team-name">{{ team.team }}</div>
+                  <div class="team-bar-container">
+                    <div class="team-bar" [style.width.%]="(team.count / analytics.totalEmployees * 100)">
+                      {{ team.count }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Weekly occupancy -->
+          <div class="chart-card">
+            <div class="card-header">
+              <h3>Taux d'occupation hebdomadaire</h3>
+            </div>
+            <div class="card-body">
+              <div class="weekly-occupancy">
+                <div *ngFor="let day of analytics.weeklyOccupancy" class="day-item">
+                  <div class="day-name">{{ day.day }}</div>
+                  <div class="day-bar-container">
+                    <div class="day-bar" [style.width.%]="day.percentage">
+                      {{ day.percentage }}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Approval rates and top employees -->
+        <div class="charts-row">
+          <!-- Approval rates -->
+          <div class="chart-card">
+            <div class="card-header">
+              <h3>Demandes de télétravail</h3>
+            </div>
+            <div class="card-body approval-rates">
+              <div class="approval-stat">
+                <div class="approval-circle" style="background-color: #10B981;">
+                  {{ analytics.approvalRates.approved }}
+                </div>
+                <div class="approval-label">Approuvées</div>
+              </div>
+              
+              <div class="approval-stat">
+                <div class="approval-circle" style="background-color: #EF4444;">
+                  {{ analytics.approvalRates.rejected }}
+                </div>
+                <div class="approval-label">Rejetées</div>
+              </div>
+              
+              <div class="approval-stat">
+                <div class="approval-circle" style="background-color: #F59E0B;">
+                  {{ analytics.approvalRates.pending }}
+                </div>
+                <div class="approval-label">En attente</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Top employees -->
+          <div class="chart-card">
+            <div class="card-header">
+              <h3>Top employés</h3>
+            </div>
+            <div class="card-body">
+              <div class="top-employees">
+                <div *ngFor="let employee of analytics.topEmployees" class="employee-item">
+                  <div class="employee-info">
+                    <div class="employee-name">{{ employee.name }}</div>
+                    <div class="employee-team">{{ employee.team }}</div>
+                  </div>
+                  <div class="employee-days">
+                    <span class="badge">{{ employee.days }} jours</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

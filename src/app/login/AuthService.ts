@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
 export interface UserProfile {
@@ -10,6 +10,8 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   team?: string;
+  profilePhotoUrl?: string;
+  normalizedRole?: string; // Normalized version of the role without prefixes
 }
 
 @Injectable({
@@ -86,6 +88,32 @@ export class AuthService {
     const user = this.currentUserSubject.value;
     return !!user && (user.role === 'TEAM_LEADER' || user.role === 'ROLE_TEAM_LEADER');
   }
+  
+  isAdmin(): boolean {
+    const user = this.currentUserSubject.value;
+    if (!user) return false;
+    
+    // Log the user role for debugging
+    console.log('Checking if user is admin. User role:', user.role);
+    
+    // Use normalizedRole if available (this will be set by loadUserProfile)
+    if (user.normalizedRole) {
+      const isAdmin = user.normalizedRole.toUpperCase() === 'ADMIN';
+      console.log('Is admin check using normalizedRole:', isAdmin);
+      return isAdmin;
+    }
+    
+    // Fallback to checking various formats directly
+    const isAdmin = (
+      user.role === 'ADMIN' || 
+      user.role === 'ROLE_ADMIN' ||
+      user.role?.toUpperCase() === 'ADMIN' ||
+      user.role?.toUpperCase() === 'ROLE_ADMIN'
+    );
+    
+    console.log('Is admin result using direct role check:', isAdmin);
+    return isAdmin;
+  }
 
   hasRole(role: string): boolean {
     const user = this.currentUserSubject.value;
@@ -110,6 +138,20 @@ export class AuthService {
     }).pipe(
       tap(profile => {
         console.log('User profile loaded:', profile);
+        // Make sure we normalize the role to handle different formats
+        if (profile && profile.role) {
+          // Store the original role from the server
+          const originalRole = profile.role;
+          
+          // Handle roles that might be prefixed with ROLE_
+          if (originalRole.startsWith('ROLE_')) {
+            profile.normalizedRole = originalRole.substring(5); // Remove ROLE_ prefix
+          } else {
+            profile.normalizedRole = originalRole;
+          }
+          
+          console.log(`Role normalized: ${originalRole} → ${profile.normalizedRole}`);
+        }
         this.currentUserSubject.next(profile);
       }),
       catchError(error => {
@@ -122,6 +164,27 @@ export class AuthService {
         return this.handleError(error);
       })
     );
+  }
+  
+  // Ensure user profile is loaded
+  ensureProfileLoaded(): Observable<UserProfile | null> {
+    if (this.currentUserSubject.value) {
+      return of(this.currentUserSubject.value);
+    } else if (this.getToken()) {
+      return this.loadUserProfile();
+    } else {
+      return of(null);
+    }
+  }
+  
+  /**
+   * Update the current user in the BehaviorSubject
+   * This will refresh the UI everywhere the current user is being observed
+   * @param user Updated user profile
+   */
+  updateCurrentUser(user: UserProfile): void {
+    console.log('Updating current user:', user);
+    this.currentUserSubject.next(user);
   }
 
   logout(): void {

@@ -9,6 +9,8 @@ import { ApiTesterComponent } from './reservation/api-tester.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { PlanningComponent } from './planning/planning.component';
 import { AuthGuard } from './login/AuthGuard';
+import { UsersComponent } from './backoffice/users/users.component';
+import { DashboardComponent } from './backoffice/dashboard/dashboard.component';
 
 const routes: Routes = [
   // Public routes - accessible without login
@@ -23,6 +25,8 @@ const routes: Routes = [
   { path: 'api-test', component: ApiTesterComponent, canActivate: [AuthGuard]},
   { path: 'planning', component: PlanningComponent, canActivate: [AuthGuard]},
   { path: 'teletravail', component: TeletravailComponent, canActivate: [AuthGuard]},
+  { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
 
 
   { path: '**', redirectTo: 'login' },

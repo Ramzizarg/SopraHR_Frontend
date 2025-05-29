@@ -2,6 +2,8 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from './AuthService';
+import { Observable, of } from 'rxjs';
+import { tap, map, catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -9,28 +11,62 @@ import { AuthService } from './AuthService';
 export class AuthGuard implements CanActivate {
   constructor(private router: Router, private authService: AuthService) {}
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    // Check if authentication token exists and is valid
-    const token = this.authService.getToken();
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | boolean {
     console.log('AuthGuard checking authentication for route:', state.url);
-    console.log('Token exists:', !!token);
     
-    if (this.authService.isLoggedIn()) {
-      // Check if route requires manager role
-      const requiresManager = route.data && route.data['requiresManager'] === true;
-      
-      if (requiresManager && !this.authService.isManager()) {
-        console.log('Route requires manager role but user is not a manager');
-        this.router.navigate(['/home']);
-        return false;
-      }
-      
-      return true;
+    // Check if user is already logged in
+    if (!this.authService.isLoggedIn()) {
+      // Store the attempted URL for redirecting after login
+      console.log('User not authenticated, redirecting to login');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: state.url }});
+      return false;
     }
     
-    // Store the attempted URL for redirecting after login
-    console.log('User not authenticated, redirecting to login');
-    this.router.navigate(['/login'], { queryParams: { returnUrl: state.url }});
-    return false;
+    // Make sure the user profile is fully loaded before making authorization decisions
+    return this.authService.ensureProfileLoaded().pipe(
+      map(user => {
+        console.log('Full user profile loaded:', user);
+        console.log('User role:', user?.role);
+        console.log('Normalized role:', user?.normalizedRole);
+        
+        // ADMIN USERS HAVE FULL ACCESS TO EVERYTHING
+        if (this.authService.isAdmin()) {
+          console.log('✓ User is ADMIN - granting FULL ACCESS to', state.url);
+          return true;
+        }
+        
+        console.log('User is not admin, checking specific route requirements');
+        
+        // Check route requirements
+        const requiresAdmin = route.data && route.data['requiresAdmin'] === true;
+        const requiresManager = route.data && route.data['requiresManager'] === true;
+        
+        console.log('Route requires admin:', requiresAdmin);
+        console.log('Route requires manager:', requiresManager);
+        
+        // Handle admin-only routes
+        if (requiresAdmin) {
+          console.log('✗ Route requires ADMIN role');
+          this.router.navigate(['/home']);
+          return false;
+        }
+        
+        // Handle manager-only routes
+        if (requiresManager && !this.authService.isManager()) {
+          console.log('✗ Route requires MANAGER role');
+          this.router.navigate(['/home']);
+          return false;
+        }
+        
+        // User has appropriate permissions
+        console.log('✓ User has appropriate permissions for', state.url);
+        return true;
+      }),
+      catchError(error => {
+        console.error('Error in AuthGuard:', error);
+        this.router.navigate(['/login']);
+        return of(false);
+      })
+    );
   }
-}
+  }

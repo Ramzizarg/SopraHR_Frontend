@@ -18,6 +18,8 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   planningEntries: PlanningResponse[] = [];
   originalPlanningEntries: PlanningResponse[] = []; // Store unfiltered entries
   teamMembers: any[] = []; // Store all team members
+  uniqueEmployees: any[] = []; // Store unique team members for display
+  userProfilePhotos: Map<number, string> = new Map(); // Store user profile photos by userId
   loading = false;
   error = '';
   success = '';
@@ -35,6 +37,8 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   showAllUsers: boolean = false; // For managers to view all users
   showTeamLeadersOnly: boolean = false; // For managers to filter to team leaders only
   isContactModalOpen: boolean = false; // For contact modal
+  searchEmployeeName: string = ''; // For managers to search employees by name
+  filteredEmployees: any[] = []; // Holds the filtered employees based on search
 
   @ViewChild('navmenu') navMenu!: ElementRef;
   @ViewChild('mobileNavToggle') mobileNavToggle!: ElementRef;
@@ -67,13 +71,20 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   
   /**
    * Set dates to current work week (Monday-Friday)
+   * If current day is Saturday or Sunday, automatically show next week
    */
   setCurrentWeekDates(): void {
     const today = new Date();
     const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ...
     
+    // If it's Saturday (6) or Sunday (0), show next week instead of current week
+    if (currentDay === 6 || currentDay === 0) {
+      this.showNextWeek();
+      return;
+    }
+    
     // Calculate the Monday of current week
-    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // Handle Sunday specially
+    const mondayOffset = 1 - currentDay; // Calculate days to Monday
     const monday = new Date(today);
     monday.setDate(today.getDate() + mondayOffset);
     monday.setHours(0, 0, 0, 0);
@@ -185,10 +196,43 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     // Reset current user filter if needed
     if (this.showTeamLeadersOnly) {
       this.showOnlyCurrentUser = false;
+      this.clearEmployeeSearch(); // Clear any name search when filtering to team leaders
     }
     
-    // Reload planning with the filter parameter
-    this.loadPlanning();
+    // Set success message based on filter state
+    if (this.showTeamLeadersOnly) {
+      this.success = 'Affichage filtré: seulement les chefs d\'équipe';
+    } else {
+      this.success = 'Affichage de tous les utilisateurs';
+    }
+  }
+  
+  /**
+   * Filter employees by name for managers
+   */
+  filterEmployeesByName(): void {
+    if (!this.searchEmployeeName) {
+      // If search is empty, reset to show all employees
+      this.filteredEmployees = [...this.uniqueEmployees];
+      return;
+    }
+    
+    const searchTerm = this.searchEmployeeName.toLowerCase();
+    this.filteredEmployees = this.uniqueEmployees.filter(employee => {
+      const employeeName = (employee.employeeName || employee.userName || '').toLowerCase();
+      return employeeName.includes(searchTerm);
+    });
+    
+    this.success = `Recherche: ${this.filteredEmployees.length} employé(s) trouvé(s)`;
+  }
+  
+  /**
+   * Clear the employee name search
+   */
+  clearEmployeeSearch(): void {
+    this.searchEmployeeName = '';
+    this.filteredEmployees = [...this.uniqueEmployees];
+    this.success = 'Recherche effacée';
   }
   
   logout(): void {
@@ -265,6 +309,13 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
                 this.teamMembers = users;
               }
               
+              // Fetch profile photos for all team members
+              this.teamMembers.forEach(member => {
+                if (member.id) {
+                  this.fetchUserProfilePhoto(member.id);
+                }
+              });
+              
               this.updateUniqueEmployees(); // Update unique employees with filtered users
               
               // Now load all planning entries across the system
@@ -294,69 +345,40 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
           });
       } else if (this.currentTeamName) {
         // Load team members for any user with a team, not just team leaders
-        console.log('User has team, current team name:', this.currentTeamName);
-        // Make sure the team name is one of the valid enum values: DEV, QA, OPS, RH
-        const normalizedTeamName = this.currentTeamName.toUpperCase();
-        console.log('Using normalized team name for API call:', normalizedTeamName);
-        
-        // First, load all team members to ensure they're displayed even without teletravail entries
-        this.planningService.getTeamMembers(normalizedTeamName)
+        this.planningService.getTeamMembers(this.currentTeamName)
           .subscribe({
             next: (members) => {
               console.log('Loaded team members:', members);
               this.teamMembers = members;
-              this.updateUniqueEmployees(); // Update unique employees when team members change
               
-              // Then load planning for the team using team name directly (team leader view)
-              this.planningService.getTeamPlanning(this.currentTeamName || 'DEFAULT', this.startDate, this.endDate)
-                .subscribe({
-                  next: (data) => {
-                    this.originalPlanningEntries = [...data]; // Store original data
-                    this.planningEntries = this.showOnlyTeletravail ? 
-                      this.filterTeletravailOnly(data) : data;
-                    this.updateUniqueEmployees(); // Update unique employees when planning entries change
-                    this.loading = false;
-                    this.success = `Planning de l'équipe ${this.currentTeamName} chargé.`;
-                  },
-                  error: (err: any) => {
-                    console.error('Planning service error (team):', err);
-                    this.handleServiceError(err);
-                    this.loading = false;
-                  }
-                });
+              // Fetch profile photos for each team member
+              members.forEach(member => {
+                if (member.id) {
+                  this.fetchUserProfilePhoto(member.id);
+                }
+              });
+              
+              // Now load planning entries for the team
+              // Ensure currentTeamName is not undefined before passing it
+              if (this.currentTeamName) {
+                this.planningService.getTeamPlanning(this.currentTeamName, this.startDate, this.endDate)
+                  .subscribe({
+                    next: (data) => {
+                      this.originalPlanningEntries = [...data]; // Store original data
+                      this.planningEntries = this.showOnlyTeletravail ? 
+                        this.filterTeletravailOnly(data) : data;
+                      this.updateUniqueEmployees(); // Update unique employees when planning entries change
+                      this.loading = false;
+                    },
+                    error: (err: any) => {
+                      console.error('Planning service error:', err);
+                      this.handleServiceError(err);
+                    }
+                  });
+              }
             },
             error: (err: any) => {
               console.error('Error loading team members:', err);
-              // Continue loading planning entries even if team member fetch fails
-              this.planningService.getTeamPlanning(this.currentTeamName || 'DEFAULT', this.startDate, this.endDate)
-                .subscribe({
-                  next: (data) => {
-                    this.originalPlanningEntries = [...data]; 
-                    this.planningEntries = this.showOnlyTeletravail ? 
-                      this.filterTeletravailOnly(data) : data;
-                    this.updateUniqueEmployees(); // Update unique employees when planning entries change
-                    this.loading = false;
-                  },
-                  error: (err: any) => {
-                    console.error('Planning service error (team):', err);
-                    this.handleServiceError(err);
-                    this.loading = false;
-                  }
-                });
-            }
-          });
-      } else if (this.currentUserId > 0) {
-        // Load planning for current user (regular user view)
-        this.planningService.getUserPlanning(this.currentUserId, this.startDate, this.endDate)
-          .subscribe({
-            next: (data) => {
-              this.originalPlanningEntries = [...data]; // Store original data
-              this.planningEntries = this.showOnlyTeletravail ? 
-                this.filterTeletravailOnly(data) : data;
-              this.loading = false;
-            },
-            error: (err: any) => {
-              console.error('Planning service error:', err);
               this.handleServiceError(err);
             }
           });
@@ -374,6 +396,20 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     }
   }
   
+  /**
+   * Toggle showing only current user entries
+   */
+  toggleShowOnlyCurrentUser(): void {
+    this.showOnlyCurrentUser = !this.showOnlyCurrentUser;
+    this.filterEntries();
+    
+    if (this.showOnlyCurrentUser) {
+      this.success = 'Affichage filtré: seulement vos entrées';
+    } else {
+      this.success = 'Affichage de toute l\'équipe';
+    }
+  }
+
   /**
    * Filter planning entries based on selected filters
    */
@@ -406,7 +442,7 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
    * - Having a workType of Regular or Exceptional
    * - Or having a status of PENDING, APPROVED, or REJECTED (teletravail request statuses)
    */
-  private filterTeletravailOnly(entries: PlanningResponse[]): PlanningResponse[] {
+  filterTeletravailOnly(entries: PlanningResponse[]): PlanningResponse[] {
     return entries.filter(entry => {
       // Check for teletravail work types
       const isTeletravailType = entry.workType === 'Regular' || entry.workType === 'Exceptional';
@@ -752,25 +788,6 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   private tooltipsInitialized = false;
   
   // Getter for unique employees (computed property)
-  get uniqueEmployees(): any[] {
-    return this._uniqueEmployees;
-  }
-
-  /**
-   * Update the unique employees list when data changes
-   * This should be called whenever teamMembers or planningEntries change
-   */
-  updateUniqueEmployees(): void {
-    console.log('Updating unique employees list');
-    this._uniqueEmployees = this.calculateUniqueEmployees();
-    
-    // Initialize tooltips after updating the DOM
-    setTimeout(() => this.initializeTooltips(), 100);
-  }
-  
-  /**
-   * Initialize Bootstrap tooltips for status icons
-   */
   initializeTooltips(): void {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     if (tooltipTriggerList.length > 0) {
@@ -855,7 +872,7 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       showCloseButton: true,
       cancelButtonColor: '#d33',
       confirmButtonColor: '#28a745',
-      reverseButtons: true
+      reverseButtons: false
     }).then((result) => {
       if (result.isConfirmed) {
         // Approve the request
@@ -1222,6 +1239,84 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     }
   }
 
+  /**
+   * Fetch profile photo for a specific user and store it in the userProfilePhotos map
+   * @param userId The ID of the user
+   */
+  fetchUserProfilePhoto(userId: number): void {
+    if (!userId) return;
+    
+    // Skip if we already have this user's photo
+    if (this.userProfilePhotos.has(userId)) return;
+    
+    this.planningService.getUserProfilePhoto(userId).subscribe({
+      next: (photoUrl) => {
+        if (photoUrl) {
+          this.userProfilePhotos.set(userId, photoUrl);
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching profile photo for user', userId, error);
+      }
+    });
+  }
+  
+  /**
+   * Get profile photo URL for a specific user
+   * @param userId The ID of the user
+   * @returns The profile photo URL or null if not available
+   */
+  getUserProfilePhoto(userId: number): string | null {
+    return this.userProfilePhotos.get(userId) || null;
+  }
+  
+
+
+
+
+
+
+
+  
+  /**
+   * Update the list of unique employees based on team members and planning entries
+   */
+  updateUniqueEmployees(): void {
+    const uniqueEmployeeMap = new Map();
+    
+    // First add all team members
+    this.teamMembers.forEach(member => {
+      if (member.id) {
+        uniqueEmployeeMap.set(member.id, {
+          userId: member.id,
+          userName: member.firstName + ' ' + member.lastName,
+          employeeName: member.firstName + ' ' + member.lastName,
+          role: member.role || 'EMPLOYEE'
+        });
+      }
+    });
+    
+    // Add any employees from planning entries not already in the map
+    this.planningEntries.forEach(entry => {
+      if (entry.userId && !uniqueEmployeeMap.has(entry.userId)) {
+        uniqueEmployeeMap.set(entry.userId, {
+          userId: entry.userId,
+          userName: entry.employeeName || ('Utilisateur #' + entry.userId),
+          employeeName: entry.employeeName,
+          role: entry.role || 'EMPLOYEE'
+        });
+      }
+    });
+    
+    // Convert map to array and assign to our property
+    this.uniqueEmployees = Array.from(uniqueEmployeeMap.values());
+    this.filteredEmployees = [...this.uniqueEmployees]; // Initialize filtered employees
+    console.log('Updated unique employees:', this.uniqueEmployees);
+    
+    // Initialize tooltips after updating the DOM
+    setTimeout(() => this.initializeTooltips(), 100);
+  }
+  
   getEmployeeStatusForDate(userId: number, date: Date): string | null {
     // Format date to compare with entry dates
     const dateStr = formatDate(date, 'yyyy-MM-dd', 'en');
