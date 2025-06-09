@@ -85,11 +85,11 @@ export class PlanningService {
   }
 
   /**
-   * Cancel/delete a teletravail request
+   * Cancel a teletravail request
    * @param teletravailId The ID of the teletravail request to cancel
    */
   cancelTeletravailRequest(teletravailId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${teletravailId}`);
+    return this.http.delete(`${this.apiUrl}/${teletravailId}/cancel`);
   }
   
   /**

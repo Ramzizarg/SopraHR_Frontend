@@ -49,9 +49,6 @@
         
         <!-- User Controls -->
         <div class="user-controls d-flex align-items-center">
-          <div class="logout-container me-3 d-none d-lg-block">
-            <button class="btn btn-logout" (click)="logout()"><i class="bi bi-box-arrow-right"></i> <span class="btn-text">Déconnexion</span></button>
-          </div>
           <a href="javascript:void(0)" class="contact-icon me-2" (click)="openContactModal()">
             <i class="bi bi-envelope-fill"></i>
           </a>
@@ -61,7 +58,7 @@
           <app-profile-header></app-profile-header>
           
           <!-- Mobile menu toggle button -->
-          <a href="javascript:void(0)" class="d-lg-none ms-3">
+          <a href="javascript:void(0)" class="d-lg-none ms-1">
             <i #mobileNavToggle class="mobile-nav-toggle bi" 
               [class.bi-list]="!isMobileMenuOpen" 
               [class.bi-x-lg]="isMobileMenuOpen"
@@ -75,7 +72,7 @@
     <div class="mobile-nav-overlay d-lg-none" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu($event)"></div>
     <aside class="sidebar-nav d-lg-none" [class.active]="isMobileMenuOpen">
       <div class="sidebar-header">
-        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Sopra HR Software" class="sidebar-logo">
+        <img src="../../assets/img/sopra_hr.png" alt="Sopra HR Software" class="sidebar-logo">
       </div>
 
       <nav class="sidebar-menu">
@@ -155,7 +152,7 @@
         <div class="horizontal-status-block">
           <!-- Today's Work Status Section -->
           <div class="status-section work-status">
-            <h4 class="status-title"><i class="bi bi-calendar-check"></i> Statut de travail</h4>
+            <h4 class="status-title"><i class="bi bi-calendar-check"></i> Statut de Travail</h4>
             
             <!-- Telework status and content -->
             <div *ngIf="workStatus === 'teletravail'">
@@ -169,16 +166,37 @@
               </div>
               
               <div class="status-content">
-                <p class="status-info">Vous travaillez à distance aujourd'hui.</p>
+                <p class="status-info d-none d-sm-block">Vous travaillez à distance aujourd'hui.</p>
                 <p class="location-info" *ngIf="teleworkAtHome">
-                  <i class="bi bi-geo-alt-fill"></i> Lieu: <strong>Domicile</strong>
+                  <i class="bi bi-geo-alt-fill"></i> <span class="d-none d-sm-inline">Lieu: </span><strong>Domicile</strong>
                 </p>
                 <p class="location-info" *ngIf="!teleworkAtHome && workLocation">
-                  <i class="bi bi-geo-alt-fill"></i> Lieu: <strong>{{ workLocation }}</strong>
+                  <i class="bi bi-geo-alt-fill"></i> <span class="d-none d-sm-inline">Lieu: </span><strong>{{ workLocation }}</strong>
                 </p>
               </div>
             </div>
             
+            <!-- Weekend status and content -->
+            <div *ngIf="workStatus === 'weekend'">
+              <div class="badge-container">
+                <div class="status-badge weekend">
+                  <i class="bi bi-sun"></i> Weekend
+                </div>
+                <div class="date-badge">
+                  <i class="bi bi-calendar3"></i> {{today | date:'dd/MM'}}
+                </div>
+              </div>
+              
+              <div class="status-content">
+                <div class="desk-info">
+                  <p class="status-info">
+                    <strong>{{ weekendMessage }}</strong><br>
+                    <i class="bi bi-emoji-wink"></i>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <!-- Office status and content -->
             <div *ngIf="workStatus === 'office' || workStatus === 'none'">
               <div class="badge-container">
@@ -191,15 +209,27 @@
               </div>
               
               <div class="status-content">
-                <div class="desk-info" *ngIf="deskReservation">
-                  <p class="status-info">Réservation: <strong>Étage 3, Bureau #{{ deskReservation.seatNumber }}</strong></p>
+                <!-- Loading state with subtle indicator -->
+                <div class="desk-info loading-reservation" *ngIf="loadingReservation">
+                  <p class="status-info">
+                    <span class="emoji-container"><i class="bi bi-clock-history"></i></span>
+                    <span class="reservation-text">Chargement des réservations...</span>
+                  </p>
                 </div>
-                <div class="no-desk-warning" *ngIf="!deskReservation">
+                <!-- Desk reservation info (only shown when not loading and reservation exists) -->
+                <div class="desk-info" *ngIf="!loadingReservation && deskReservation">
+                  <p class="status-info">
+                    <span class="emoji-container">🧑‍💻</span>
+                    <span class="reservation-text">Zone <strong>{{ deskReservation.zone }}</strong> • Bureau <strong>#{{ deskReservation.seatNumber }}</strong></span>
+                  </p>
+                </div>
+                <!-- No desk warning (only shown when not loading and no reservation exists) -->
+                <div class="no-desk-warning" *ngIf="!loadingReservation && !deskReservation && !isWeekend">
                   <div class="alert alert-danger small-alert">
-                    <i class="bi bi-info-circle-fill"></i> Vous n'avez pas réservé de bureau pour aujourd'hui.
+                    <i class="bi bi-info-circle-fill"></i> <span class="d-none d-sm-inline">Vous n'avez pas réservé de bureau aujourd'hui.</span><span class="d-sm-none">Pas de réservation</span>
                   </div>
                   <button class="btn btn-primary reserve-btn" routerLink="/reservation">
-                    <i class="bi bi-calendar-check"></i> Voir réservation
+                    <i class="bi bi-calendar-check"></i> <span class="d-none d-sm-inline">fait reservation</span><span class="d-sm-none">Réserver</span>
                   </button>
                 </div>
               </div>
@@ -239,7 +269,7 @@
                   <div class="day-status" [ngClass]="day.status">
                     <div class="status-emoji">
                       <span *ngIf="day.status === 'teletravail'">🏠</span>
-                      <span *ngIf="day.status === 'office'">💼</span>
+                      <span *ngIf="day.status === 'office'">🏢</span>
                       <span *ngIf="day.status === 'pending'">⏳</span>
                       <span *ngIf="day.status === 'none'">-</span>
                     </div>

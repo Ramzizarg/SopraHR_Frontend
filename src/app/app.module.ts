@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, LOCALE_ID } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -11,18 +11,19 @@ import { AuthInterceptor } from './auth-interceptor';
 import { HomeComponent } from './home/home.component';
 import { ForgetpasswordComponent } from './forgetpassword/forgetpassword.component';
 import { TeletravailComponent } from './teletravail/teletravail.component';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
-import { PlanningComponent } from './planning/planning.component';
 import { AuthService } from './login/AuthService';
 import { AuthGuard } from './login/AuthGuard';
 import { ReservationComponent } from './reservation/reservation.component';
 import { ApiTesterComponent } from './reservation/api-tester.component';
 import { SharedModule } from './shared/shared.module';
 import { ProfileService } from './services/profile.service';
+import { PlanningComponent } from './planning/planning.component';
 import { PasswordResetService } from './services/password-reset.service';
 import { SoundService } from './services/sound.service';
+import { BFCacheService } from './services/bfcache.service';
 
 // Import locale data
 import { registerLocaleData } from '@angular/common';
@@ -31,7 +32,7 @@ import { UsersComponent } from './backoffice/users/users.component';
 import { DashboardComponent } from './backoffice/dashboard/dashboard.component';
 
 // Register the locale data
-registerLocaleData(localeFr);
+registerLocaleData(localeFr, 'fr');
 
 @NgModule({
   declarations: [
@@ -64,6 +65,10 @@ registerLocaleData(localeFr);
     AuthGuard,
     PasswordResetService,
     SoundService,
+    BFCacheService,
+    DatePipe,
+    ProfileService,
+    { provide: LOCALE_ID, useValue: 'fr' },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]

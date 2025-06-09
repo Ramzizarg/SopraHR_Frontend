@@ -5,6 +5,7 @@ import { AuthService } from '../login/AuthService';
 import { ProfileService } from '../services/profile.service';
 import Swal from 'sweetalert2';
 
+// tslint:disable-next-line:use-inline-template-type-checking
 @Component({
   selector: 'app-teletravail',
   templateUrl: './teletravail.component.html',
@@ -23,6 +24,16 @@ export class TeletravailComponent implements OnInit {
   selectedGouvernorat: string = '';
   reason: string = '';
   rejectionReason: string = '';
+  
+  // Multiple date selection for exceptional requests
+  selectedDates: string[] = [];
+  // Multiple date selection for regular requests
+  regularSelectedDates: string[] = [];
+  dateSelectorValue: string = '';
+  // Travel location
+  travailLocation: string = '';
+  // Travel reason for exceptional requests
+  travailReason: string = '';
 
   // Role-based access
   isManager: boolean = false;
@@ -169,7 +180,7 @@ export class TeletravailComponent implements OnInit {
   }
 
   private loadRequests(): void {
-    // Always load user requests for date validation in the form
+    // Load user requests for date validation in the form
     this.teletravailService.getUserRequests().subscribe({
       next: (requests) => {
         this.userRequests = requests;
@@ -201,34 +212,6 @@ export class TeletravailComponent implements OnInit {
         });
       }
     });
-    
-    // Load team requests for team leaders
-    if (this.isTeamLeader || this.isManager) {
-      this.teletravailService.getTeamRequests().subscribe({
-        next: (requests) => {
-          this.teamRequests = requests;
-          console.log('Team requests loaded:', this.teamRequests.length);
-        },
-        error: (err) => {
-          console.error('Failed to load team requests:', err);
-          this.handleApiError(err, 'Impossible de charger les demandes de l\'équipe.');
-        }
-      });
-    }
-    
-    // Load all requests for managers
-    if (this.isManager) {
-      this.teletravailService.getAllRequests().subscribe({
-        next: (requests) => {
-          this.allRequests = requests;
-          console.log('All requests loaded:', this.allRequests.length);
-        },
-        error: (err) => {
-          console.error('Failed to load all requests:', err);
-          this.handleApiError(err, 'Impossible de charger toutes les demandes.');
-        }
-      });
-    }
   }
   
   private handleApiError(err: any, defaultMessage: string): void {
@@ -273,34 +256,50 @@ export class TeletravailComponent implements OnInit {
     const today = new Date();
     this.today = this.formatDate(today); // Set today's date
     const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
-
-    if (dayOfWeek === 6) { // Saturday
-      // Start from next Monday (skip current week)
+    const currentHour = today.getHours();
+    
+    // Check if it's Friday after work hours (5PM+), Saturday, or Sunday
+    const isFridayEvening = dayOfWeek === 5 && currentHour >= 17;
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    
+    if (isFridayEvening || isWeekend) { 
+      // After Friday or on weekend - show the next two weeks
+      console.log('After Friday cutoff - showing next two weeks');
+      
+      // Calculate the start of next week (next Monday)
       const startNextMonday = new Date(today);
-      startNextMonday.setDate(today.getDate() + (8 - dayOfWeek)); // Move to next Monday
+      const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek; // If Sunday, next day is Monday
+      startNextMonday.setDate(today.getDate() + daysUntilNextMonday);
       startNextMonday.setHours(0, 0, 0, 0);
       this.startOfCurrentWeek = this.formatDate(startNextMonday);
 
+      // End of next week (Sunday)
       const endNextSunday = new Date(startNextMonday);
       endNextSunday.setDate(startNextMonday.getDate() + 6);
       endNextSunday.setHours(23, 59, 59, 999);
       this.endOfCurrentWeek = this.formatDate(endNextSunday);
 
+      // Start of the week after next
       const startFollowingMonday = new Date(startNextMonday);
       startFollowingMonday.setDate(startNextMonday.getDate() + 7);
       startFollowingMonday.setHours(0, 0, 0, 0);
       this.startOfNextWeek = this.formatDate(startFollowingMonday);
 
+      // End of the week after next
       const endFollowingSunday = new Date(startFollowingMonday);
       endFollowingSunday.setDate(startFollowingMonday.getDate() + 6);
       endFollowingSunday.setHours(23, 59, 59, 999);
       this.endOfNextWeek = this.formatDate(endFollowingSunday);
 
+      // Friday of next week
       const friday = new Date(startNextMonday);
       friday.setDate(startNextMonday.getDate() + 4);
       friday.setHours(0, 0, 0, 0);
       this.fridayCutoff = this.formatDate(friday);
-    } else { // Any other day (Sunday to Friday)
+    } else { 
+      // Normal case (Monday to Friday daytime) - show current week and next week
+      console.log('Normal weekday - showing current week and next week');
+      
       const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       const startCurrent = new Date(today);
       startCurrent.setDate(today.getDate() - diffToMonday);
@@ -327,6 +326,8 @@ export class TeletravailComponent implements OnInit {
       endNext.setHours(23, 59, 59, 999);
       this.endOfNextWeek = this.formatDate(endNext);
     }
+    
+    console.log(`Date ranges: Current week ${this.startOfCurrentWeek} to ${this.endOfCurrentWeek}, Next week ${this.startOfNextWeek} to ${this.endOfNextWeek}`);
   }
 
   private formatDate(date: Date): string {
@@ -413,6 +414,202 @@ export class TeletravailComponent implements OnInit {
     this.teletravailDate = input.value;
   }
 
+  // Helper method to check if dates are in the same week
+  private areDatesInSameWeek(date1: string, date2: string): boolean {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    
+    // Get the week number for each date
+    const getWeekNumber = (date: Date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+      const week1 = new Date(d.getFullYear(), 0, 4);
+      return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    };
+    
+    // Check if week numbers and years match
+    return getWeekNumber(d1) === getWeekNumber(d2) && d1.getFullYear() === d2.getFullYear();
+  }
+  
+  // Helper method to check if dates are consecutive
+  private areDatesConsecutive(date1: string, date2: string): boolean {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    
+    // Calculate difference in days
+    const timeDiff = Math.abs(d2.getTime() - d1.getTime());
+    const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    return diffDays === 1;
+  }
+  
+  onRegularDateSelect(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+    const selectedDate = inputElement.value;
+    
+    if (!selectedDate) return;
+    
+    // Check if date is a weekend
+    const date = new Date(selectedDate);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      this.showDateError('Les demandes de télétravail ne sont pas autorisées pour les weekends.');
+      this.dateSelectorValue = '';
+      return;
+    }
+
+    // Check if there's already a telework request for this date
+    const existingRequest = this.userRequests.find(request => 
+      request.teletravailDate === selectedDate && 
+      (request.status === TeletravailStatus.PENDING || request.status === TeletravailStatus.APPROVED)
+    );
+
+    if (existingRequest) {
+      this.showDateError(`Vous avez déjà une demande ${existingRequest.travailType === 'reguliere' ? 'régulière' : 'exceptionnelle'} pour cette date.`);
+      this.dateSelectorValue = '';
+      return;
+    }
+
+    // Check existing regular telework requests for the same week
+    const selectedWeekStart = new Date(date);
+    selectedWeekStart.setDate(date.getDate() - date.getDay() + 1); // Start of week (Monday)
+    selectedWeekStart.setHours(0, 0, 0, 0);
+    
+    const selectedWeekEnd = new Date(selectedWeekStart);
+    selectedWeekEnd.setDate(selectedWeekStart.getDate() + 6); // End of week (Sunday)
+    selectedWeekEnd.setHours(23, 59, 59, 999);
+
+    const existingRequestsInWeek = this.userRequests.filter(request => {
+      const requestDate = new Date(request.teletravailDate);
+      return requestDate >= selectedWeekStart && 
+             requestDate <= selectedWeekEnd && 
+             request.travailType === 'reguliere' &&
+             (request.status === TeletravailStatus.PENDING || request.status === TeletravailStatus.APPROVED);
+    });
+
+    if (existingRequestsInWeek.length >= 2) {
+      this.showDateError(`Vous avez déjà ${existingRequestsInWeek.length} demande(s) régulière(s) pour cette semaine.`);
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // Check if date is already selected in exceptional telework
+    if (this.selectedDates.includes(selectedDate)) {
+      this.showDateError('Cette date est déjà sélectionnée pour une demande exceptionnelle.');
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // Check if date is already selected
+    if (this.regularSelectedDates.includes(selectedDate)) {
+      this.showDateError('Cette date est déjà sélectionnée.');
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // Check if we're not exceeding maximum number of days (2)
+    if (this.regularSelectedDates.length >= 2) {
+      this.showDateError('Vous ne pouvez pas sélectionner plus de 2 jours pour une demande régulière.');
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // If we already have one date, perform additional validations
+    if (this.regularSelectedDates.length === 1) {
+      const existingDate = this.regularSelectedDates[0];
+      
+      // Check if dates are in the same week
+      if (!this.areDatesInSameWeek(existingDate, selectedDate)) {
+        this.showDateError('Les deux dates doivent être dans la même semaine.');
+        this.dateSelectorValue = '';
+        return;
+      }
+      
+      // Check if dates are consecutive
+      if (this.areDatesConsecutive(existingDate, selectedDate)) {
+        this.showDateError('Les jours sélectionnés ne doivent pas être consécutifs.');
+        this.dateSelectorValue = '';
+        return;
+      }
+    }
+    
+    // Add the date to selected dates
+    this.regularSelectedDates.push(selectedDate);
+    // Sort dates chronologically
+    this.regularSelectedDates.sort();
+    // Reset the date selector value
+    this.dateSelectorValue = '';
+  }
+  
+  removeRegularSelectedDate(index: number): void {
+    if (index >= 0 && index < this.regularSelectedDates.length) {
+      this.regularSelectedDates.splice(index, 1);
+    }
+  }
+  
+  onExceptionalDateSelect(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+    const selectedDate = inputElement.value;
+    
+    if (!selectedDate) return;
+    
+    // Check if date is a weekend
+    const date = new Date(selectedDate);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      this.showDateError('Les demandes de télétravail ne sont pas autorisées pour les weekends.');
+      this.dateSelectorValue = '';
+      return;
+    }
+
+    // Check if there's already a telework request for this date
+    const existingRequest = this.userRequests.find(request => 
+      request.teletravailDate === selectedDate && 
+      (request.status === TeletravailStatus.PENDING || request.status === TeletravailStatus.APPROVED)
+    );
+
+    if (existingRequest) {
+      this.showDateError(`Vous avez déjà une demande ${existingRequest.travailType === 'reguliere' ? 'régulière' : 'exceptionnelle'} pour cette date.`);
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // Check if date is already selected in regular telework
+    if (this.regularSelectedDates.includes(selectedDate)) {
+      this.showDateError('Cette date est déjà sélectionnée pour une demande régulière.');
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // Check if date is already selected
+    if (this.selectedDates.includes(selectedDate)) {
+      this.showDateError('Cette date est déjà sélectionnée.');
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // Check if we're not exceeding maximum number of days (5)
+    if (this.selectedDates.length >= 5) {
+      this.showDateError('Vous ne pouvez pas sélectionner plus de 5 jours.');
+      this.dateSelectorValue = '';
+      return;
+    }
+    
+    // Add the date to selected dates
+    this.selectedDates.push(selectedDate);
+    // Sort dates chronologically
+    this.selectedDates.sort();
+    // Reset the date selector value
+    this.dateSelectorValue = '';
+  }
+  
+  removeSelectedDate(index: number): void {
+    if (index >= 0 && index < this.selectedDates.length) {
+      this.selectedDates.splice(index, 1);
+    }
+  }
+
   onCountryChange(): void {
     this.selectedGouvernorat = '';
     if (this.selectedPays) {
@@ -434,8 +631,6 @@ export class TeletravailComponent implements OnInit {
     }
   }
 
-  // Tab navigation removed - no longer needed
-  
   openStatusModal(request: TeletravailResponse): void {
     this.selectedRequest = request;
     this.rejectionReason = '';
@@ -479,87 +674,341 @@ export class TeletravailComponent implements OnInit {
   }
   
   onSubmit(): void {
-    // Set isSubmitting flag to true when the form is being submitted
+    if (this.isSubmitting) return;
     this.isSubmitting = true;
     
+    // Validation logic
+    const isExceptional = this.travailType === 'exceptionnelle';
+    const isRegular = this.travailType === 'reguliere';
     const requiresLocation = this.travailMaison === 'non';
-    const requiresReason = this.travailType !== 'reguliere';
-
-    if (!this.travailType || !this.teletravailDate || !this.travailMaison) {
+    
+    // Form validation
+    if (!this.travailType) {
       Swal.fire({
         icon: 'error',
         title: 'Erreur',
-        text: 'Veuillez remplir tous les champs obligatoires.',
+        text: 'Veuillez sélectionner un type de travail.',
         confirmButtonText: 'OK',
         timer: 3000,
       });
       this.isSubmitting = false;
       return;
     }
-
+    
+    // For regular telework, require dates selection
+    if (isRegular && this.regularSelectedDates.length === 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Veuillez sélectionner au moins une date pour votre demande régulière.',
+        confirmButtonText: 'OK',
+        timer: 3000,
+      });
+      this.isSubmitting = false;
+      return;
+    }
+    
+    // For exceptional telework, require dates selection
+    if (isExceptional && this.selectedDates.length === 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Veuillez sélectionner au moins une date pour votre demande exceptionnelle.',
+        confirmButtonText: 'OK',
+        timer: 3000,
+      });
+      this.isSubmitting = false;
+      return;
+    }
+    
+    if (!this.travailMaison) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Veuillez indiquer si vous travaillerez depuis votre domicile habituel.',
+        confirmButtonText: 'OK',
+        timer: 3000,
+      });
+      this.isSubmitting = false;
+      return;
+    }
+    
+    // Location validation only applies for non-home work
     if (requiresLocation && (!this.selectedPays || !this.selectedGouvernorat)) {
       Swal.fire({
         icon: 'error',
         title: 'Erreur',
-        text: 'Veuillez sélectionner un pays et une région.',
+        text: 'Veuillez sélectionner un pays et un gouvernorat.',
         confirmButtonText: 'OK',
         timer: 3000,
       });
       this.isSubmitting = false;
       return;
     }
-
-    if (requiresReason && !this.reason.trim()) {
+    
+    // Reason validation only applies for exceptional requests
+    if (isExceptional && !this.travailReason) {
       Swal.fire({
         icon: 'error',
         title: 'Erreur',
-        text: 'Veuillez fournir une raison pour une demande non régulière.',
+        text: 'Veuillez fournir une raison pour cette demande exceptionnelle.',
         confirmButtonText: 'OK',
         timer: 3000,
       });
       this.isSubmitting = false;
       return;
     }
-
-    const formData: TeletravailForm = {
-      travailType: this.travailType,
-      teletravailDate: this.teletravailDate,
-      travailMaison: this.travailMaison,
-      ...(requiresLocation && {
-        selectedPays: this.selectedPays,
-        selectedGouvernorat: this.selectedGouvernorat
-      }),
-      ...(requiresReason && { reason: this.reason })
-    };
-
-    this.teletravailService.submitRequest(formData).subscribe({
-      next: (response) => {
-        this.isSubmitting = false;
-        Swal.fire({
-          icon: 'success',
-          title: 'Succès',
-          text: 'Votre demande de télétravail a été soumise avec succès !',
-          confirmButtonText: 'OK',
-          timer: 3000,
-        }).then(() => {
-          this.resetForm();
-          this.loadRequests();
+    
+    // Create request object
+    const userId = this.authService.currentUserValue?.id;
+    if (!userId) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Utilisateur non identifié. Veuillez vous reconnecter.',
+        confirmButtonText: 'OK'
+      });
+      this.isSubmitting = false;
+      return;
+    }
+    
+    // For exceptional telework with multiple dates, submit separate requests for each date
+    if (isExceptional && this.selectedDates.length > 0) {
+      console.log('Creating multiple requests for exceptional telework');
+      
+      // Track how many requests have been processed and statuses
+      let completedRequests = 0;
+      let successfulRequests = 0;
+      let failedRequests = 0;
+      
+      // Process each date as a separate request
+      this.selectedDates.forEach((date, index) => {
+        const request: TeletravailForm = {
+          travailType: this.travailType,
+          teletravailDate: date,
+          travailMaison: this.travailMaison === 'oui' ? 'true' : 'false',
+          reason: isExceptional ? this.travailReason || '' : '',
+          selectedPays: requiresLocation ? this.selectedPays || '' : '',
+          selectedGouvernorat: requiresLocation ? this.selectedGouvernorat || '' : ''
+        };
+        
+        console.log(`Sending request ${index + 1}/${this.selectedDates.length}:`, request);
+        
+        this.teletravailService.submitRequest(request).subscribe({
+          next: () => {
+            completedRequests++;
+            successfulRequests++;
+            
+            // When all requests are processed, show appropriate message
+            if (completedRequests === this.selectedDates.length) {
+              this.isSubmitting = false;
+              
+              if (failedRequests === 0) {
+                // All requests succeeded
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Succès',
+                  text: 'Vos demandes de télétravail ont été soumises avec succès.',
+                  confirmButtonText: 'OK',
+                  timer: 3000
+                }).then(() => {
+                  this.fetchRequests(); // Refresh the list
+                  this.resetForm();    // Clear the form
+                });
+              } else if (successfulRequests > 0) {
+                // Some requests succeeded, some failed
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Attention',
+                  text: `${successfulRequests} demandes soumises avec succès, ${failedRequests} demandes ont échoué.`,
+                  confirmButtonText: 'OK'
+                }).then(() => {
+                  this.fetchRequests(); // Refresh the list
+                });
+              } else {
+                // All requests failed
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erreur',
+                  text: 'Une erreur est survenue lors de la soumission de vos demandes.',
+                  confirmButtonText: 'OK'
+                });
+              }
+            }
+          },
+          error: (err) => {
+            console.error(`Error saving request ${index + 1}:`, err);
+            completedRequests++;
+            failedRequests++;
+            
+            // When all requests are processed, show appropriate message
+            if (completedRequests === this.selectedDates.length) {
+              this.isSubmitting = false;
+              
+              if (failedRequests === this.selectedDates.length) {
+                // All requests failed
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erreur',
+                  text: 'Une erreur est survenue lors de la soumission de vos demandes.',
+                  confirmButtonText: 'OK'
+                });
+              } else {
+                // Some requests succeeded, some failed
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Attention',
+                  text: `${successfulRequests} demandes soumises avec succès, ${failedRequests} demandes ont échoué.`,
+                  confirmButtonText: 'OK'
+                }).then(() => {
+                  this.fetchRequests(); // Refresh the list
+                });
+              }
+            }
+          }
         });
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        console.error('Failed to submit teletravail request:', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Erreur',
-          text: err.error?.errorMessage || 'Échec de la soumission. Veuillez réessayer.',
-          confirmButtonText: 'OK',
-          timer: 5000,
+      });
+    }
+    // For regular telework with multiple dates, submit separate requests for each date
+    else if (isRegular && this.regularSelectedDates.length > 0) {
+      console.log('Creating multiple requests for regular telework');
+      
+      // Track how many requests have been processed and statuses
+      let completedRequests = 0;
+      let successfulRequests = 0;
+      let failedRequests = 0;
+      
+      // Process each date as a separate request
+      this.regularSelectedDates.forEach((date, index) => {
+        const request: TeletravailForm = {
+          travailType: this.travailType,
+          teletravailDate: date,
+          travailMaison: this.travailMaison === 'oui' ? 'true' : 'false',
+          reason: '',
+          selectedPays: requiresLocation ? this.selectedPays || '' : '',
+          selectedGouvernorat: requiresLocation ? this.selectedGouvernorat || '' : ''
+        };
+        
+        console.log(`Sending request ${index + 1}/${this.regularSelectedDates.length}:`, request);
+        
+        this.teletravailService.submitRequest(request).subscribe({
+          next: () => {
+            completedRequests++;
+            successfulRequests++;
+            
+            // When all requests are processed, show appropriate message
+            if (completedRequests === this.regularSelectedDates.length) {
+              this.isSubmitting = false;
+              
+              if (failedRequests === 0) {
+                // All requests succeeded
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Succès',
+                  text: 'Vos demandes de télétravail ont été soumises avec succès.',
+                  confirmButtonText: 'OK',
+                  timer: 3000
+                }).then(() => {
+                  this.fetchRequests(); // Refresh the list
+                  this.resetForm();    // Clear the form
+                });
+              } else if (successfulRequests > 0) {
+                // Some requests succeeded, some failed
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Attention',
+                  text: `${successfulRequests} demandes soumises avec succès, ${failedRequests} demandes ont échoué.`,
+                  confirmButtonText: 'OK'
+                }).then(() => {
+                  this.fetchRequests(); // Refresh the list
+                });
+              } else {
+                // All requests failed
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erreur',
+                  text: 'Une erreur est survenue lors de la soumission de vos demandes.',
+                  confirmButtonText: 'OK'
+                });
+              }
+            }
+          },
+          error: (err) => {
+            console.error(`Error saving request ${index + 1}:`, err);
+            completedRequests++;
+            failedRequests++;
+            
+            // When all requests are processed, show appropriate message
+            if (completedRequests === this.regularSelectedDates.length) {
+              this.isSubmitting = false;
+              
+              if (failedRequests === this.regularSelectedDates.length) {
+                // All requests failed
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erreur',
+                  text: 'Une erreur est survenue lors de la soumission de vos demandes.',
+                  confirmButtonText: 'OK'
+                });
+              } else {
+                // Some requests succeeded, some failed
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Attention',
+                  text: `${successfulRequests} demandes soumises avec succès, ${failedRequests} demandes ont échoué.`,
+                  confirmButtonText: 'OK'
+                }).then(() => {
+                  this.fetchRequests(); // Refresh the list
+                });
+              }
+            }
+          }
         });
-      }
-    });
+      });
+    } else {
+      // Handle legacy single-date requests
+      const request: TeletravailForm = {
+        travailType: this.travailType,
+        teletravailDate: this.teletravailDate || '',
+        travailMaison: this.travailMaison === 'oui' ? 'true' : 'false',
+        reason: isExceptional ? this.travailReason || '' : '',
+        selectedPays: requiresLocation ? this.selectedPays || '' : '',
+        selectedGouvernorat: requiresLocation ? this.selectedGouvernorat || '' : ''
+      };
+      
+      console.log('Sending single request:', request);
+      
+      // Submit request to backend
+      this.teletravailService.submitRequest(request).subscribe({
+        next: (savedRequest) => {
+          console.log('Request saved successfully:', savedRequest);
+          this.isSubmitting = false;
+          Swal.fire({
+            icon: 'success',
+            title: 'Succès',
+            text: 'Votre demande de télétravail a été soumise avec succès.',
+            confirmButtonText: 'OK',
+            timer: 3000
+          }).then(() => {
+            this.fetchRequests(); // Refresh the list
+            this.resetForm();    // Clear the form
+          });
+        },
+        error: (err) => {
+          console.error('Error saving request:', err);
+          this.isSubmitting = false;
+          Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Une erreur est survenue lors de la soumission de votre demande.',
+            confirmButtonText: 'OK'
+          });
+        }
+      });
+    }
   }
-
+  
+  
   logout(): void {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (token) {
@@ -582,22 +1031,27 @@ export class TeletravailComponent implements OnInit {
     this.selectedPays = '';
     this.selectedGouvernorat = '';
     this.reason = '';
+    this.travailReason = '';
+    this.travailLocation = '';
     this.filteredGouvernorats = [];
     this.isDateDisabled = false;
+    this.selectedDates = [];
+    this.regularSelectedDates = [];
+    this.dateSelectorValue = '';
   }
   
   // Contact modal methods
-  openContactModal() {
+  openContactModal(): void {
     this.isContactModalOpen = true;
     document.body.classList.add('modal-open');
   }
 
-  closeContactModal() {
+  closeContactModal(): void {
     this.isContactModalOpen = false;
     document.body.classList.remove('modal-open');
   }
 
-  sendContactMessage() {
+  sendContactMessage(): void {
     // Here you would implement actual message sending functionality
     // For now, we'll just close the modal and show an alert
     alert('Votre message a été envoyé. Nous vous contacterons bientôt.');
@@ -605,14 +1059,22 @@ export class TeletravailComponent implements OnInit {
   }
 
   // Profile photo methods
-  toggleProfilePopup(event: Event) {
+  toggleProfilePopup(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
     this.isProfilePopupOpen = !this.isProfilePopupOpen;
   }
 
-  closeProfilePopup() {
+  closeProfilePopup(): void {
     this.isProfilePopupOpen = false;
+  }
+
+  /**
+   * Fetches all telework requests that are relevant to the current user
+   */
+  fetchRequests(): void {
+    // Reuse existing loadRequests method
+    this.loadRequests();
   }
 
   /**
@@ -633,4 +1095,4 @@ export class TeletravailComponent implements OnInit {
       }
     });
   }
-}
+  }

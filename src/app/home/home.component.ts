@@ -32,10 +32,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   isUploadingPhoto: boolean = false;
   
   // Work status info
-  workStatus: 'teletravail' | 'office' | 'pending' | 'none' = 'office';
+  workStatus: 'teletravail' | 'office' | 'pending' | 'none' | 'weekend' = 'office';
+  isWeekend: boolean = false;
+  weekendMessage: string = 'Bon weekend!';
   deskReservation: { zone: string, seatNumber: string } | null = null;
   // Flag to track if we have a valid reservation from localStorage
   hasValidLocalReservation: boolean = false;
+  // Flag to track if we are currently loading reservation data
+  loadingReservation: boolean = true;
   // User status properties
   workLocation: string = '';
   teleworkAtHome: boolean = true;
@@ -157,6 +161,20 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.setupDateAndGreeting();
     this.getRandomMotivationalQuote();
     
+    // Initialize weekend status check immediately
+    const currentDate = new Date();
+    const dayOfWeek = currentDate.getDay(); // 0 for Sunday, 6 for Saturday
+    this.isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    
+    if (this.isWeekend) {
+      // Set weekend status and message immediately
+      this.workStatus = 'weekend';
+      this.weekendMessage = dayOfWeek === 6 ? 
+        'Bon weekend! Profitez de votre samedi!' : 
+        'Bon dimanche! Reposez-vous bien avant la semaine!';
+      console.log('Today is weekend, setting weekend status immediately');
+    }
+    
     // We need to set up a one-time timeout to ensure the currentUser is loaded
     // before performing any operations that depend on user data
     setTimeout(() => {
@@ -173,8 +191,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
         
         // After planning data is loaded, setup work status which uses the planning data
+        // but only if it's not a weekend since we already handled that
         setTimeout(() => {
-          this.setupWorkStatus();
+          if (!this.isWeekend) {
+            this.setupWorkStatus();
+          }
         }, 500); // Short delay to ensure planning data is loaded
       }
     }, 500); // Short delay to ensure currentUser is available
@@ -464,10 +485,33 @@ export class HomeComponent implements OnInit, OnDestroy {
   private setupWorkStatus(): void {
     console.log('Setting up work status');
     
+    // Set loading flag to true at the beginning
+    this.loadingReservation = true;
+    
     // Only proceed if we have a valid user
     if (!this.currentUser?.email) {
       console.log('No user found, cannot check reservation status');
+      this.loadingReservation = false;
       return;
+    }
+    
+    // Check if today is weekend (Saturday or Sunday)
+    const currentDate = new Date();
+    const dayOfWeek = currentDate.getDay(); // 0 for Sunday, 6 for Saturday
+    this.isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    
+    if (this.isWeekend) {
+      // Set weekend status and message
+      this.workStatus = 'weekend';
+      // Get a nice weekend message based on the day
+      if (dayOfWeek === 6) { // Saturday
+        this.weekendMessage = 'Bon weekend! Profitez de votre samedi!'; 
+      } else { // Sunday
+        this.weekendMessage = 'Bon dimanche! Reposez-vous bien avant la semaine!';
+      }
+      
+      console.log('Today is weekend, setting weekend status');
+      return; // Skip the rest of the method since it's weekend
     }
     
     // IMPORTANT: First ensure we have loaded desk reservation from localStorage
@@ -663,6 +707,8 @@ export class HomeComponent implements OnInit, OnDestroy {
               
               // Save the reservation to localStorage for persistence
               this.saveDeskReservation(this.deskReservation);
+              // Set loading to false now that we have data
+              this.loadingReservation = false;
             } else {
               console.warn('Reservation found but no desk ID available in the response');
               
@@ -672,6 +718,8 @@ export class HomeComponent implements OnInit, OnDestroy {
                 seatNumber: '56'
               };
               this.saveDeskReservation(this.deskReservation);
+              // Set loading to false now that we have data
+              this.loadingReservation = false;
             }
           } else {
             console.log('No desk reservations found in API response');
@@ -686,6 +734,8 @@ export class HomeComponent implements OnInit, OnDestroy {
               // Get a random motivational quote
               this.getRandomMotivationalQuote();
             }
+            // Set loading to false when no reservations are found
+            this.loadingReservation = false;
           }
         },
         error: (err: any) => {
@@ -701,6 +751,8 @@ export class HomeComponent implements OnInit, OnDestroy {
             // Keep existing reservation and show a motivational quote
             this.getRandomMotivationalQuote();
           }
+          // Set loading to false even when there are errors
+          this.loadingReservation = false;
         }
       });
   }
@@ -712,13 +764,25 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Get the day of the week (0 = Sunday, 1 = Monday, ...)
     const currentDay = today.getDay();
     
-    // Calculate the Monday of this week
-    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // If Sunday, go back 6 days, otherwise calculate days to go back to Monday
+    // Calculate the Monday of the week to display
+    let mondayOffset;
+    
+    if (currentDay === 6) { // Saturday
+      // For Saturday, show the next week
+      mondayOffset = 2; // Monday is 2 days away
+    } else if (currentDay === 0) { // Sunday
+      // For Sunday, show this week (tomorrow to Friday)
+      mondayOffset = 1; // Tomorrow is Monday
+    } else {
+      // For weekdays, show current week
+      mondayOffset = 1 - currentDay; // Calculate days to Monday
+    }
+    
     const monday = new Date(today);
     monday.setDate(today.getDate() + mondayOffset);
     monday.setHours(0, 0, 0, 0); // Set to start of day
     
-    // Calculate the Friday of current week
+    // Calculate the Friday of displayed week
     const friday = new Date(monday);
     friday.setDate(monday.getDate() + 4); // 4 days after Monday = Friday
     friday.setHours(23, 59, 59, 999); // Set to end of day

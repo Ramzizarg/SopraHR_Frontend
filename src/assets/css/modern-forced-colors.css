@@ -1,0 +1,65 @@
+/* Modern Forced Colors Mode implementation to replace deprecated -ms-high-contrast */
+
+/* Base forced colors mode support */
+@media (forced-colors: active) {
+  /* Core UI elements */
+  button,
+  input,
+  select,
+  a,
+  .btn,
+  .form-control,
+  .nav-link,
+  .navbar,
+  .card,
+  .modal,
+  .dropdown-menu {
+    forced-color-adjust: none;
+  }
+  
+  /* Login form specific elements */
+  .password-toggle-btn,
+  .password-toggle-btn svg,
+  .checkbox-field input[type="checkbox"],
+  .checkbox-field input[type="checkbox"]::before {
+    forced-color-adjust: none;
+  }
+  
+  /* Set explicit colors for high contrast mode */
+  .btn-signin {
+    background: ButtonFace;
+    color: ButtonText;
+    border: 1px solid ButtonText;
+  }
+  
+  .btn-signin:hover {
+    background: Highlight;
+    color: HighlightText;
+  }
+  
+  /* Focus states for accessibility */
+  *:focus {
+    outline: 2px solid Highlight !important;
+    outline-offset: 2px;
+  }
+  
+  /* Link colors */
+  a {
+    color: LinkText;
+  }
+  
+  a:hover {
+    color: Highlight;
+  }
+}
+
+/* Remove any instances of -ms-high-contrast usage */
+@media (forced-colors: active) {
+  /* Replace any existing -ms-high-contrast declarations */
+  .links a:focus,
+  .password-toggle-btn:focus,
+  .checkbox-field input[type="checkbox"]:focus {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}

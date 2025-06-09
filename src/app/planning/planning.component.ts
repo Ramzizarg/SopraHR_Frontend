@@ -19,7 +19,7 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   originalPlanningEntries: PlanningResponse[] = []; // Store unfiltered entries
   teamMembers: any[] = []; // Store all team members
   uniqueEmployees: any[] = []; // Store unique team members for display
-  userProfilePhotos: Map<number, string> = new Map(); // Store user profile photos by userId
+  userProfilePhotos: Map<number, string | null> = new Map(); // Store user profile photos by userId
   loading = false;
   error = '';
   success = '';
@@ -69,43 +69,77 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   isCurrentWeek: boolean = true;
   isNextWeek: boolean = false;
   
+  // Add this static Set at the class level
+  private static loggedCombinations = new Set<string>();
+
+  /**
+   * Helper function to get the Monday of a given date's week
+   * @param date The reference date
+   * @returns Date object representing the Monday of that week
+   */
+  getMonday(date: Date): Date {
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Sunday
+    const monday = new Date(date);
+    monday.setDate(diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
+
   /**
    * Set dates to current work week (Monday-Friday)
    * If current day is Saturday or Sunday, automatically show next week
    */
   setCurrentWeekDates(): void {
-    const today = new Date();
-    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ...
-    
-    // If it's Saturday (6) or Sunday (0), show next week instead of current week
-    if (currentDay === 6 || currentDay === 0) {
-      this.showNextWeek();
-      return;
+    try {
+      const today = new Date();
+      const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ...
+      
+      // If it's Saturday (6) or Sunday (0), show next week instead of current week
+      if (currentDay === 6 || currentDay === 0) {
+        this.showNextWeek();
+        return;
+      }
+      
+      // Get Monday using the helper method
+      const monday = this.getMonday(today);
+      
+      // Calculate the Friday of current week
+      const friday = new Date(monday);
+      friday.setDate(monday.getDate() + 4); // 4 days after Monday = Friday
+      
+      this.startDate = formatDate(monday, 'yyyy-MM-dd', 'en');
+      this.endDate = formatDate(friday, 'yyyy-MM-dd', 'en');
+      
+      // Set navigation flags
+      this.isCurrentWeek = true;
+      this.isNextWeek = false;
+      
+      console.log('Current week dates set:', { start: this.startDate, end: this.endDate });
+    } catch (error) {
+      console.error('Error setting current week dates:', error);
+      // Fallback: calculate dates manually
+      const today = new Date();
+      const monday = this.getMonday(today);
+      const friday = new Date(monday);
+      friday.setDate(monday.getDate() + 4);
+      
+      this.startDate = formatDate(monday, 'yyyy-MM-dd', 'en');
+      this.endDate = formatDate(friday, 'yyyy-MM-dd', 'en');
+      
+      this.isCurrentWeek = true;
+      this.isNextWeek = false;
     }
-    
-    // Calculate the Monday of current week
-    const mondayOffset = 1 - currentDay; // Calculate days to Monday
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + mondayOffset);
-    monday.setHours(0, 0, 0, 0);
-    
-    // Calculate the Friday of current week
-    const friday = new Date(monday);
-    friday.setDate(monday.getDate() + 4); // 4 days after Monday = Friday
-    
-    this.startDate = formatDate(monday, 'yyyy-MM-dd', 'en');
-    this.endDate = formatDate(friday, 'yyyy-MM-dd', 'en');
-    
-    // Set navigation flags
-    this.isCurrentWeek = true;
-    this.isNextWeek = false;
-    
-    console.log('Current week dates set:', { start: this.startDate, end: this.endDate });
   }
-  
+
   ngOnInit(): void {
     // Set default date range to current week (Monday to Friday of this week)
     this.setCurrentWeekDates();
+    
+    // Explicitly ensure navigation flags are in correct initial state
+    // This MUST be after setCurrentWeekDates to override any values set there
+    this.isCurrentWeek = true;  // Initially disable left arrow (can't go before current week)
+    this.isNextWeek = false;    // Initially enable right arrow (can go to next week)
     
     // Log the start and end dates for debugging
     console.log('Start date:', this.startDate);
@@ -292,45 +326,40 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     
     try {
       if (this.isManager) {
-        // Managers now always see all users by default (showAllUsers is true by default)
-        console.log('Manager view - loading all users');
+        // Managers now see only their team members, similar to team leaders
+        console.log('Manager view - loading team members');
         
-        // First, load all users from the system
-        this.planningService.getAllUsers()
+        // Get manager's team information
+        const teamName = this.currentTeamName;
+        if (!teamName) {
+          this.error = 'Impossible de charger les données: équipe non définie';
+          this.loading = false;
+          return;
+        }
+
+        // Load team members for the manager's team
+        this.planningService.getTeamMembers(teamName)
           .subscribe({
-            next: (users) => {
-              console.log('Loaded all users:', users);
-              // Filter to only team leaders if that toggle is active
-              if (this.showTeamLeadersOnly) {
-                console.log('Filtering to show only team leaders');
-                this.teamMembers = users.filter(user => user.roles?.includes('TEAM_LEADER'));
-                this.success = 'Affichage filtré: chefs d\'équipe uniquement';
-              } else {
-                this.teamMembers = users;
-              }
+            next: (members) => {
+              console.log('Loaded team members:', members);
+              this.teamMembers = members;
               
-              // Fetch profile photos for all team members
-              this.teamMembers.forEach(member => {
+              // Fetch profile photos for each team member
+              members.forEach(member => {
                 if (member.id) {
                   this.fetchUserProfilePhoto(member.id);
                 }
               });
               
-              this.updateUniqueEmployees(); // Update unique employees with filtered users
-              
-              // Now load all planning entries across the system
-              this.planningService.getAllPlanning(this.startDate, this.endDate)
+              // Load planning entries for the team
+              this.planningService.getTeamPlanning(teamName, this.startDate, this.endDate)
                 .subscribe({
                   next: (data) => {
                     this.originalPlanningEntries = [...data]; // Store original data
                     this.planningEntries = this.showOnlyTeletravail ? 
                       this.filterTeletravailOnly(data) : data;
+                    this.updateUniqueEmployees(); // Update unique employees when planning entries change
                     this.loading = false;
-                    if (this.showTeamLeadersOnly) {
-                      this.success = 'Affichage uniquement des chefs d\'équipe';
-                    } else {
-                      this.success = 'Affichage de tous les utilisateurs';
-                    }
                   },
                   error: (err: any) => {
                     console.error('Planning service error:', err);
@@ -338,8 +367,8 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
                   }
                 });
             },
-            error: (err) => {
-              console.error('Error loading all users:', err);
+            error: (err: any) => {
+              console.error('Error loading team members:', err);
               this.handleServiceError(err);
             }
           });
@@ -542,7 +571,9 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     });
   }
   
-  // Navigation method to the teletravail request form
+  /**
+   * Navigation method to the teletravail request form
+   */
   createNewTeletravailRequest(): void {
     this.router.navigate(['/teletravail']);
   }
@@ -616,82 +647,32 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   }
   
   /**
-   * Reject a teletravail request (for team leaders and managers)
-   * @param id The ID of the teletravail request to reject
+   * Reject a teletravail request
+   * @param requestId The ID of the request to reject
+   * @param rejectionReason The reason for rejecting the request
    */
-  rejectTeletravailRequest(id: number): void {
-    // Find the entry to get context for a useful message
-    const entryToReject = this.planningEntries.find(entry => entry.id === id);
-    if (!entryToReject) {
-      this.error = 'Demande de télétravail non trouvée';
-      return;
-    }
-    
-    // Format date for user-friendly message
-    const dateStr = formatDate(new Date(entryToReject.planningDate), 'dd/MM/yyyy', 'fr');
-    
-    // Use SweetAlert for confirmation dialog with rejection reason input
-    Swal.fire({
-      title: 'Refuser cette demande ?',
-      html: `Voulez-vous refuser la demande de télétravail de <strong>${entryToReject.userName}</strong> pour le <strong>${dateStr}</strong> ?`,
-      icon: 'warning',
-      input: 'textarea',
-      inputLabel: 'Motif du refus (obligatoire)',
-      inputPlaceholder: 'Veuillez indiquer la raison du refus...',
-      inputAttributes: {
-        'aria-label': 'Veuillez indiquer la raison du refus'
-      },
-      inputValidator: (value) => {
-        if (!value) {
-          return 'Vous devez indiquer une raison pour le refus';
-        }
-        return null;
-      },
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Refuser la demande',
-      cancelButtonText: 'Annuler'
-    }).then((result) => {
-      if (result.isConfirmed && result.value) {
-        const rejectionReason = result.value;
-        this.loading = true;
-        this.error = '';
+  private rejectTeletravailRequest(requestId: number, rejectionReason: string): void {
+    this.loading = true;
+    this.planningService.rejectTeletravailRequest(requestId, rejectionReason).subscribe({
+      next: (response) => {
+        this.success = 'Demande refusée avec succès';
+        this.loading = false;
+        // Reload the planning data
+        this.loadPlanning();
         
-        // Call the service to reject the request
-        this.planningService.rejectTeletravailRequest(id, rejectionReason)
-          .subscribe({
-            next: () => {
-              // Show success message
-              Swal.fire({
-                title: 'Demande refusée',
-                text: `La demande de télétravail de ${entryToReject.userName} pour le ${dateStr} a été refusée.`,
-                icon: 'info',
-                confirmButtonText: 'OK'
-              });
-              
-              this.loading = false;
-              this.loadPlanning(); // Reload planning data
-            },
-            error: (err: any) => {
-              let errorMsg = '';
-              if (err.status === 403) {
-                errorMsg = 'Vous n\'avez pas l\'autorisation de refuser cette demande de télétravail.';
-              } else {
-                errorMsg = 'Erreur lors du refus: ' + (err.error?.message || err.message);
-              }
-              
-              // Show error with SweetAlert
-              Swal.fire({
-                title: 'Erreur',
-                text: errorMsg,
-                icon: 'error',
-                confirmButtonText: 'OK'
-              });
-              
-              this.loading = false;
-            }
-          });
+        // Show success notification
+        Swal.fire({
+          title: 'Demande refusée',
+          text: 'La demande de télétravail a été refusée avec succès',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      error: (error) => {
+        console.error('Error rejecting request:', error);
+        this.error = 'Erreur lors du refus de la demande';
+        this.loading = false;
       }
     });
   }
@@ -821,186 +802,397 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   }
   
   /**
-   * Handle click on status icon for team leaders to manage requests
+   * Handle click on status icon
    * @param event The click event
-   * @param userId The user ID of the employee
-   * @param day The day that was clicked
-   * @param status The current status
+   * @param entry The planning entry
    */
-  handleStatusClick(event: Event, userId: number, day: Date, status: string): void {
-    // Only allow team leaders or managers to change request status
+  handleStatusClick(event: MouseEvent, entry: any): void {
+    // Prevent default context menu
+    event.preventDefault();
+
+    // If user is not a team leader or manager (i.e., employee)
     if (!this.isTeamLeader && !this.isManager) {
+      // Only allow cancellation of own requests
+      if (entry.userId !== this.currentUserId) {
+        Swal.fire({
+          title: 'Action non autorisée',
+          text: 'Vous ne pouvez annuler que vos propres demandes de télétravail',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+
+      // Check if the request date is in the future
+      const requestDate = new Date(entry.planningDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (requestDate < today) {
+        Swal.fire({
+          title: 'Annulation impossible',
+          text: 'Vous ne pouvez pas annuler une demande de télétravail pour une date passée',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+
+      // Show confirmation dialog directly for employees
+      Swal.fire({
+        title: 'Annuler la demande',
+        text: 'Êtes-vous sûr de vouloir annuler cette demande de télétravail ?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Oui, annuler',
+        cancelButtonText: 'Non, conserver',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.cancelTeletravailRequest(entry.id);
+        }
+      });
       return;
     }
+
+    // For team leaders and managers:
+    // Right click (button 2) for request removal
+    if (event.button === 2) {
+      // Only allow cancellation of own requests
+      if (entry.userId !== this.currentUserId) {
+        Swal.fire({
+          title: 'Action non autorisée',
+          text: 'Vous ne pouvez annuler que vos propres demandes de télétravail',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+
+      // Check if the request date is in the future
+      const requestDate = new Date(entry.planningDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (requestDate < today) {
+        Swal.fire({
+          title: 'Annulation impossible',
+          text: 'Vous ne pouvez pas annuler une demande de télétravail pour une date passée',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+
+      // Show confirmation dialog
+      Swal.fire({
+        title: 'Annuler la demande',
+        text: 'Êtes-vous sûr de vouloir annuler cette demande de télétravail ?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Oui, annuler',
+        cancelButtonText: 'Non, conserver',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.cancelTeletravailRequest(entry.id);
+        }
+      });
+    }
+    // Left click for approval/refusal
+    else if (event.button === 0) {
+      // Check if user is team leader or manager
+      if (!this.isTeamLeader && !this.isManager) {
+        Swal.fire({
+          title: 'Action non autorisée',
+          text: 'Seuls les chefs d\'équipe et les managers peuvent approuver ou refuser les demandes',
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+
+      // Show approval options
+      this.showApprovalOptions(entry);
+    }
+  }
+  
+  /**
+   * Show next week's dates (Monday-Friday)
+   */
+  showNextWeek(): void {
+    try {
+      let startDateObj: Date;
+      
+      // Validate current startDate before using it
+      if (!this.startDate || isNaN(new Date(this.startDate).getTime())) {
+        // If current startDate is invalid, use today
+        startDateObj = this.getMonday(new Date());
+      } else {
+        startDateObj = new Date(this.startDate);
+      }
+      
+      // Calculate next Monday
+      const nextMonday = new Date(startDateObj);
+      nextMonday.setDate(startDateObj.getDate() + 7); // Next Monday is 7 days later
+      
+      const nextFriday = new Date(nextMonday);
+      nextFriday.setDate(nextMonday.getDate() + 4); // 4 days after Next Monday = Next Friday
+      
+      this.startDate = formatDate(nextMonday, 'yyyy-MM-dd', 'en');
+      this.endDate = formatDate(nextFriday, 'yyyy-MM-dd', 'en');
+      
+      // Set navigation flags
+      this.isCurrentWeek = false; // Enable left arrow (we can now go back to current week)
+      this.isNextWeek = true;     // Disable right arrow (we can only see one week ahead)
+      
+      console.log('Next week dates set:', { start: this.startDate, end: this.endDate });
+    } catch (error) {
+      console.error('Error setting next week dates:', error);
+      // Set fallback dates
+      const today = new Date();
+      const monday = this.getMonday(today);
+      const nextMonday = new Date(monday);
+      nextMonday.setDate(monday.getDate() + 7);
+      
+      const nextFriday = new Date(nextMonday);
+      nextFriday.setDate(nextMonday.getDate() + 4);
+      
+      this.startDate = formatDate(nextMonday, 'yyyy-MM-dd', 'en');
+      this.endDate = formatDate(nextFriday, 'yyyy-MM-dd', 'en');
+      
+      // Set navigation flags
+      this.isCurrentWeek = false;
+      this.isNextWeek = true;
+    }
     
-    // Prevent click from propagating to parent elements
-    event.stopPropagation();
+    // Reload planning data for the new date range
+    this.loadPlanning();
+  }
+  
+  /**
+   * Show previous week's dates (May 26-30) when left arrow is clicked
+   */
+  showPreviousWeek(): void {
+    try {
+      let startDateObj: Date;
+      
+      // Validate current startDate before using it
+      if (!this.startDate || isNaN(new Date(this.startDate).getTime())) {
+        // If current startDate is invalid, use current week's Monday
+        startDateObj = this.getMonday(new Date());
+      } else {
+        startDateObj = new Date(this.startDate);
+      }
+      
+      // Calculate previous Monday (1 week before current date)
+      const prevMonday = new Date(startDateObj);
+      prevMonday.setDate(startDateObj.getDate() - 7); // Previous Monday is 7 days earlier
+      
+      const prevFriday = new Date(prevMonday);
+      prevFriday.setDate(prevMonday.getDate() + 4); // 4 days after Previous Monday = Previous Friday
+      
+      this.startDate = formatDate(prevMonday, 'yyyy-MM-dd', 'en');
+      this.endDate = formatDate(prevFriday, 'yyyy-MM-dd', 'en');
+      
+      // Set navigation flags for previous week
+      this.isCurrentWeek = false; // We're now viewing a previous week, so left arrow can be enabled
+      this.isNextWeek = false;    // Enable right arrow when viewing previous week
+      
+      console.log('Previous week dates set:', { start: this.startDate, end: this.endDate });
+    } catch (error) {
+      console.error('Error setting previous week dates:', error);
+    }
     
-    // Find the planning entry matching the user and date
-    const dateStr = formatDate(day, 'yyyy-MM-dd', 'en');
+    // Reload planning data for the new date range
+    this.loadPlanning();
+  }
+  
+  /**
+   * Get the letter representation for each day of the work week
+   * @param dayIndex The index of the day (0-4 for Monday-Friday)
+   * @returns Letter representation of the day
+   */
+  getDayLetter(dayIndex: number): string {
+    // English version: M, T, W, T, F
+    // French version: L, M, M, J, V
+    const dayLetters = ['L', 'M', 'M', 'J', 'V'];
+    return dayLetters[dayIndex] || '';
+  }
+  
+  /**
+   * Get formatted date range string for the week navigation
+   * @returns Formatted date range like "12-16 May, 2025" or "19-23 Mai, 2025"
+   */
+  getFormattedDateRange(): string {
+    // Parse start and end dates
+    const startDateObj = new Date(this.startDate);
+    const endDateObj = new Date(this.endDate);
+    
+    // Get day numbers
+    const startDay = startDateObj.getDate();
+    const endDay = endDateObj.getDate();
+    
+    // Get month name (use French month names)
+    const months = [
+      'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
+      'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'
+    ];
+    const month = months[startDateObj.getMonth()];
+    
+    // Get year
+    const year = startDateObj.getFullYear();
+    
+    // Return formatted string
+    return `${startDay}-${endDay} ${month}, ${year}`;
+  }
+  
+  /**
+   * Get the week days to display in the calendar
+   * Returns an array of Date objects for the days to show
+   */
+  getWeekDays(): Date[] {
+    // Start with the start date and generate 5 days
+    const days: Date[] = [];
+    
+    // Validate startDate to ensure it's not invalid
+    let startDateObj: Date;
+    try {
+      // First check if startDate is valid
+      if (!this.startDate || this.startDate.trim() === '') {
+        console.error('Invalid or empty startDate', this.startDate);
+        // If invalid, use the current date as a fallback
+        startDateObj = this.getMonday(new Date());
+      } else {
+        startDateObj = new Date(this.startDate);
+        
+        // Check if date is valid
+        if (isNaN(startDateObj.getTime())) {
+          console.error('Invalid date from startDate string:', this.startDate);
+          startDateObj = this.getMonday(new Date());
+        }
+      }
+    } catch (error) {
+      console.error('Error creating date from startDate:', error);
+      startDateObj = this.getMonday(new Date());
+    }
+    
+    // Generate the 5 weekdays
+    for (let i = 0; i < 5; i++) {
+      try {
+        const dayDate = new Date(startDateObj);
+        dayDate.setDate(startDateObj.getDate() + i);
+        days.push(dayDate);
+      } catch (error) {
+        console.error(`Error creating day date for index ${i}:`, error);
+        // Push a valid date as fallback
+        const fallbackDate = new Date();
+        fallbackDate.setDate(fallbackDate.getDate() + i);
+        days.push(fallbackDate);
+      }
+    }
+    
+    return days;
+  }
+  
+  /**
+   * Get employee's status for a specific date
+   * @param userId User ID
+   * @param date Date to check
+   * @returns Status string (TELETRAVAIL, PENDING, OFFICE, MEETING, VACATION, etc)
+   */
+  getEmployeeStatusForDate(userId: number, date: Date): string | null {
+    // Format date to compare with entry dates
+    const dateStr = formatDate(date, 'yyyy-MM-dd', 'en');
+    
+    // Find matching entry for this employee and date
     const entry = this.planningEntries.find(entry => 
       entry.userId === userId && 
       formatDate(new Date(entry.planningDate), 'yyyy-MM-dd', 'en') === dateStr
     );
     
-    if (!entry || !entry.id) {
-      console.error('Cannot find entry for this date and user');
-      return;
+    if (!entry) {
+      // Default to OFFICE when no entry is found
+      return 'OFFICE';
     }
     
-    // Show options based on current status
-    if (status === 'PENDING') {
-      this.showApprovalOptions(entry.id, entry.employeeName || 'Employé');
-    } else if (status === 'TELETRAVAIL') {
-      this.showRejectionOptions(entry.id, entry.employeeName || 'Employé');
+    // Check directly for status fields first (more reliable)
+    if (entry.planningStatus) {
+      const status = entry.planningStatus.toUpperCase();
+      
+      // Map according to your requirements
+      if (status === 'PENDING' || status === 'EN ATTENTE') {
+        return 'PENDING';
+      } else if (status === 'APPROVED' || status === 'TELETRAVAIL' || status === 'TÉLÉTRAVAIL') {
+        return 'TELETRAVAIL';
+      }
     }
-  }
-  
-  /**
-   * Show a dialog with options to approve or reject a pending request
-   * @param requestId The ID of the request
-   * @param employeeName The name of the employee
-   */
-  showApprovalOptions(requestId: number, employeeName: string): void {
-    Swal.fire({
-      title: 'Gérer la demande',
-      html: `Souhaitez-vous approuver ou refuser la demande de télétravail de <strong>${employeeName}</strong>?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Approuver',
-      cancelButtonText: 'Refuser',
-      showCloseButton: true,
-      cancelButtonColor: '#d33',
-      confirmButtonColor: '#28a745',
-      reverseButtons: false
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Approve the request
-        this.approveRequest(requestId);
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        // Reject the request - ask for reason
-        this.promptForRejectionReason(requestId, employeeName);
-      }
-    });
-  }
-  
-  /**
-   * Approve a teletravail request
-   * @param requestId The ID of the request to approve
-   */
-  approveRequest(requestId: number): void {
-    this.loading = true;
-    this.planningService.approveTeletravailRequest(requestId).subscribe({
-      next: (response) => {
-        this.success = 'Demande approuvée avec succès';
-        this.loading = false;
-        // Reload the planning data
-        this.loadPlanning();
-        
-        // Show success notification
-        Swal.fire({
-          title: 'Demande approuvée',
-          text: 'La demande de télétravail a été approuvée avec succès',
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      },
-      error: (error) => {
-        console.error('Error approving request:', error);
-        this.error = 'Erreur lors de l\'approbation de la demande';
-        this.loading = false;
-      }
-    });
-  }
-  
-  /**
-   * Prompt for rejection reason when rejecting a request
-   * @param requestId The ID of the request to reject
-   * @param employeeName The name of the employee
-   */
-  promptForRejectionReason(requestId: number, employeeName: string): void {
-    Swal.fire({
-      title: 'Motif de refus',
-      html: `Veuillez indiquer le motif de refus pour la demande de <strong>${employeeName}</strong>:`,
-      input: 'textarea',
-      inputPlaceholder: 'Motif de refus...',
-      inputAttributes: {
-        'aria-label': 'Motif de refus'
-      },
-      showCancelButton: true,
-      confirmButtonText: 'Refuser la demande',
-      cancelButtonText: 'Annuler',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d',
-      inputValidator: (value) => {
-        if (!value) {
-          return 'Vous devez indiquer un motif de refus';
-        }
-        return null;
-      }
-    }).then((result) => {
-      if (result.isConfirmed && result.value) {
-        // Reject the request with the provided reason
-        this.rejectRequest(requestId, result.value);
-      }
-    });
-  }
-  
-  /**
-   * Reject a teletravail request
-   * @param requestId The ID of the request to reject
-   * @param rejectionReason The reason for rejection
-   */
-  rejectRequest(requestId: number, rejectionReason: string): void {
-    this.loading = true;
-    this.planningService.rejectTeletravailRequest(requestId, rejectionReason).subscribe({
-      next: (response) => {
-        this.success = 'Demande refusée avec succès';
-        this.loading = false;
-        // Reload the planning data
-        this.loadPlanning();
-        
-        // Show success notification
-        Swal.fire({
-          title: 'Demande refusée',
-          text: 'La demande de télétravail a été refusée avec succès',
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      },
-      error: (error) => {
-        console.error('Error rejecting request:', error);
-        this.error = 'Erreur lors du refus de la demande';
-        this.loading = false;
-      }
-    });
-  }
-  
-  /**
-   * Show a dialog with options to reject an approved request
-   * @param requestId The ID of the request
-   * @param employeeName The name of the employee
-   */
-  showRejectionOptions(requestId: number, employeeName: string): void {
-    Swal.fire({
-      title: 'Annuler l\'approbation',
-      html: `Souhaitez-vous annuler l'approbation de télétravail de <strong>${employeeName}</strong>?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Oui, annuler',
-      cancelButtonText: 'Non, conserver',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Ask for rejection reason
-        this.promptForRejectionReason(requestId, employeeName);
-      }
-    });
+    
+    // If no explicit status, check work type
+    if (entry.workType === 'Regular' || entry.workType === 'Exceptional') {
+      // Default teletravail entry to TELETRAVAIL if no other status is set
+      return 'TELETRAVAIL';
+    } else if (entry.workType === 'Office') {
+      return 'OFFICE';
+    // Meeting option removed
+    }
+    
+    // Default to office if we can't determine
+    return 'OFFICE';
   }
 
+  /**
+   * Get the work type (Regular or Exceptional) for a specific date
+   * @param userId User ID
+   * @param date Date to check
+   * @returns Work type string ('Regular' or 'Exceptional')
+   */
+  getWorkTypeForDate(userId: number, date: Date): string {
+    // Format date to compare with entry dates
+    const dateStr = formatDate(date, 'yyyy-MM-dd', 'en');
+    
+    // Find matching entry for this employee and date
+    const entry = this.planningEntries.find(entry => 
+      entry.userId === userId && 
+      formatDate(new Date(entry.planningDate), 'yyyy-MM-dd', 'en') === dateStr
+    );
+    
+    if (!entry || !entry.workType) {
+      // Default to Regular when no entry is found or no workType is specified
+      return 'Regular';
+    }
+    
+    // Normalize workType to handle different capitalizations
+    const workType = entry.workType.toLowerCase();
+    
+    // Create a unique key for this user-date combination
+    const logKey = `${userId}-${dateStr}`;
+    
+    // Only log if we haven't seen this combination before
+    if (!PlanningComponent.loggedCombinations.has(logKey)) {
+      console.log(`Work type for user ${userId} on ${dateStr}: ${workType}`);
+      PlanningComponent.loggedCombinations.add(logKey);
+    }
+    
+    // Handle different capitalizations and formats
+    if (workType.includes('exceptional') || workType.includes('exceptionnel')) {
+      return 'Exceptional';
+    } else if (workType.includes('regular') || workType.includes('régulier')) {
+      return 'Regular';
+    }
+    
+    // If we can't determine, check for specific strings that might indicate exceptional telework
+    if (workType.includes('except') || workType.includes('except') || 
+        workType === 'e' || workType === 'ex' || workType === 'exc') {
+      return 'Exceptional';
+    }
+    
+    // For any other telework type, return Regular as default
+    return 'Regular';
+  }
+  
   /**
    * Calculate unique employees from planning entries
    * This is used to display one row per employee in the calendar view
@@ -1115,104 +1307,44 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   }
   
   /**
-   * Show next week's dates (Monday-Friday)
+   * Update the list of unique employees based on team members and planning entries
    */
-  showNextWeek(): void {
-    const startDateObj = new Date(this.startDate);
-    const nextMonday = new Date(startDateObj);
-    nextMonday.setDate(startDateObj.getDate() + 7); // Next Monday is 7 days later
+  updateUniqueEmployees(): void {
+    const uniqueEmployeeMap = new Map();
     
-    const nextFriday = new Date(nextMonday);
-    nextFriday.setDate(nextMonday.getDate() + 4); // 4 days after Next Monday = Next Friday
+    // First add all team members
+    this.teamMembers.forEach(member => {
+      if (member.id) {
+        uniqueEmployeeMap.set(member.id, {
+          userId: member.id,
+          userName: member.firstName + ' ' + member.lastName,
+          employeeName: member.firstName + ' ' + member.lastName,
+          role: member.role || 'EMPLOYEE'
+        });
+      }
+    });
     
-    this.startDate = formatDate(nextMonday, 'yyyy-MM-dd', 'en');
-    this.endDate = formatDate(nextFriday, 'yyyy-MM-dd', 'en');
+    // Add any employees from planning entries not already in the map
+    this.planningEntries.forEach(entry => {
+      if (entry.userId && !uniqueEmployeeMap.has(entry.userId)) {
+        uniqueEmployeeMap.set(entry.userId, {
+          userId: entry.userId,
+          userName: entry.employeeName || ('Utilisateur #' + entry.userId),
+          employeeName: entry.employeeName,
+          role: entry.role || 'EMPLOYEE'
+        });
+      }
+    });
     
-    // Set navigation flags
-    this.isCurrentWeek = false;
-    this.isNextWeek = true;
+    // Convert map to array and assign to our property
+    this.uniqueEmployees = Array.from(uniqueEmployeeMap.values());
+    this.filteredEmployees = [...this.uniqueEmployees]; // Initialize filtered employees
+    console.log('Updated unique employees:', this.uniqueEmployees);
     
-    console.log('Next week dates set:', { start: this.startDate, end: this.endDate });
-    
-    // Reload planning data for the new date range
-    this.loadPlanning();
+    // Initialize tooltips after updating the DOM
+    setTimeout(() => this.initializeTooltips(), 100);
   }
   
-  /**
-   * Show previous week's dates (back to current week)
-   */
-  showPreviousWeek(): void {
-    // Since we only navigate between current and next week,
-    // going back from next week should return to current week
-    if (!this.isCurrentWeek) {
-      this.setCurrentWeekDates();
-      this.loadPlanning();
-    }
-  }
-  
-  /**
-   * Get the letter representation for each day of the work week
-   * @param dayIndex The index of the day (0-4 for Monday-Friday)
-   * @returns Letter representation of the day
-   */
-  getDayLetter(dayIndex: number): string {
-    // English version: M, T, W, T, F
-    // French version: L, M, M, J, V
-    const dayLetters = ['L', 'M', 'M', 'J', 'V'];
-    return dayLetters[dayIndex] || '';
-  }
-  
-  /**
-   * Get formatted date range string for the week navigation
-   * @returns Formatted date range like "12-16 May, 2025" or "19-23 Mai, 2025"
-   */
-  getFormattedDateRange(): string {
-    // Parse start and end dates
-    const startDateObj = new Date(this.startDate);
-    const endDateObj = new Date(this.endDate);
-    
-    // Get day numbers
-    const startDay = startDateObj.getDate();
-    const endDay = endDateObj.getDate();
-    
-    // Get month name (use French month names)
-    const months = [
-      'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
-      'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'
-    ];
-    const month = months[startDateObj.getMonth()];
-    
-    // Get year
-    const year = startDateObj.getFullYear();
-    
-    // Return formatted string
-    return `${startDay}-${endDay} ${month}, ${year}`;
-  }
-  
-  /**
-   * Get the week days to display in the calendar
-   * Returns an array of Date objects for the days to show
-   */
-  getWeekDays(): Date[] {
-    // Start with the start date and generate 5 days
-    const days: Date[] = [];
-    const startDateObj = new Date(this.startDate);
-    
-    for (let i = 0; i < 5; i++) {
-      const dayDate = new Date(startDateObj);
-      dayDate.setDate(startDateObj.getDate() + i);
-      days.push(dayDate);
-    }
-    
-    return days;
-  }
-  
-  /**
-   * Get employee's status for a specific date
-   * @param userId User ID
-   * @param date Date to check
-   * @returns Status string (TELETRAVAIL, PENDING, OFFICE, MEETING, VACATION, etc)
-   */
   /**
    * Convert role string to user-friendly label
    * @param role Role string from API
@@ -1256,7 +1388,12 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
         }
       },
       error: (error) => {
-        console.error('Error fetching profile photo for user', userId, error);
+        // Don't log 404 errors as they are expected for users without photos
+        if (error.status !== 404) {
+          console.error('Error fetching profile photo for user', userId, error);
+        }
+        // Set null in the map to indicate no photo available
+        this.userProfilePhotos.set(userId, null);
       }
     });
   }
@@ -1270,91 +1407,138 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     return this.userProfilePhotos.get(userId) || null;
   }
   
-
-
-
-
-
-
-
-  
   /**
-   * Update the list of unique employees based on team members and planning entries
+   * Show a dialog with options to approve or reject a pending request
+   * @param entry The planning entry object
    */
-  updateUniqueEmployees(): void {
-    const uniqueEmployeeMap = new Map();
+  private showApprovalOptions(entry: any) {
+    // Check if the request is from the current user (manager/team leader)
+    if (entry.userId === this.currentUserId) {
+      Swal.fire({
+        title: 'Action non autorisée',
+        text: 'Vous ne pouvez pas approuver ou refuser vos propres demandes de télétravail',
+        icon: 'warning',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    // Translate work type to French and check for exceptional type
+    const isExceptional = entry.workType?.toLowerCase() === 'exceptional' || 
+                         entry.workType?.toLowerCase() === 'exceptionnelle';
+    const workTypeFr = isExceptional ? 'Exceptionnelle' : 'Régulière';
     
-    // First add all team members
-    this.teamMembers.forEach(member => {
-      if (member.id) {
-        uniqueEmployeeMap.set(member.id, {
-          userId: member.id,
-          userName: member.firstName + ' ' + member.lastName,
-          employeeName: member.firstName + ' ' + member.lastName,
-          role: member.role || 'EMPLOYEE'
-        });
+    Swal.fire({
+      title: 'Gérer la demande',
+      html: `
+        <div style="font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size: 1.1em; line-height: 1.6;">
+          <p style="margin-bottom: 1.5em; color: #2c3e50;">
+            Souhaitez-vous approuver ou refuser la demande de télétravail de 
+            <strong style="color: #3498db;">${entry.employeeName}</strong>?
+          </p>
+          <div style="background-color: #f8f9fa; padding: 1em; border-radius: 8px; margin-bottom: 1em;">
+            <p style="margin: 0.5em 0;">
+              <span style="color: #7f8c8d; font-weight: 500;">Type:</span>
+              <span style="color: #2c3e50; margin-left: 0.5em;">${workTypeFr}</span>
+            </p>
+            ${isExceptional ? `
+            <p style="margin: 0.5em 0;">
+              <span style="color: #7f8c8d; font-weight: 500;">Raison:</span>
+              <span style="color: #2c3e50; margin-left: 0.5em;">${entry.reasons || 'Non spécifiée'}</span>
+            </p>
+            ` : ''}
+            <p style="margin: 0.5em 0;">
+              <span style="color: #7f8c8d; font-weight: 500;">Date:</span>
+              <span style="color: #2c3e50; margin-left: 0.5em;">${formatDate(entry.planningDate, 'dd/MM/yyyy', 'fr')}</span>
+            </p>
+          </div>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Approuver',
+      cancelButtonText: 'Refuser',
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#dc3545',
+      customClass: {
+        popup: 'animated fadeInDown',
+        title: 'swal2-title-custom',
+        htmlContainer: 'swal2-html-container-custom',
+        confirmButton: 'swal2-confirm-button-custom',
+        cancelButton: 'swal2-cancel-button-custom'
+      },
+      buttonsStyling: true,
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.approveTeletravailRequest(entry.id);
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        this.rejectTeletravailRequest(entry.id, '');
       }
     });
-    
-    // Add any employees from planning entries not already in the map
-    this.planningEntries.forEach(entry => {
-      if (entry.userId && !uniqueEmployeeMap.has(entry.userId)) {
-        uniqueEmployeeMap.set(entry.userId, {
-          userId: entry.userId,
-          userName: entry.employeeName || ('Utilisateur #' + entry.userId),
-          employeeName: entry.employeeName,
-          role: entry.role || 'EMPLOYEE'
-        });
-      }
-    });
-    
-    // Convert map to array and assign to our property
-    this.uniqueEmployees = Array.from(uniqueEmployeeMap.values());
-    this.filteredEmployees = [...this.uniqueEmployees]; // Initialize filtered employees
-    console.log('Updated unique employees:', this.uniqueEmployees);
-    
-    // Initialize tooltips after updating the DOM
-    setTimeout(() => this.initializeTooltips(), 100);
   }
-  
-  getEmployeeStatusForDate(userId: number, date: Date): string | null {
-    // Format date to compare with entry dates
-    const dateStr = formatDate(date, 'yyyy-MM-dd', 'en');
-    
-    // Find matching entry for this employee and date
-    const entry = this.planningEntries.find(entry => 
+
+  /**
+   * Show a dialog with options to reject an approved request
+   * @param requestId The ID of the request
+   * @param employeeName The name of the employee
+   */
+  private showRejectionOptions(requestId: number, employeeName: string): void {
+    Swal.fire({
+      title: 'Annuler l\'approbation',
+      html: `Souhaitez-vous annuler l'approbation de télétravail de <strong>${employeeName}</strong>?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui, annuler',
+      cancelButtonText: 'Non, conserver',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Ask for rejection reason
+        this.promptForRejectionReason(requestId, employeeName);
+      }
+    });
+  }
+
+  /**
+   * Prompt for rejection reason
+   * @param requestId The ID of the request
+   * @param employeeName The name of the employee
+   */
+  private promptForRejectionReason(requestId: number, employeeName: string): void {
+    Swal.fire({
+      title: 'Raison du refus',
+      input: 'textarea',
+      inputLabel: `Veuillez indiquer la raison du refus pour ${employeeName}`,
+      inputPlaceholder: 'Entrez votre raison ici...',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'La raison est requise!';
+        }
+        return null;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.rejectTeletravailRequest(requestId, result.value);
+      }
+    });
+  }
+
+  /**
+   * Get the planning entry for a specific user and date
+   * @param userId The user ID
+   * @param date The date
+   * @returns The planning entry or undefined if not found
+   */
+  getPlanningEntry(userId: number, date: Date): any {
+    return this.planningEntries.find(entry => 
       entry.userId === userId && 
-      formatDate(new Date(entry.planningDate), 'yyyy-MM-dd', 'en') === dateStr
+      new Date(entry.planningDate).toDateString() === date.toDateString()
     );
-    
-    if (!entry) {
-      // Default to OFFICE when no entry is found
-      return 'OFFICE';
-    }
-    
-    // Check directly for status fields first (more reliable)
-    if (entry.planningStatus) {
-      const status = entry.planningStatus.toUpperCase();
-      
-      // Map according to your requirements
-      if (status === 'PENDING' || status === 'EN ATTENTE') {
-        return 'PENDING';
-      } else if (status === 'APPROVED' || status === 'TELETRAVAIL' || status === 'TÉLÉTRAVAIL') {
-        return 'TELETRAVAIL';
-      }
-    }
-    
-    // If no explicit status, check work type
-    if (entry.workType === 'Regular' || entry.workType === 'Exceptional') {
-      // Default teletravail entry to TELETRAVAIL if no other status is set
-      return 'TELETRAVAIL';
-    } else if (entry.workType === 'Office') {
-      return 'OFFICE';
-    // Meeting option removed
-    }
-    
-    // Default to office if we can't determine
-    return 'OFFICE';
   }
-  
+
 }

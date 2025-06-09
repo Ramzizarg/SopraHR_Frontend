@@ -416,7 +416,9 @@
   align-items: center;
 }
 
-.form-input {
+.form-input,
+.form-control,
+input[type="date"] {
   width: 100%;
   padding: 0.65rem 0.85rem;
   border: 1px solid #e0e0e0;
@@ -427,7 +429,23 @@
   letter-spacing: 0.3px;
 }
 
-.form-input:focus {
+/* Handle Angular's form state classes */
+.form-input.ng-untouched,
+.form-input.ng-pristine,
+.form-input.ng-invalid,
+.form-control.ng-untouched,
+.form-control.ng-pristine,
+.form-control.ng-invalid,
+input[type="date"].ng-untouched,
+input[type="date"].ng-pristine,
+input[type="date"].ng-invalid {
+  border: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.form-input:focus,
+.form-control:focus,
+input[type="date"]:focus {
   outline: none;
   border-color: var(--accent-color); /* Purple color for focus */
   background: white;
@@ -1314,4 +1332,55 @@ textarea.form-control {
 .logout-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Multiple date selection styles */
+.date-badge {
+  font-size: 9px;
+  padding: 2px 4px;
+  margin-left: 4px;
+  background-color: rgba(255, 153, 0, 0.1);
+  color: #ff9900;
+  border-left: 2px solid #ff9900;
+  border-radius: 0;
+}
+
+.date-badge-empty {
+  opacity: 0.6;
+}
+
+.selected-dates-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.selected-date-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9px;
+  padding: 2px 6px;
+  background-color: rgba(255, 153, 0, 0.1);
+  color: #ff9900;
+  border-left: 2px solid #ff9900;
+  border-radius: 0;
+}
+
+.remove-date-btn {
+  background: none;
+  border: none;
+  font-size: 9px;
+  color: #ff9900;
+  padding: 0 0 0 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.remove-date-btn:hover {
+  opacity: 1;
 }

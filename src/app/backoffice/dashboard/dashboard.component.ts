@@ -398,14 +398,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
           
           // Apply the crop and show the cropped image
           function applyCrop() {
-            // Create a new square canvas for the final cropped image
+            // Create a circular crop
+            const tempCanvas = document.createElement('canvas');
+            const tempContext = tempCanvas.getContext('2d');
+            tempCanvas.width = cropSize;
+            tempCanvas.height = cropSize;
+            
+            // Copy the main canvas
+            tempContext.drawImage(cropCanvas, 0, 0);
+            
+            // Create circle clipping
             const finalCanvas = document.createElement('canvas');
+            const finalContext = finalCanvas.getContext('2d');
             finalCanvas.width = cropSize;
             finalCanvas.height = cropSize;
-            const finalContext = finalCanvas.getContext('2d');
             
-            // Draw the cropped image to the new canvas
-            finalContext.drawImage(cropCanvas, 0, 0, cropSize, cropSize);
+            finalContext.beginPath();
+            finalContext.arc(cropSize/2, cropSize/2, cropSize/2, 0, Math.PI * 2);
+            finalContext.closePath();
+            finalContext.clip();
+            finalContext.drawImage(tempCanvas, 0, 0);
             
             // Get the data URL of the cropped image
             const croppedDataUrl = finalCanvas.toDataURL('image/png');
@@ -566,23 +578,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
             text-align: center;
           }
           .crop-container {
-            width: 100%;
-            max-width: 300px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            max-width: 100%;
             margin: 0 auto;
           }
           .crop-header {
-            font-size: 0.9rem;
+            font-size: 14px;
             font-weight: 500;
-            margin-bottom: 0.5rem;
+            color: #4B5563;
+            margin-bottom: 8px;
             text-align: center;
           }
           .crop-area {
             position: relative;
             width: 200px;
             height: 200px;
-            margin: 0 auto;
-            border: 2px solid #3B82F6;
+            border-radius: 50%;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            margin: 0 auto;
+          }
+          #cropCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: move;
+            touch-action: none; /* Prevent touch scrolling */
           }
           .crop-overlay {
             position: absolute;
@@ -590,35 +613,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
             left: 0;
             width: 100%;
             height: 100%;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            border: 2px dashed rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-sizing: border-box;
             pointer-events: none;
           }
           .crop-controls {
             display: flex;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 8px;
+            margin-top: 10px;
           }
           .crop-btn {
-            width: 30px;
-            height: 30px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 1px solid #D1D5DB;
-            background-color: white;
+            background-color: #F3F4F6;
+            border: 1px solid #E5E7EB;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: all 0.2s ease;
           }
           .crop-btn:hover {
-            background-color: #F3F4F6;
+            background-color: #E5E7EB;
           }
           .crop-btn i {
-            font-size: 0.8rem;
-            color: #374151;
+            font-size: 16px;
+            color: #4B5563;
           }
           .crop-actions {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+          }
+          .crop-actions .btn {
+            font-size: 12px;
+            padding: 4px 12px;
           }
         `;
         document.head.appendChild(style);

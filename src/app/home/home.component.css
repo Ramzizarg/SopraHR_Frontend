@@ -7,6 +7,13 @@
   --contrast-color: #ffffff;
 }
 
+/* Add your home page specific styles here */
+
+/* Adjust nav links position on home page */
+.main-nav .nav-links-container {
+  margin-left: -1000px; /* Move navigation links to the left */
+}
+
 /* Responsive Header Styles */
 .header {
   padding: 15px 0;
@@ -386,11 +393,17 @@
   }
   
   .sidebar-logo {
-    height: 40px;
+    height: auto;
     width: auto;
-    max-width: 160px;
+    max-width: 250px;
     object-fit: contain;
-    filter: brightness(0) invert(1);
+    transition: all 0.3s ease;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  }
+  
+  .sidebar-logo:hover {
+    transform: scale(1.05);
+    filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
   }
   
   .close-sidebar {
@@ -548,6 +561,15 @@
   
   .header-right {
     margin-right: 60px;
+  }
+}
+
+/* Home component styling */
+
+/* Custom navigation styling specific to home page */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .nav-links-container.d-flex.align-items-center {
+    margin-left: -600px;
   }
 }
 
@@ -1136,6 +1158,14 @@
 
 .desk-info .status-info {
   margin-bottom: 0;
+  text-align: center;
+}
+
+.status-info .bi-emoji-wink {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 10px;
+  color: #f0ad4e;
 }
 
 .desk-info .status-info strong {
@@ -2111,6 +2141,72 @@
   transform: translateY(0);
   box-shadow: 0 1px 2px rgba(123, 29, 189, 0.2);
   background: rgba(123, 29, 189, 1);
+}
+
+/* Desk Reservation Styling */
+.desk-info .status-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.emoji-container {
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: subtle-bounce 2s infinite ease-in-out;
+}
+
+@keyframes subtle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.emoji-container {
+  display: inline-block;
+  animation: subtle-bounce 2s ease infinite;
+  margin-right: 8px;
+  font-size: 1.2rem;
+  vertical-align: middle;
+}
+
+@keyframes subtle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Loading animation */
+.loading-reservation .emoji-container {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-reservation .reservation-text {
+  color: var(--bs-gray-600);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.loading-reservation .bi-clock-history {
+  color: var(--theme-accent, #f68b33);
+  opacity: 0.8;
+}
+
+.reservation-text {
+  font-size: 0.9rem;
+  vertical-align: middle;
+  color: var(--bs-gray-700);
+}
+
+.reservation-text strong {
+  color: var(--theme-accent, #f68b33);
+  font-weight: 600;
 }
 
 /* SweetAlert Toast Customization */

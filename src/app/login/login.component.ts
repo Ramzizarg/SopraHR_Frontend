@@ -13,6 +13,8 @@ export class LoginComponent {
   loginForm: FormGroup;
   errorMessage: string | null = null;
   loading = false;
+  showPassword = false;
+  hasPasswordInput = false; // Track if password field has content
 
   constructor(
     private router: Router,
@@ -77,5 +79,15 @@ export class LoginComponent {
     this.errorMessage = null;
   }
 
+  // Toggle password visibility
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+  
+  // Check if password field has content
+  checkPasswordInput() {
+    const passwordValue = this.loginForm.get('password')?.value;
+    this.hasPasswordInput = passwordValue && passwordValue.length > 0;
+  }
   
 }

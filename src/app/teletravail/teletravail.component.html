@@ -49,9 +49,6 @@
         
         <!-- User Controls -->
         <div class="user-controls d-flex align-items-center">
-          <div class="logout-container me-2 d-none d-lg-block">
-            <button class="logout-button" (click)="logout()"><i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span></button>
-          </div>
           <a href="javascript:void(0)" class="contact-icon ms-2" (click)="openContactModal()">
             <i class="bi bi-envelope-fill"></i>
           </a>
@@ -60,51 +57,13 @@
           </a>
           <app-profile-header></app-profile-header>
           
-          <!-- Mobile menu toggle button -->
-          <a href="javascript:void(0)" class="d-lg-none ms-3">
-            <i #mobileNavToggle class="mobile-nav-toggle bi" style="color: #ffffff !important;"
-               [class.bi-list]="!isMobileMenuOpen" 
-               [class.bi-x-lg]="isMobileMenuOpen"
-               (click)="toggleMobileMenu($event)"></i>
-          </a>
+          <!-- Mobile menu toggle button removed -->
         </div>
         
       </div>
     </div>
     
-    <!-- GitHub-style Mobile Navigation Sidebar -->
-    <div class="mobile-nav-overlay d-lg-none" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu($event)"></div>
-    <aside #navmenu class="sidebar-nav d-lg-none" [class.active]="isMobileMenuOpen">
-      <div class="sidebar-header">
-        <img src="../../assets/img/Sopra_Steria_logo.svg.png" alt="Sopra HR Software" class="sidebar-logo">
-      </div>
-
-      <nav class="sidebar-menu">
-        <a href="/home" class="nav-item">
-          <i class="bi bi-house-door"></i>
-          <span>Page d'accueil</span>
-        </a>
-        <a href="/teletravail" class="nav-item active">
-          <i class="bi bi-laptop"></i>
-          <span>Télétravail</span>
-        </a>
-        <a href="/reservation" class="nav-item">
-          <i class="bi bi-calendar-check"></i>
-          <span>Réservations</span>
-        </a>
-        <a href="/planning" class="nav-item">
-          <i class="bi bi-calendar-week"></i>
-          <span>Planning</span>
-        </a>
-        <div class="sidebar-divider"></div>
-        
-        <div class="sidebar-logout-container">
-          <button class="logout-button" (click)="logout()">
-            <i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span>
-          </button>
-        </div>
-      </nav>
-    </aside>
+    <!-- Sidebar navigation removed -->
   </header>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -143,24 +102,91 @@
           </div>
 
           <div class="form-group">
-            <label for="teletravailDate" class="form-label">
-              <i class="fas fa-calendar-alt"></i> Date souhaitée
-              <span class="date-badge ms-2" *ngIf="teletravailDate">{{teletravailDate | date:'EEE d MMM'}}</span>
-              <span class="date-badge date-badge-empty ms-2" *ngIf="!teletravailDate">Non sélectionnée</span>
-            </label>
-            <div class="input-icon">
-              <input 
-                type="date" 
-                id="teletravailDate" 
-                class="form-input" 
-                name="teletravailDate"
-                [(ngModel)]="teletravailDate" 
-                (change)="disableWeekends($event); onDateChange($event)" 
-                [min]="today > startOfCurrentWeek ? today : startOfCurrentWeek" 
-                [max]="endOfNextWeek" 
-                [attr.disabled]="isDateDisabled ? true : null"
-                required
-              />
+            <!-- Multiple date selection for regular requests -->
+            <div *ngIf="travailType === 'reguliere'">
+              <label class="form-label">
+                <i class="fas fa-calendar-alt"></i> Dates souhaitées (1-2 max)
+                <span class="date-badge ms-2" *ngIf="regularSelectedDates && regularSelectedDates.length > 0">{{regularSelectedDates.length}} jour(s) sélectionné(s)</span>
+                <span class="date-badge date-badge-empty ms-2" *ngIf="!regularSelectedDates || regularSelectedDates.length === 0">Aucun jour sélectionné</span>
+              </label>
+              <div class="input-icon">
+                <input
+                  type="date"
+                  id="regularDateSelector"
+                  name="regularDateSelector"
+                  class="form-input"
+                  [(ngModel)]="dateSelectorValue"
+                  (change)="onRegularDateSelect($event)"
+                  [min]="today > startOfCurrentWeek ? today : startOfCurrentWeek"
+                  [max]="endOfNextWeek"
+                  [attr.disabled]="isDateDisabled ? true : null"
+                />
+              </div>
+              
+              <!-- Selected dates display -->
+              <div class="selected-dates-container mt-2" *ngIf="regularSelectedDates.length > 0">
+                <div class="selected-date-tag" *ngFor="let date of regularSelectedDates; let i = index">
+                  {{ date | date:'EEE d MMM' }}
+                  <button type="button" class="remove-date-btn" (click)="removeRegularSelectedDate(i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <small class="form-text text-muted mt-1">
+                <i class="fas fa-info-circle me-1"></i> Maximum 2 jours non consécutifs dans la même semaine
+              </small>
+            </div>
+            
+            <!-- Single date selection when no type selected -->
+            <div *ngIf="!travailType">
+              <label for="teletravailDate" class="form-label">
+                <i class="fas fa-calendar-alt"></i> Date souhaitée
+              </label>
+              <div class="input-group">
+                <input
+                  type="date"
+                  id="teletravailDate"
+                  name="teletravailDate"
+                  class="form-control"
+                  [(ngModel)]="teletravailDate"
+                  (change)="onDateChange($event)"
+                  [min]="today"
+                  [attr.disabled]="isDateDisabled ? true : null"
+                  required
+                />
+              </div>
+            </div>
+            
+            <!-- Multiple date selection for exceptional requests -->
+            <div *ngIf="travailType === 'exceptionnelle'">
+              <label class="form-label">
+                <i class="fas fa-calendar-alt"></i> Dates souhaitées (5 max)
+                <span class="date-badge ms-2" *ngIf="selectedDates && selectedDates.length > 0">{{selectedDates.length}} jour(s) sélectionné(s)</span>
+                <span class="date-badge date-badge-empty ms-2" *ngIf="!selectedDates || selectedDates.length === 0">Aucun jour sélectionné</span>
+              </label>
+              <div class="input-icon">
+                <input 
+                  type="date" 
+                  id="dateSelector" 
+                  class="form-input" 
+                  name="dateSelector"
+                  [(ngModel)]="dateSelectorValue" 
+                  (change)="onExceptionalDateSelect($event)" 
+                  [min]="today > startOfCurrentWeek ? today : startOfCurrentWeek" 
+                  [max]="endOfNextWeek"
+                />
+              </div>
+              <div class="selected-dates-container mt-2" *ngIf="selectedDates && selectedDates.length > 0">
+                <div class="selected-date-tag" *ngFor="let date of selectedDates; let i = index">
+                  {{date | date:'EEE d MMM'}}
+                  <button type="button" class="remove-date-btn" (click)="removeSelectedDate(i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <small class="form-text text-muted mt-1">
+                <i class="fas fa-info-circle me-1"></i> Vous pouvez sélectionner jusqu'à 5 jours
+              </small>
             </div>
           </div>
         </div>
@@ -219,7 +245,7 @@
             <label for="reason" class="form-label">
               <i class="fas fa-comment"></i> Justification
             </label>
-            <textarea id="reason" class="form-input" name="reason" [(ngModel)]="reason" required placeholder="Entrez la raison"></textarea>
+            <textarea id="reason" class="form-input" name="reason" [(ngModel)]="travailReason" required placeholder="Entrez la raison"></textarea>
           </div>
         </div>
 

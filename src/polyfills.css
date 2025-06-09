@@ -1,0 +1,43 @@
+/* Global polyfill to override deprecated -ms-high-contrast with modern standards */
+
+@supports (forced-color-adjust: none) {
+  /* This targets modern browsers that support the new standard */
+  * {
+    forced-color-adjust: auto; /* Default to browser handling */
+  }
+  
+  /* Elements that might use -ms-high-contrast in Bootstrap */
+  .btn,
+  .form-control,
+  .nav-link,
+  .navbar,
+  .card,
+  .modal,
+  .dropdown-menu,
+  input[type="checkbox"],
+  input[type="radio"] {
+    forced-color-adjust: none !important;
+  }
+  
+  /* Common elements that might need high contrast overrides */
+  button,
+  input,
+  select,
+  a,
+  .password-toggle-btn svg,
+  .checkbox-field input[type="checkbox"],
+  .checkbox-field input[type="checkbox"]::before {
+    forced-color-adjust: none !important;
+  }
+}
+
+/* CSS Variable polyfill for -ms-high-contrast */
+:root {
+  --high-contrast-mode: none;
+}
+
+@media (forced-colors: active) {
+  :root {
+    --high-contrast-mode: active;
+  }
+}

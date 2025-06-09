@@ -1,26 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Planning</title>
-  <meta name="description" content="Planning chez Sopra HR">
-  <meta name="keywords" content="Planning, Télétravail, Sopra HR">
-
-  <!-- Favicons -->
-  <link href="../../assets/img/Sopra.png" rel="icon">
-  <link href="../../assets/img/apple-touch-icon.png" rel="apple-touch-icon">
-
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-</head>
-
-<body class="planning-page">
+<div class="planning-page">
   <!-- Header -->
   <header id="header" class="header sticky-top">
     <div class="container-fluid container-lg">
@@ -49,9 +27,6 @@
         
         <!-- User Controls -->
         <div class="user-controls d-flex align-items-center">
-          <div class="logout-container me-2 d-none d-lg-block">
-            <button class="logout-button" (click)="logout()"><i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span></button>
-          </div>
           <a href="javascript:void(0)" class="contact-icon ms-2" (click)="openContactModal()">
             <i class="bi bi-envelope-fill"></i>
           </a>
@@ -99,12 +74,6 @@
           <span>Planning</span>
         </a>
         <div class="sidebar-divider"></div>
-        
-        <div class="sidebar-logout-container">
-          <button class="logout-button" (click)="logout()">
-            <i class="bi bi-box-arrow-right"></i><span class="btn-text">Déconnexion</span>
-          </button>
-        </div>
       </nav>
     </aside>
   </header>
@@ -158,7 +127,7 @@
                     <input class="form-check-input" type="checkbox" id="showOnlyCurrentUser" 
                       [(ngModel)]="showOnlyCurrentUser" (change)="filterEntries()">
                     <label class="form-check-label" for="showOnlyCurrentUser">
-                      Afficher mes entrées
+                      <i class="bi bi-person-fill me-1"></i>Afficher mes entrées
                     </label>
                   </div>
                   
@@ -222,14 +191,16 @@
                       </div>
                     </div>
                     <div class="week-navigator">
-                      <button class="nav-arrow" (click)="showPreviousWeek()" [disabled]="isCurrentWeek">
+                      <button class="nav-arrow" (click)="showPreviousWeek()" [disabled]="isCurrentWeek" title="Semaine précédente">
                         <i class="bi bi-chevron-left"></i>
+                        <span class="visually-hidden">Semaine précédente</span>
                       </button>
                       <span class="date-range">
                         {{ getFormattedDateRange() }}
                       </span>
-                      <button class="nav-arrow" (click)="showNextWeek()" [disabled]="isNextWeek">
+                      <button class="nav-arrow" (click)="showNextWeek()" [disabled]="isNextWeek" title="Semaine suivante">
                         <i class="bi bi-chevron-right"></i>
+                        <span class="visually-hidden">Semaine suivante</span>
                       </button>
                     </div>
                   </div>
@@ -256,14 +227,21 @@
                     <div class="team-member" [ngClass]="{'current-user': employee.userId === currentUserId}">
 
                       <!-- User profile photo display with fallback to default avatar -->
-                      <img [src]="getUserProfilePhoto(employee.userId) || '/assets/images/default-avatar.svg'" 
+                      <img *ngIf="getUserProfilePhoto(employee.userId)" 
+                           [src]="getUserProfilePhoto(employee.userId)" 
                            class="user-profile-photo" 
-                           alt="Photo de profil" 
-                           onerror="this.src='/assets/images/default-avatar.svg'">
+                           alt="Photo de profil">
+                      <div *ngIf="!getUserProfilePhoto(employee.userId)" 
+                           class="avatar-circle" 
+                           [ngStyle]="{'background-color': employee.team === 'DEV' ? '#3B82F6' : 
+                                      employee.team === 'QA' ? '#16A34A' : 
+                                      employee.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+                        {{ (employee.employeeName || employee.userName || '')?.charAt(0) || 'U' }}
+                      </div>
                       
                       <!-- Priority to employeeName from backend, fallback to userName or userId -->
                       <div class="member-info">
-                        <div class="member-name">
+                        <div class="member-name" [title]="employee.employeeName || employee.userName || 'Utilisateur #' + employee.userId">
                           {{ employee.employeeName || employee.userName || 'Utilisateur #' + employee.userId }}
                         </div>
                         <div class="role-badge" *ngIf="employee.role">
@@ -276,27 +254,63 @@
                         <div class="day-cell">
                           <!-- Get employee status for this specific day -->
                           <ng-container *ngIf="getEmployeeStatusForDate(employee.userId, day) as status">
-                            <!-- Enhanced tooltips with click handlers for team leaders -->
-                            <i *ngIf="status === 'TELETRAVAIL'" 
-                               class="bi bi-house-door teletravail-icon tooltip-icon"
+
+                            <!-- Approved Regular Telework - Green -->
+                            <i *ngIf="status === 'TELETRAVAIL' && getWorkTypeForDate(employee.userId, day) === 'Regular'" 
+                               class="bi bi-house-door teletravail-icon teletravail-approved-icon tooltip-icon"
                                [class.clickable]="isTeamLeader || isManager"
-                               [title]="(isTeamLeader || isManager) ? 'Cliquez pour annuler l\'approbation - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Télétravail - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
-                               (click)="handleStatusClick($event, employee.userId, day, status)"></i>
+                               [title]="(isTeamLeader || isManager) ? 'Télétravail régulier approuvé - Cliquez pour annuler - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Télétravail régulier approuvé - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                               (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+
+                            <!-- Approved Exceptional Telework - Green -->
+                            <i *ngIf="status === 'TELETRAVAIL' && getWorkTypeForDate(employee.userId, day) === 'Exceptional'" 
+                               class="bi bi-house-door teletravail-icon teletravail-approved-icon tooltip-icon"
+                               [class.clickable]="isTeamLeader || isManager"
+                               [title]="(isTeamLeader || isManager) ? 'Télétravail exceptionnel approuvé - Cliquez pour annuler - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Télétravail exceptionnel approuvé - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                               (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
                             
+                            <!-- Fallback for any telework that doesn't match specific conditions -->
+                            <i *ngIf="status === 'TELETRAVAIL' && getWorkTypeForDate(employee.userId, day) !== 'Regular' && getWorkTypeForDate(employee.userId, day) !== 'Exceptional'" 
+                               class="bi bi-house-door teletravail-icon tooltip-icon"
+                               style="color: #f59e0b;" 
+                               [class.clickable]="isTeamLeader || isManager"
+                               [title]="(isTeamLeader || isManager) ? 'Télétravail - Cliquez pour annuler - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Télétravail - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                               (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+                            
+                            <!-- Office (or Rejected Telework) -->
                             <i *ngIf="status === 'OFFICE'" 
                                class="bi bi-building office-icon tooltip-icon"
                                [title]="'Présence au bureau - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
                             
-                            <i *ngIf="status === 'PENDING'" 
+                            <!-- Pending Regular Telework - Yellow -->
+                            <i *ngIf="status === 'PENDING' && getWorkTypeForDate(employee.userId, day) === 'Regular'" 
                                class="bi bi-house-door teletravail-icon pending-icon tooltip-icon"
                                [class.clickable]="isTeamLeader || isManager"
-                               [title]="(isTeamLeader || isManager) ? 'Cliquez pour approuver/refuser - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Demande en attente - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
-                               (click)="handleStatusClick($event, employee.userId, day, status)"></i>
-                            
-                            <i *ngIf="status === 'VACATION'" 
-                               class="bi bi-umbrella beach-icon tooltip-icon"
-                               [title]="'Congé - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
+                               [title]="(isTeamLeader || isManager) ? 'Demande de télétravail régulier en attente - Cliquez pour approuver/refuser - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Demande de télétravail régulier en attente - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                               (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
 
+                            <!-- Pending Exceptional Telework - Red with Yellow Indicator -->
+                            <i *ngIf="status === 'PENDING' && getWorkTypeForDate(employee.userId, day) === 'Exceptional'" 
+                               class="bi bi-house-door teletravail-icon pending-icon teletravail-exceptional-icon tooltip-icon"
+                               style="color: #dc3545;"
+                               [class.clickable]="isTeamLeader || isManager"
+                               [title]="(isTeamLeader || isManager) ? 'Demande de télétravail exceptionnel en attente - Cliquez pour approuver/refuser - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Demande de télétravail exceptionnel en attente - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                               (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+                            
+                            <!-- Fallback for any pending that doesn't match specific conditions -->
+                            <i *ngIf="status === 'PENDING' && getWorkTypeForDate(employee.userId, day) !== 'Regular' && getWorkTypeForDate(employee.userId, day) !== 'Exceptional'" 
+                               class="bi bi-house-door teletravail-icon pending-icon tooltip-icon"
+                               [class.clickable]="isTeamLeader || isManager"
+                               [title]="(isTeamLeader || isManager) ? 'Demande de télétravail en attente - Cliquez pour approuver/refuser - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Demande de télétravail en attente - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                               (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                               (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+                            
+                                                      <!-- Default Office -->
                             <i *ngIf="!status" 
                                class="bi bi-building office-icon tooltip-icon"
                                [title]="'Présence au bureau - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
@@ -322,11 +336,15 @@
                   </div>
                   <div class="legend-item">
                     <i class="bi bi-building office-icon"></i>
-                    <span>Présentiel</span>
+                    <span>Sur site</span>
                   </div>
                   <div class="legend-item">
-                    <i class="bi bi-hourglass-split pending-icon"></i>
-                    <span>En attente</span>
+                    <i class="bi bi-house-door teletravail-icon pending-icon"></i>
+                    <span>En attente régulière</span>
+                  </div>
+                  <div class="legend-item">
+                    <i class="bi bi-house-door teletravail-exceptional-icon pending-icon"></i>
+                    <span>En attente exceptionnelle</span>
                   </div>
                 </div>
               </div>
@@ -438,6 +456,3 @@
     </div>
   </div>
 </div>
-
-</body>
-</html>

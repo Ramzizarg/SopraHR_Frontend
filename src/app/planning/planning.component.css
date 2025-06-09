@@ -247,6 +247,101 @@
   transform: scale(1.2);
 }
 
+/* Telework Status Icons */
+.teletravail-icon {
+  color: #0d6efd; /* Default blue color */
+}
+
+/* Approved Regular Telework - Amber */
+.teletravail-approved-icon {
+  color: #f59e0b; /* Amber color */
+}
+
+/* Approved Exceptional Telework - Vibrant Red - HIGH PRIORITY */
+.planning-page .teletravail-exceptional-icon,
+.planning-page i.bi.bi-house-door.teletravail-exceptional-icon,
+.planning-page i.teletravail-exceptional-icon,
+.day-cell i.teletravail-exceptional-icon,
+.day-cells i[class*="teletravail-exceptional-icon"],
+i[style*="color: #dc3545"] {
+  color: #ff0000 !important; /* Pure bright red color */
+  font-weight: bold !important;
+  text-shadow: 0 0 2px rgba(255,0,0,0.5) !important;
+  position: relative !important;
+  /* Add circular styling similar to pending notification */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 19px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255, 151, 151, 0.8) !important;
+  background-color: rgba(255, 249, 249, 0.95) !important;
+  box-shadow: 0 0 3px rgba(255, 43, 43, 0.812) !important;
+  margin: 0 auto !important;
+}
+
+/* Pending Telework - Yellow/Orange */
+.pending-icon {
+  color: #ffc107; /* Yellow/orange color */
+  position: relative;
+}
+
+/* Add a small notification dot for pending status */
+.pending-icon::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 6px;
+  height: 6px;
+  background: #ffc107;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+/* Hide notification dot in the calendar legend */
+.calendar-legend .pending-icon::after {
+  display: none;
+}
+
+/* Ensure exceptional telework icon styling in the legend */
+.calendar-legend .teletravail-exceptional-icon {
+  color: #ff0000 !important;
+  font-weight: bold !important;
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 16px !important;
+  border-radius: 50% !important;
+  border: 2px solid #ff5757 !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 1px 3px rgba(255,0,0,0.3) !important;
+  margin: 0 auto !important;
+  vertical-align: middle !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Hover effect for exceptional telework icon in legend */
+.calendar-legend .legend-item:hover .teletravail-exceptional-icon {
+  transform: scale(1.05) !important;
+  box-shadow: 0 2px 5px rgba(255,0,0,0.4) !important;
+}
+
+/* Office icon */
+.office-icon {
+  color: #6c757d; /* Gray color */
+}
+
+/* Vacation icon */
+.beach-icon {
+  color: #17a2b8; /* Teal color */
+}
+
 /* Clickable icon style for team leaders */
 .clickable {
   cursor: pointer;
@@ -768,9 +863,9 @@ tr.table-info:hover {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 200px;
+  max-width: 200px;
 }
-
-
 
 /* User profile photo */
 .user-profile-photo {
@@ -780,6 +875,22 @@ tr.table-info:hover {
   object-fit: cover;
   border: 2px solid #e2e8f0;
   margin-right: 10px;
+}
+
+/* Avatar circle for users without profile photos */
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-right: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Current user highlight */
@@ -858,7 +969,8 @@ tr.table-info:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  max-width: 100%;
+  min-width: 0;
+  flex: 1;
   overflow: hidden;
 }
 
@@ -869,27 +981,65 @@ tr.table-info:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+  max-width: 100%;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  position: relative;
+  cursor: help;
+}
+
+/* Tooltip styles */
+.member-name[title] {
+  position: relative;
+}
+
+.member-name[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.member-name[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% - 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+  z-index: 1000;
 }
 
 /* Role badge - subtle, minimal design */
 .role-badge {
-  font-size: 9px; /* Very small font size as per user preference */
+  font-size: 9px;
   padding: 1px 4px;
   border-radius: 3px;
-  margin-top: 2px;
-  background-color: rgba(249, 250, 251, 0.8); /* Very subtle background */
-  border-left: 2px solid #e03a3c; /* Accent color matching preferences */
-  color: #718096; /* Subtle text color */
+  background-color: rgba(249, 250, 251, 0.8);
+  border-left: 2px solid #e03a3c;
+  color: #718096;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
   line-height: 1.1;
-  max-width: 90%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .day-cells {
@@ -1405,4 +1555,101 @@ textarea.form-control {
     height: auto;
     margin-bottom: 0;
   }
+}
+
+/* Custom styles for SweetAlert dialogs */
+.swal2-popup {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
+  border-radius: 12px !important;
+  padding: 2em !important;
+}
+
+.swal2-title {
+  font-size: 1.5em !important;
+  color: #2c3e50 !important;
+  font-weight: 600 !important;
+  margin-bottom: 1em !important;
+}
+
+.swal2-html-container {
+  margin: 1em 0 !important;
+}
+
+.swal2-confirm-button-custom {
+  font-size: 1em !important;
+  padding: 0.8em 2em !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.swal2-confirm-button-custom:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+}
+
+.swal2-cancel-button-custom {
+  font-size: 1em !important;
+  padding: 0.8em 2em !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.swal2-cancel-button-custom:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* Animation for the popup */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animated.fadeInDown {
+  animation: fadeInDown 0.3s ease-out;
+}
+
+/* Custom styles for the info box */
+.swal2-html-container .info-box {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.2em;
+  margin: 1em 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom styles for labels and values */
+.swal2-html-container .label {
+  color: #7f8c8d;
+  font-weight: 500;
+  margin-right: 0.5em;
+}
+
+.swal2-html-container .value {
+  color: #2c3e50;
+  font-weight: 400;
+}
+
+/* Custom styles for the employee name */
+.swal2-html-container .employee-name {
+  color: #3498db;
+  font-weight: 600;
+}
+
+/* Custom styles for the buttons container */
+.swal2-actions {
+  margin-top: 2em !important;
+  gap: 1em !important;
 }

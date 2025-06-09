@@ -14,6 +14,7 @@ export class ResetPasswordComponent implements OnInit {
   successMessage: string | null = null;
   errorMessage: string | null = null;
   token: string | null = null;
+  loading = false;
 
   constructor(
     private fb: FormBuilder,
@@ -47,12 +48,24 @@ export class ResetPasswordComponent implements OnInit {
   // Getter for form controls
   get f() { return this.resetPasswordForm.controls; }
 
+  // Clear success message
+  clearSuccess() {
+    this.successMessage = null;
+  }
+
+  // Clear error message
+  clearError() {
+    this.errorMessage = null;
+  }
+
   onSubmit(): void {
     this.submitted = true;
     this.successMessage = null;
     this.errorMessage = null;
+    this.loading = true;
 
     if (this.resetPasswordForm.invalid || !this.token) {
+      this.loading = false;
       return;
     }
 
@@ -62,13 +75,17 @@ export class ResetPasswordComponent implements OnInit {
     this.http.post(`${environment.apiUrl}/auth/reset-password`, payload)
       .subscribe({
         next: (response: any) => {
+          this.loading = false;
           this.successMessage = response.message || 'Password reset successfully! Redirecting to login in 5 seconds...';
+          this.resetPasswordForm.reset();
+          this.submitted = false;
           // Redirect to login page after 5 seconds
           setTimeout(() => {
             this.router.navigate(['/login']);
           }, 5000); // 5000ms = 5 seconds
         },
         error: (error) => {
+          this.loading = false;
           this.errorMessage = error.error?.errorMessage || 'Failed to reset password. The link may be invalid or expired.';
         }
       });

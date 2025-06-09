@@ -1,0 +1,29 @@
+/* Override deprecated -ms-high-contrast with modern forced-colors standard */
+@media (forced-colors: active) {
+  /* General button overrides */
+  .btn, button, input[type="button"], input[type="submit"] {
+    forced-color-adjust: none;
+  }
+  
+  /* Form controls */
+  input[type="text"], input[type="email"], input[type="password"], 
+  input[type="checkbox"], input[type="radio"], textarea, select {
+    forced-color-adjust: none;
+  }
+  
+  /* Password visibility toggle */
+  .password-toggle-btn svg {
+    forced-color-adjust: none;
+  }
+  
+  /* Orange elements for login form */
+  .checkbox-field input[type="checkbox"]:checked::before,
+  .checkbox-field input[type="checkbox"] {
+    forced-color-adjust: none;
+  }
+  
+  /* Links and interactive elements */
+  a, .form-options a {
+    forced-color-adjust: none;
+  }
+}

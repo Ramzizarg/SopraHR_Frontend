@@ -2520,15 +2520,10 @@ body {
 }
 
 /* Collapsed Sidebar Styles - Icon Only Mode */
-.sidebar {
-  width: 250px;
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .sidebar-collapsed .sidebar,
 .sidebar.sidebar-mini {
   width: 80px;
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s ease;
 }
 
 .sidebar-collapsed .sidebar-header,
@@ -2541,20 +2536,12 @@ body {
   max-width: 40px;
 }
 
-.menu-label {
-  opacity: 1;
-  visibility: visible;
-  height: auto;
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .sidebar-collapsed .menu-label,
 .sidebar-mini .menu-label {
   opacity: 0;
   visibility: hidden;
   height: 0;
   padding: 0;
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-collapsed .sidebar .nav-link,
@@ -2569,20 +2556,9 @@ body {
   font-size: 1.5rem;
 }
 
-.sidebar .nav-link span {
-  opacity: 1;
-  max-width: 200px;
-  overflow: hidden;
-  white-space: nowrap;
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .sidebar-collapsed .sidebar .nav-link span,
 .sidebar-mini .nav-link span {
-  opacity: 0;
-  max-width: 0;
-  overflow: hidden;
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: none;
 }
 
 .sidebar-collapsed .sidebar-footer,
@@ -2635,8 +2611,7 @@ body {
 .main-content {
   margin-left: 250px;
   width: calc(100% - 250px);
-  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: margin-left, width;
+  transition: margin-left 0.3s ease, width 0.3s ease;
 }
 
 .sidebar-collapsed-layout .main-content {

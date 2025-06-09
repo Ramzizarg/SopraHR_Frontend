@@ -16,13 +16,15 @@
   margin: 15px;
   padding: 40px;
   border-radius: 25px;
-  box-shadow: 0px 10px 25px 5px #0000000f;
+  box-shadow: 0px 10px 25px 5px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* Adding a subtle border for better contrast against white backgrounds */
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .form:hover {
   transform: translateY(-5px);
-  box-shadow: 0px 20px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0px 20px 30px rgba(0, 0, 0, 0.3);
 }
 
 /* Sign-in Section */
@@ -109,6 +111,58 @@
   margin-top: 5px;
 }
 
+/* Password Field with Toggle */
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 40px; /* Space for the eye icon */
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f67200;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  outline: none;
+  width: 28px;
+  height: 28px;
+}
+
+.password-toggle-btn:hover {
+  /* Removed background color as requested */
+  background-color: transparent;
+}
+
+.password-toggle-btn:focus {
+  /* Removed box-shadow as requested */
+  outline: none;
+}
+
+.password-icon {
+  position: absolute;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.password-icon.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
 /* Checkbox Field */
 .checkbox-field {
   display: flex;
@@ -132,27 +186,30 @@
   transition: all 0.3s ease;
   position: relative;
   background-color: #fff;
+  outline: none;
 }
 
 .checkbox-field input[type="checkbox"]::before {
   content: '✔';
   font-size: 14px;
-  color: white;
+  color: #f67200;
   display: none;
   position: absolute;
 }
 
 .checkbox-field input[type="checkbox"]:hover {
-  background-color: #f0e6ff;
+  background-color: rgba(246, 114, 0, 0.1);
+  border-color: #f67200;
 }
 
 .checkbox-field input[type="checkbox"]:checked {
-  background-color: #f67200;
-  border-color: #000000;
+  background-color: #ffffff;
+  border-color: #f67200;
 }
 
 .checkbox-field input[type="checkbox"]:checked::before {
   display: block;
+  color: #f67200;
 }
 
 .checkbox-field label {
@@ -162,7 +219,7 @@
 }
 
 .checkbox-field label:hover {
-  color: #ff6e6e;
+  color: #f67200;
 }
 
 /* Form Options */
@@ -174,12 +231,13 @@
 }
 
 .form-options a {
-  color: #7F00FF;
+  color: #f67200; /* Orange color to match theme */
   font-size: 0.9em;
+  text-decoration: underline;
 }
 
 .form-options a:hover {
-  color: #ffbf00;
+  color: #ff0000; /* Red on hover as requested */
 }
 
 /* Submit Button */
@@ -222,37 +280,138 @@
 }
 
 .links a {
-  color: #fcad46;
+  color: #f67200; /* Orange color to match theme */
   font-size: 1em;
+  font-weight: 500;
+  text-decoration: underline;
 }
 
 .links a:hover {
-  color: #ff0000;
+  color: #ff0000; /* Red on hover as requested */
+}
+
+.links a:focus {
+  outline: 2px solid #f67200;
+  outline-offset: 2px;
 }
 
 /* Responsive Design */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .container {
+    height: auto;
+    min-height: 100vh;
+    padding: 20px 0;
+  }
+
   .form {
-    max-width: 100%;
-    padding: 30px;
+    max-width: 360px; /* Slightly smaller than desktop */
+    margin: 10px auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 0;
   }
 
+  .form {
+    max-width: 300px; /* Even smaller for mobile */
+    padding: 15px 20px;
+    margin: 0 auto;
+    /* Keep the same border-radius as desktop */
+  }
+  
+  /* Make form elements more compact */
+  .form-field {
+    margin: 8px 0;
+  }
+  
   .form-field input {
-    padding: 12px;
-    font-size: 1.1em;
+    padding: 7px 10px;
+    font-size: 0.9em;
+  }
+  
+  .sign-in-section img.logo {
+    width: 25% !important;
+    margin-bottom: 0;
+  }
+  
+  .sign-in-section h1 {
+    margin: 3px 0 12px;
+    font-size: 1.5rem;
+  }
+  
+  .sign-in-section h1:after {
+    bottom: -8px;
+    height: 3px;
+    width: 30px;
+  }
+  
+  /* Smaller button and form options */
+  .btn {
+    padding: 8px;
+    font-size: 0.95em;
+    margin-top: 5px;
+  }
+  
+  .form-options {
+    margin: 5px 0;
+  }
+  
+  .checkbox-field input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Make password toggle slightly bigger for touch */
+  .password-toggle-btn {
+    width: 32px;
+    height: 32px;
   }
 
+  /* Keep form options same as desktop */
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Sign-in button slightly smaller but same style */
   .btn {
     padding: 12px;
     font-size: 1em;
   }
 
   .sign-in-section h1 {
+    font-size: 1.9rem; /* Just slightly smaller */
+  }
+}
+
+@media (max-width: 400px) {
+  .form {
+    max-width: 280px;
+    padding: 25px;
+  }
+  
+  .sign-in-section h1 {
     font-size: 1.8rem;
   }
-
-  .form-options a {
-    font-size: 0.8em;
+  
+  /* Keep the underline same as desktop */
+  .sign-in-section h1:after {
+    bottom: -15px;
+    height: 5px;
+    width: 40px;
   }
+  
+  .form-field input {
+    padding: 10px;
+  }
+  
+  /* Everything else remains the same as desktop */
 }
 

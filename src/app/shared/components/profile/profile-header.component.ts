@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../login/AuthService';
 import { ProfileService } from '../../../services/profile.service';
 import { PasswordResetService } from '../../../services/password-reset.service';
@@ -16,12 +17,14 @@ export class ProfileHeaderComponent implements OnInit {
   currentUser: any = null;
   isUploadingPhoto: boolean = false;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('profilePopup') profilePopupElement!: ElementRef<HTMLElement>;
 
   constructor(
     private authService: AuthService,
     private profileService: ProfileService,
     private passwordResetService: PasswordResetService,
-    private soundService: SoundService
+    private soundService: SoundService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -65,6 +68,9 @@ export class ProfileHeaderComponent implements OnInit {
    * Handle password reset request
    */
   handlePasswordReset(): void {
+    // Close the profile popup first
+    this.closeProfilePopup();
+    
     if (!this.currentUser?.email) {
       Swal.fire({
         title: 'Erreur',
@@ -84,65 +90,73 @@ export class ProfileHeaderComponent implements OnInit {
       });
       return;
     }
-
-    this.passwordResetService.requestPasswordReset(this.currentUser.email).subscribe({
-      next: () => {
-        // Play success sound
-        this.soundService.playSuccess();
-
-        // Show success message
-        Swal.fire({
-          title: 'Email envoyé',
-          text: 'Un email avec un lien de réinitialisation a été envoyé à votre adresse.',
-          icon: 'success',
-          toast: true,
-          position: 'bottom-end',
-          showConfirmButton: false,
-          timer: 3000,
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: '0.5em',
-          customClass: {
-            popup: 'small-toast',
-            title: 'small-toast-title',
-            htmlContainer: 'small-toast-content'
-          }
-        });
-
-        // Automatically logout after 5 seconds
-        setTimeout(() => {
-          this.authService.logout();
-        }, 5000);
-      },
-      error: (error) => {
-        console.error('Error requesting password reset:', error);
-        Swal.fire({
-          title: 'Erreur',
-          text: 'Impossible d\'envoyer l\'email de réinitialisation. Veuillez réessayer plus tard.',
-          icon: 'error',
-          toast: true,
-          position: 'bottom-end',
-          showConfirmButton: false,
-          timer: 3000,
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: '0.5em',
-          customClass: {
-            popup: 'small-toast',
-            title: 'small-toast-title',
-            htmlContainer: 'small-toast-content'
-          }
-        });
-      }
-    });
+    
+    this.passwordResetService.requestPasswordReset(this.currentUser.email)
+      .subscribe({
+        next: () => {
+          // Play success sound
+          this.soundService.playSuccess();
+          
+          // Show success message
+          Swal.fire({
+            title: 'Email envoyé',
+            text: 'Un email avec un lien de réinitialisation a été envoyé à votre adresse.',
+            icon: 'success',
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            background: 'rgba(255, 255, 255, 0.9)',
+            padding: '0.5em',
+            customClass: {
+              popup: 'small-toast',
+              title: 'small-toast-title',
+              htmlContainer: 'small-toast-content'
+            }
+          });
+        },
+        error: (error) => {
+          console.error('Error requesting password reset:', error);
+          
+          // Show error message
+          Swal.fire({
+            title: 'Erreur',
+            text: 'Impossible d\'envoyer l\'email de réinitialisation. Veuillez réessayer plus tard.',
+            icon: 'error',
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            background: 'rgba(255, 255, 255, 0.9)',
+            padding: '0.5em',
+            customClass: {
+              popup: 'small-toast',
+              title: 'small-toast-title',
+              htmlContainer: 'small-toast-content'
+            }
+          });
+        }
+      });
+  }
+  
+  /**
+   * Logout the user and redirect to login page
+   */
+  logout(): void {
+    this.closeProfilePopup();
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   /**
-   * Closes the popup when clicking outside
+   * Handles clicks outside the profile popup to close it
+   * @param event The mouse event
    */
-  closePopupOnClickOutside = (event: any): void => {
+  private closePopupOnClickOutside = (event: MouseEvent): void => {
     const popup = document.querySelector('.profile-popup');
     const profileIcon = document.querySelector('.user-profile');
     
-    if (popup && !popup.contains(event.target) && profileIcon && !profileIcon.contains(event.target)) {
+    if (popup && !popup.contains(event.target as Node) && profileIcon && !profileIcon.contains(event.target as Node)) {
       this.closeProfilePopup();
     }
   }
@@ -299,4 +313,6 @@ export class ProfileHeaderComponent implements OnInit {
     
     return roleMap[role] || role;
   }
+  
+
 }
