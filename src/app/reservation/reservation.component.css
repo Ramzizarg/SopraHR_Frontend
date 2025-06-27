@@ -373,9 +373,7 @@ body.reservation-page {
 }
 
 /* Add spacing for all main-content-wrapper variants */
-.main-content-wrapper {
-  margin-top: 2rem; /* Consistent space between header and all content */
-}
+
 
 .main-content-wrapper:not(.centered) .status-bar {
   margin-left: auto;
@@ -390,8 +388,7 @@ body.reservation-page {
   align-items: center;
   justify-content: center; /* Center vertically too */
   height: 95vh; /* Use almost full viewport height */
-  margin-top: 2rem; /* Increased space between header and content */
-  margin-bottom: 2.5rem; /* Space between content and footer */
+  margin-top: 4rem; /* Increased space between header and content */
 }
 
 .main-content-wrapper.centered #designContainer {
@@ -400,11 +397,6 @@ body.reservation-page {
   width: 1150px; /* Fixed width to match manager view */
 }
 
-.main-content-wrapper.centered .status-bar {
-  margin-left: auto;
-  margin-right: auto;
-  width: 1150px; /* Fixed width to match design container */
-}
 
 .design-container {
   flex-grow: 1;
@@ -1216,7 +1208,7 @@ button:hover:not(:disabled) i {
   overflow: visible;
   backdrop-filter: blur(10px);
   margin-left: var(--sidebar-width, 340px);
-  margin-bottom: 2rem; /* Added space between status bar and footer */
+  margin-bottom: 5rem; /* Added space between status bar and footer */
   max-width: calc(100% - 2.5rem); /* Ensure the status bar stays within screen boundaries */
 }
 
@@ -3114,7 +3106,6 @@ body.modal-open {
 .status-bar, #designContainer {
   width: 100%;
   max-width: 89%;
-  margin: 0;
   left: 82;
   box-sizing: border-box;
 }
