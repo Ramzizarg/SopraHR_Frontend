@@ -4,6 +4,7 @@ import { TeletravailForm, TeletravailService, TeletravailResponse, TeletravailSt
 import { AuthService } from '../login/AuthService';
 import { ProfileService } from '../services/profile.service';
 import Swal from 'sweetalert2';
+import { ContactService, ContactRequest } from '../services/contact.service';
 
 // tslint:disable-next-line:use-inline-template-type-checking
 @Component({
@@ -35,15 +36,8 @@ export class TeletravailComponent implements OnInit {
   // Travel reason for exceptional requests
   travailReason: string = '';
 
-  // Role-based access
-  isManager: boolean = false;
-  isTeamLeader: boolean = false;
-
   // Request management
   userRequests: TeletravailResponse[] = [];
-  teamRequests: TeletravailResponse[] = [];
-  allRequests: TeletravailResponse[] = [];
-  selectedRequest: TeletravailResponse | null = null;
   isSubmitting: boolean = false;
   statusColors = {
     [TeletravailStatus.PENDING]: 'bg-warning',
@@ -82,7 +76,8 @@ export class TeletravailComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private renderer: Renderer2,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private contactService: ContactService
   ) {
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -127,13 +122,6 @@ export class TeletravailComponent implements OnInit {
       return;
     }
     console.log('TeletravailComponent: Loading page with token');
-    
-    // Check user roles
-    this.isManager = this.authService.isManager();
-    this.isTeamLeader = this.authService.isTeamLeader();
-    
-    // No need to set default view since we removed tabs
-    // Just loading all required data based on user role
     
     this.calculateWeekDates();
     setInterval(() => this.calculateWeekDates(), 60000);
@@ -230,26 +218,6 @@ export class TeletravailComponent implements OnInit {
       text: errorMessage,
       confirmButtonText: 'OK'
     });
-  }
-  
-  private updateRequestInLists(updatedRequest: TeletravailResponse): void {
-    // Update in user requests list
-    const userIndex = this.userRequests.findIndex(r => r.id === updatedRequest.id);
-    if (userIndex !== -1) {
-      this.userRequests[userIndex] = updatedRequest;
-    }
-    
-    // Update in team requests list
-    const teamIndex = this.teamRequests.findIndex(r => r.id === updatedRequest.id);
-    if (teamIndex !== -1) {
-      this.teamRequests[teamIndex] = updatedRequest;
-    }
-    
-    // Update in all requests list
-    const allIndex = this.allRequests.findIndex(r => r.id === updatedRequest.id);
-    if (allIndex !== -1) {
-      this.allRequests[allIndex] = updatedRequest;
-    }
   }
   
   calculateWeekDates(): void {
@@ -631,48 +599,6 @@ export class TeletravailComponent implements OnInit {
     }
   }
 
-  openStatusModal(request: TeletravailResponse): void {
-    this.selectedRequest = request;
-    this.rejectionReason = '';
-  }
-  
-  updateRequestStatus(status: TeletravailStatus): void {
-    if (!this.selectedRequest) return;
-    
-    const update: StatusUpdateRequest = {
-      status: status,
-      rejectionReason: status === TeletravailStatus.REJECTED ? this.rejectionReason : undefined
-    };
-    
-    this.teletravailService.updateRequestStatus(this.selectedRequest.id, update).subscribe({
-      next: (updatedRequest) => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Succès',
-          text: `La demande a été ${status === TeletravailStatus.APPROVED ? 'approuvée' : 'refusée'} avec succès.`,
-          confirmButtonText: 'OK'
-        });
-        
-        // Update the request in the appropriate list
-        this.updateRequestInLists(updatedRequest);
-        this.selectedRequest = null;
-        this.rejectionReason = '';
-      },
-      error: (err) => {
-        console.error(`Failed to ${status === TeletravailStatus.APPROVED ? 'approve' : 'reject'} request:`, err);
-        this.handleApiError(err, `Impossible de ${status === TeletravailStatus.APPROVED ? 'approuver' : 'refuser'} la demande.`);
-      }
-    });
-  }
-  
-  getStatusClass(status: TeletravailStatus): string {
-    return this.statusColors[status] || 'bg-secondary';
-  }
-  
-  getStatusLabel(status: TeletravailStatus): string {
-    return this.statusLabels[status] || 'Inconnu';
-  }
-  
   onSubmit(): void {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
@@ -1008,7 +934,6 @@ export class TeletravailComponent implements OnInit {
     }
   }
   
-  
   logout(): void {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (token) {
@@ -1052,10 +977,78 @@ export class TeletravailComponent implements OnInit {
   }
 
   sendContactMessage(): void {
-    // Here you would implement actual message sending functionality
-    // For now, we'll just close the modal and show an alert
-    alert('Votre message a été envoyé. Nous vous contacterons bientôt.');
-    this.closeContactModal();
+    const priority = (document.getElementById('priority') as HTMLSelectElement).value;
+    const subject = (document.getElementById('subject') as HTMLInputElement).value;
+    const message = (document.getElementById('message') as HTMLTextAreaElement).value;
+
+    if (!subject || !message) {
+      Swal.fire({
+        toast: true,
+        position: 'bottom-end',
+        icon: 'warning',
+        title: 'Veuillez remplir tous les champs obligatoires',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: '#fff',
+        iconColor: '#f39c12',
+        customClass: {
+          popup: 'swal-toast-popup',
+          title: 'swal-toast-title'
+        }
+      });
+      return;
+    }
+
+    const contactRequest: ContactRequest = {
+      priority,
+      subject,
+      message,
+      userEmail: this.currentUser?.email || 'anonymous@example.com',
+      employeeName: this.currentUser?.firstName && this.currentUser?.lastName 
+        ? `${this.currentUser.firstName} ${this.currentUser.lastName}`
+        : this.currentUser?.name || 'Unknown User'
+    };
+
+    this.contactService.createContactRequest(contactRequest)
+      .subscribe({
+        next: () => {
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'success',
+            title: 'Votre message a été envoyé avec succès',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#7b1dbd',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+          this.closeContactModal();
+        },
+        error: (error) => {
+          console.error('Error sending contact request:', error);
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'error',
+            title: 'Une erreur est survenue lors de l\'envoi du message',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#e74c3c',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+        }
+      });
   }
 
   // Profile photo methods
@@ -1095,4 +1088,4 @@ export class TeletravailComponent implements OnInit {
       }
     });
   }
-  }
+}

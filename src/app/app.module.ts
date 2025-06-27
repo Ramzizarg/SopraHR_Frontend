@@ -24,12 +24,19 @@ import { PlanningComponent } from './planning/planning.component';
 import { PasswordResetService } from './services/password-reset.service';
 import { SoundService } from './services/sound.service';
 import { BFCacheService } from './services/bfcache.service';
+import { GererDemandeComponent } from './gerer-demande/gerer-demande.component';
+import { ReclamationBackComponent } from './backoffice/reclamation-back/reclamation-back.component';
+import { NgApexchartsModule } from 'ng-apexcharts';
 
 // Import locale data
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { UsersComponent } from './backoffice/users/users.component';
 import { DashboardComponent } from './backoffice/dashboard/dashboard.component';
+import { TeletravailBackComponent } from './backoffice/teletravail-back/teletravail-back.component';
+import { PlanningBackComponent } from './backoffice/planning-back/planning-back.component';
+import { ReservationBackComponent } from './backoffice/reservation-back/reservation-back.component';
+
 
 // Register the locale data
 registerLocaleData(localeFr, 'fr');
@@ -48,6 +55,11 @@ registerLocaleData(localeFr, 'fr');
     ApiTesterComponent,
     UsersComponent,
     DashboardComponent,
+    TeletravailBackComponent,
+    PlanningBackComponent,
+    ReservationBackComponent,
+    GererDemandeComponent,
+    ReclamationBackComponent
   ],
   imports: [
     BrowserModule,
@@ -58,7 +70,8 @@ registerLocaleData(localeFr, 'fr');
     HttpClientModule,
     CommonModule,
     BrowserAnimationsModule,
-    SharedModule
+    SharedModule,
+    NgApexchartsModule
   ],
   providers: [
     AuthService, 

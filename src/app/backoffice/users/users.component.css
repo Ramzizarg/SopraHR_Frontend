@@ -534,7 +534,7 @@ body {
   top: 0;
   height: 100%;
   width: 3px;
-  background-color: #3B82F6;
+  background-color: #16A34A;
   opacity: 0.7;
 }
 
@@ -2297,4 +2297,109 @@ body {
 .sidebar-collapsed-layout .menu-toggle i {
   transform: rotate(180deg);
   transition: transform 0.3s ease;
+}
+
+.action-button i.bi-arrow-repeat {
+  transition: transform 0.3s ease;
+}
+
+.action-button:hover i.bi-arrow-repeat {
+  transform: rotate(180deg);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-container p {
+  margin-top: 1rem;
+  color: #6B7280;
+}
+
+.error-container {
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.error-container .alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  color: #DC2626;
+}
+
+.error-container .alert i {
+  font-size: 1.25rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #F0FDF4;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+  border: 1px solid #DCFCE7;
+  max-width: 94%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.card-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.5rem;
+  background-color: #DCFCE7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+}
+
+.card-logo i {
+  font-size: 1.5rem;
+  color: #16A34A;
+}
+
+.header-text h5 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.header-text .subtitle {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin-top: 0.25rem;
+}
+
+.date-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #FEF3C7;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #D97706;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.date-line {
+  width: 1px;
+  height: 1rem;
+  background-color: #FBBF24;
 }

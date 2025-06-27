@@ -10,37 +10,44 @@
       </div>
     </div>
     
+       
     <div class="sidebar-menu">
       <p class="menu-label">MENU</p>
       <ul class="nav flex-column">
         <li class="nav-item">
-          <a class="nav-link" routerLink="/dashboard">
+          <a class="nav-link" routerLink="/backoffice/dashboard">
             <i class="bi bi-speedometer2"></i>
             <span>Dashboard</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active" routerLink="/users">
+          <a class="nav-link active" routerLink="/backoffice/users">
             <i class="bi bi-people"></i>
             <span>Utilisateurs</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/reservation">
-            <i class="bi bi-geo-alt"></i>
+          <a class="nav-link" routerLink="/backoffice/reservation-back">
+            <i class="bi bi-calendar-check me-1"></i>
             <span>Réservation</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/planning">
+          <a class="nav-link" routerLink="/backoffice/planning-back">
             <i class="bi bi-calendar3"></i>
             <span>Planning</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/teletravail">
+          <a class="nav-link" routerLink="/backoffice/teletravail-back">
             <i class="bi bi-laptop"></i>
             <span>Télétravail</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/reclamation-back">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>Réclamation</span>
           </a>
         </li>
       </ul>
@@ -123,246 +130,269 @@
       </div>
     </div>
     
+    <!-- Dashboard Content -->
     <div class="dashboard-content">
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p>Chargement des données...</p>
+      </div>
       
-      <!-- Enhanced Content Card -->
-      <div class="content-card">
-        <!-- Card Header with Logo -->
-        <div class="content-card-header">
-          <div class="header-left">
+      <!-- Error message -->
+      <div *ngIf="error" class="error-container">
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ error }}
+        </div>
+      </div>
+      
+      <!-- Main content -->
+      <div *ngIf="!isLoading && !error" class="content">
+        <!-- Header -->
+        <div class="dashboard-header">
+          <div class="d-flex align-items-center">
             <div class="card-logo">
-              <i class="bi bi-people-fill"></i>
+              <i class="bi bi-people"></i>
             </div>
             <div class="header-text">
-              <h5>Gestion des utilisateurs</h5>
-              <span class="subtitle">{{ users.length }} utilisateurs au total</span>
+              <h5>Gestion des Utilisateurs</h5>
+              <div class="subtitle">Gérez et suivez les utilisateurs de votre équipe</div>
             </div>
           </div>
-          
-          <div class="header-actions">
-            <!-- Actions Menu -->
-            <div class="action-menu">
-              <button class="action-button" title="Ajouter un utilisateur" (click)="addNewUser()">
-                <i class="bi bi-person-plus-fill"></i>
-              </button>
-              <button class="action-button" title="Exporter les données" (click)="exportUserData()">
-                <i class="bi bi-download"></i>
-              </button>
-              <button class="action-button" title="Actualiser" (click)="refreshUserData()">
-                <i class="bi bi-arrow-repeat"></i>
-              </button>
-            </div>
-            
-            <!-- Search & Filter -->
-            <div class="d-flex gap-2 search-filter-container">
-              <div class="search-input">
-                <i class="bi bi-search"></i>
-                <input type="text" placeholder="Rechercher par nom..." [(ngModel)]="searchTerm" (input)="applyFilters()">
-              </div>
-              
-              <div class="filter-wrapper">
-                <select class="filter-select" (change)="onTeamChange($event)">
-                  <option value="">Équipe: Toutes</option>
-                  <option *ngFor="let team of teams" [value]="team">{{ team }}</option>
-                </select>
-                <i class="bi bi-funnel"></i>
-              </div>
-              
-              <div class="filter-wrapper">
-                <select class="filter-select" (change)="onRoleChange($event)">
-                  <option value="">Rôle: Tous</option>
-                  <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
-                </select>
-                <i class="bi bi-shield"></i>
-              </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="date-badge">
+              <div class="date-line"></div>
+              <span>{{ formattedDate }}</span>
             </div>
           </div>
         </div>
         
-        <div class="content-card-body">
-          <!-- Success Message -->
-          <div *ngIf="showSuccess" class="success-message">
-            <i class="bi bi-check-circle"></i>
-            <span>{{ successMessage }}</span>
-          </div>
-          
-          <!-- Error Message -->
-          <div *ngIf="error" class="error-message">
-            <i class="bi bi-exclamation-triangle"></i>
-            <span>{{ error }}</span>
-          </div>
-          
-          <!-- Loading State -->
-          <div *ngIf="loading" class="d-flex justify-content-center my-4">
-            <div class="spinner">
-              <div class="bounce1"></div>
-              <div class="bounce2"></div>
-              <div class="bounce3"></div>
+        <!-- Enhanced Content Card -->
+        <div class="content-card">
+          <!-- Card Header with Logo -->
+          <div class="content-card-header">
+            <div class="header-left">
+              <div class="card-logo">
+                <i class="bi bi-people-fill"></i>
+              </div>
+              <div class="header-text">
+                <h5>Gestion des utilisateurs</h5>
+                <span class="subtitle">{{ users.length }} utilisateurs au total</span>
+              </div>
+            </div>
+            
+            <div class="header-actions">
+              <!-- Actions Menu -->
+              <div class="action-menu">
+                <button class="action-button" title="Ajouter un utilisateur" (click)="addNewUser()">
+                  <i class="bi bi-person-plus-fill"></i>
+                </button>
+                <button class="action-button" title="Exporter les données" (click)="exportData()">
+                  <i class="bi bi-download"></i>
+                </button>
+                <button class="action-button" title="Actualiser" (click)="refreshUserData()">
+                  <i class="bi bi-arrow-repeat"></i>
+                </button>
+              </div>
+              
+              <!-- Search & Filter -->
+              <div class="d-flex gap-2 search-filter-container">
+                <div class="search-input">
+                  <i class="bi bi-search"></i>
+                  <input type="text" placeholder="Rechercher par nom..." [(ngModel)]="searchTerm" (input)="applyFilters()">
+                </div>
+                
+                <div class="filter-wrapper">
+                  <select class="filter-select" (change)="onTeamChange($event)">
+                    <option value="">Équipe: Toutes</option>
+                    <option *ngFor="let team of teams" [value]="team">{{ team }}</option>
+                  </select>
+                  <i class="bi bi-funnel"></i>
+                </div>
+                
+                <div class="filter-wrapper">
+                  <select class="filter-select" (change)="onRoleChange($event)">
+                    <option value="">Rôle: Tous</option>
+                    <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+                  </select>
+                  <i class="bi bi-shield"></i>
+                </div>
+              </div>
             </div>
           </div>
           
-          <!-- Empty line for spacing -->
-          
-          <!-- Empty State -->
-          <div *ngIf="!loading && filteredUsers.length === 0" class="empty-state">
-            <div class="empty-icon">
-              <i class="bi bi-people"></i>
+          <div class="content-card-body">
+            <!-- Success Message -->
+            <div *ngIf="showSuccess" class="success-message">
+              <i class="bi bi-check-circle"></i>
+              <span>{{ successMessage }}</span>
             </div>
-            <p class="empty-title">Aucun utilisateur trouvé</p>
-            <p class="empty-subtitle">Essayez de modifier vos critères de recherche</p>
-          </div>
-          
-          <!-- User Table -->
-          <div *ngIf="!loading && filteredUsers.length > 0" class="users-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>
-                    <div class="th-content" (click)="toggleSort('name')">
-                      <span>Employé</span>
-                      <i class="bi sort-icon" [ngClass]="{
-                        'bi-arrow-down-short': sortColumn === 'name' && sortDirection === 'desc',
-                        'bi-arrow-up-short': sortColumn === 'name' && sortDirection === 'asc',
-                        'bi-arrow-down': sortColumn !== 'name'
-                      }"></i>
-                    </div>
-                  </th>
-                  <th>
-                    <div class="th-content" (click)="toggleSort('email')">
-                      <span>Email</span>
-                      <i class="bi sort-icon" [ngClass]="{
-                        'bi-arrow-down-short': sortColumn === 'email' && sortDirection === 'desc',
-                        'bi-arrow-up-short': sortColumn === 'email' && sortDirection === 'asc',
-                        'bi-arrow-down': sortColumn !== 'email'
-                      }"></i>
-                    </div>
-                  </th>
-                  <th>
-                    <div class="th-content" (click)="toggleSort('role')">
-                      <span>Rôle</span>
-                      <i class="bi sort-icon" [ngClass]="{
-                        'bi-arrow-down-short': sortColumn === 'role' && sortDirection === 'desc',
-                        'bi-arrow-up-short': sortColumn === 'role' && sortDirection === 'asc',
-                        'bi-arrow-down': sortColumn !== 'role'
-                      }"></i>
-                    </div>
-                  </th>
-                  <th>
-                    <div class="th-content" (click)="toggleSort('team')">
-                      <span>Équipe</span>
-                      <i class="bi sort-icon" [ngClass]="{
-                        'bi-arrow-down-short': sortColumn === 'team' && sortDirection === 'desc',
-                        'bi-arrow-up-short': sortColumn === 'team' && sortDirection === 'asc',
-                        'bi-arrow-down': sortColumn !== 'team'
-                      }"></i>
-                    </div>
-                  </th>
-                  <th class="actions-column"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let user of paginatedUsers" [attr.data-user-id]="user.id">
-                  <td>
-                    <div class="user-info">
-                      <div class="user-avatar">
-                        <!-- Show profile photo if available, otherwise show initials -->
-                        <img *ngIf="getUserProfilePhoto(user.id)" class="profile-photo" [src]="getUserProfilePhoto(user.id)" alt="{{ user.firstName }} {{ user.lastName }}" />
-                        <div *ngIf="!getUserProfilePhoto(user.id)" class="avatar-circle" [ngStyle]="{'background-color': user.team === 'DEV' ? '#3B82F6' : user.team === 'QA' ? '#16A34A' : user.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
-                          {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+            
+            <!-- Empty line for spacing -->
+            
+            <!-- Empty State -->
+            <div *ngIf="!loading && filteredUsers.length === 0" class="empty-state">
+              <div class="empty-icon">
+                <i class="bi bi-people"></i>
+              </div>
+              <p class="empty-title">Aucun utilisateur trouvé</p>
+              <p class="empty-subtitle">Essayez de modifier vos critères de recherche</p>
+            </div>
+            
+            <!-- User Table -->
+            <div *ngIf="!loading && filteredUsers.length > 0" class="users-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>
+                      <div class="th-content" (click)="toggleSort('name')">
+                        <span>Employé</span>
+                        <i class="bi sort-icon" [ngClass]="{
+                          'bi-arrow-down-short': sortColumn === 'name' && sortDirection === 'desc',
+                          'bi-arrow-up-short': sortColumn === 'name' && sortDirection === 'asc',
+                          'bi-arrow-down': sortColumn !== 'name'
+                        }"></i>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="th-content" (click)="toggleSort('email')">
+                        <span>Email</span>
+                        <i class="bi sort-icon" [ngClass]="{
+                          'bi-arrow-down-short': sortColumn === 'email' && sortDirection === 'desc',
+                          'bi-arrow-up-short': sortColumn === 'email' && sortDirection === 'asc',
+                          'bi-arrow-down': sortColumn !== 'email'
+                        }"></i>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="th-content" (click)="toggleSort('role')">
+                        <span>Rôle</span>
+                        <i class="bi sort-icon" [ngClass]="{
+                          'bi-arrow-down-short': sortColumn === 'role' && sortDirection === 'desc',
+                          'bi-arrow-up-short': sortColumn === 'role' && sortDirection === 'asc',
+                          'bi-arrow-down': sortColumn !== 'role'
+                        }"></i>
+                      </div>
+                    </th>
+                    <th>
+                      <div class="th-content" (click)="toggleSort('team')">
+                        <span>Équipe</span>
+                        <i class="bi sort-icon" [ngClass]="{
+                          'bi-arrow-down-short': sortColumn === 'team' && sortDirection === 'desc',
+                          'bi-arrow-up-short': sortColumn === 'team' && sortDirection === 'asc',
+                          'bi-arrow-down': sortColumn !== 'team'
+                        }"></i>
+                      </div>
+                    </th>
+                    <th class="actions-column"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let user of paginatedUsers" [attr.data-user-id]="user.id">
+                    <td>
+                      <div class="user-info">
+                        <div class="user-avatar">
+                          <!-- Show profile photo if available, otherwise show initials -->
+                          <img *ngIf="getUserProfilePhoto(user.id)" class="profile-photo" [src]="getUserProfilePhoto(user.id)" alt="{{ user.firstName }} {{ user.lastName }}" />
+                          <div *ngIf="!getUserProfilePhoto(user.id)" class="avatar-circle" [ngStyle]="{'background-color': user.team === 'DEV' ? '#3B82F6' : user.team === 'QA' ? '#16A34A' : user.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+                            {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+                          </div>
+                        </div>
+                        <div class="user-details">
+                          <div class="user-name">{{ user.employeeName || (user.firstName + ' ' + user.lastName) }}</div>
+                          <div class="user-id">#{{ user.id }}</div>
                         </div>
                       </div>
-                      <div class="user-details">
-                        <div class="user-name">{{ user.employeeName || (user.firstName + ' ' + user.lastName) }}</div>
-                        <div class="user-id">#{{ user.id }}</div>
+                    </td>
+                    <td>
+                      <a href="mailto:{{ user.email }}" class="user-email">{{ user.email }}</a>
+                    </td>
+                    <td>
+                      <span class="role-badge" [ngClass]="{
+                        'admin': user.role === 'ADMIN',
+                        'manager': user.role === 'MANAGER',
+                        'team-leader': user.role === 'TEAM_LEADER',
+                        'employee': user.role === 'EMPLOYEE'
+                      }">
+                        {{ user.role }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="team-badge" [ngClass]="{
+                        'dev': user.team === 'DEV',
+                        'qa': user.team === 'QA',
+                        'ops': user.team === 'OPS',
+                        'rh': user.team === 'RH'
+                      }">
+                        {{ user.team }}
+                      </span>
+                    </td>
+                    <td class="actions-column" style="position: relative;">
+                      <!-- Action button with data-user-id for positioning -->
+                      <div class="user-actions-menu">
+                        <button class="action-button" [attr.data-user-id]="user.id" (click)="setActiveUser(user.id, $event)">
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <a href="mailto:{{ user.email }}" class="user-email">{{ user.email }}</a>
-                  </td>
-                  <td>
-                    <span class="role-badge" [ngClass]="{
-                      'admin': user.role === 'ADMIN',
-                      'manager': user.role === 'MANAGER',
-                      'team-leader': user.role === 'TEAM_LEADER',
-                      'employee': user.role === 'EMPLOYEE'
-                    }">
-                      {{ user.role }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="team-badge" [ngClass]="{
-                      'dev': user.team === 'DEV',
-                      'qa': user.team === 'QA',
-                      'ops': user.team === 'OPS',
-                      'rh': user.team === 'RH'
-                    }">
-                      {{ user.team }}
-                    </span>
-                  </td>
-                  <td class="actions-column" style="position: relative;">
-                    <!-- Action button with data-user-id for positioning -->
-                    <div class="user-actions-menu">
-                      <button class="action-button" [attr.data-user-id]="user.id" (click)="setActiveUser(user.id, $event)">
-                        <i class="bi bi-three-dots-vertical"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <!-- Fixed popup menu outside the table structure -->
-            <div class="fixed-action-menu" *ngIf="activeDropdown !== null" (click)="closeActionMenu($event)">
-              <div class="action-menu-content" 
-                   [style.left.px]="actionMenuPosition.x" 
-                   [style.top.px]="actionMenuPosition.y">
-                <div class="action-menu-header">
-                  Actions
-                </div>
-                <div class="action-menu-items">
-                  <button class="menu-item success" (click)="modifyUser(getActiveUser())">
-                    <i class="bi bi-pencil-square"></i>
-                    <span>Modifier</span>
-                  </button>
-                  <button class="menu-item primary" (click)="toggleBlockUser(getActiveUser())">
-                    <i class="bi bi-lock"></i>
-                    <span>Bloquer</span>
-                  </button>
-                  <button class="menu-item danger" (click)="deleteUser(getActiveUser())">
-                    <i class="bi bi-trash"></i>
-                    <span>Supprimer</span>
-                  </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <!-- Fixed popup menu outside the table structure -->
+              <div class="fixed-action-menu" *ngIf="activeDropdown !== null" (click)="closeActionMenu($event)">
+                <div class="action-menu-content" 
+                     [style.left.px]="actionMenuPosition.x" 
+                     [style.top.px]="actionMenuPosition.y">
+                  <div class="action-menu-header">
+                    Actions
+                  </div>
+                  <div class="action-menu-items">
+                    <button class="menu-item success" (click)="modifyUser(getActiveUser())">
+                      <i class="bi bi-pencil-square"></i>
+                      <span>Modifier</span>
+                    </button>
+                    <button class="menu-item primary" (click)="toggleBlockUser(getActiveUser())">
+                      <i class="bi bi-lock"></i>
+                      <span>Bloquer</span>
+                    </button>
+                    <button class="menu-item danger" (click)="deleteUser(getActiveUser())">
+                      <i class="bi bi-trash"></i>
+                      <span>Supprimer</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- Table Footer with Pagination -->
-            <div class="table-footer">
-              <div class="table-info">
-                <span>Affichage de {{ paginatedUsers.length }} sur {{ filteredUsers.length }} utilisateurs</span>
-              </div>
-              <div class="pagination-controls">
-                <button class="pagination-button" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-                
-                <!-- Page numbers -->
-                <div class="page-numbers" *ngIf="totalPages > 1">
-                  <button 
-                    *ngFor="let page of pageNumbers" 
-                    class="page-number" 
-                    [class.active]="page === currentPage"
-                    (click)="goToPage(page)">
-                    {{ page }}
+              
+              <!-- Table Footer with Pagination -->
+              <div class="table-footer">
+                <div class="table-info">
+                  <span>Affichage de {{ paginatedUsers.length }} sur {{ filteredUsers.length }} utilisateurs</span>
+                </div>
+                <div class="pagination-controls">
+                  <button class="pagination-button" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  
+                  <!-- Page numbers -->
+                  <div class="page-numbers" *ngIf="totalPages > 1">
+                    <button 
+                      *ngFor="let page of pageNumbers" 
+                      class="page-number" 
+                      [class.active]="page === currentPage"
+                      (click)="goToPage(page)">
+                      {{ page }}
+                    </button>
+                  </div>
+                  
+                  <span class="page-indicator" *ngIf="totalPages <= 1">Page {{ currentPage }}</span>
+                  
+                  <button class="pagination-button" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+                    <i class="bi bi-chevron-right"></i>
                   </button>
                 </div>
-                
-                <span class="page-indicator" *ngIf="totalPages <= 1">Page {{ currentPage }}</span>
-                
-                <button class="pagination-button" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
-                  <i class="bi bi-chevron-right"></i>
-                </button>
               </div>
             </div>
           </div>

@@ -1,0 +1,339 @@
+<!-- Main Layout -->
+<div class="d-flex" [ngClass]="{'sidebar-collapsed-layout': !isSidebarOpen}">
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" (click)="toggleSidebar()"></div>
+    
+    <!-- Sidebar -->
+    <div class="sidebar" [ngClass]="{'sidebar-mini': !isSidebarOpen}">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <img *ngIf="isSidebarOpen" src="assets/img/sopra_hr.png" alt="Sopra HR" class="sopra-logo">
+          <img *ngIf="!isSidebarOpen" src="assets/img/sopraa.png" alt="Sopra" class="sopra-icon">
+        </div>
+      </div>
+      
+      <div class="sidebar-menu">
+        <p class="menu-label">MENU</p>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/backoffice/dashboard">
+              <i class="bi bi-speedometer2"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/backoffice/users">
+              <i class="bi bi-people"></i>
+              <span>Utilisateurs</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/backoffice/reservation-back">
+              <i class="bi bi-calendar-check me-1"></i>
+              <span>Réservation</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/backoffice/planning-back">
+              <i class="bi bi-calendar3"></i>
+              <span>Planning</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/backoffice/teletravail-back">
+              <i class="bi bi-laptop"></i>
+              <span>Télétravail</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" routerLink="/backoffice/reclamation-back">
+              <i class="bi bi-exclamation-circle"></i>
+              <span>Réclamation</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="sidebar-footer">
+        <button class="logout-button" (click)="logout()">
+          <i class="bi bi-power"></i>
+          <span>Déconnexion</span>
+        </button>
+      </div>
+    </div>
+  
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Top Header Bar -->
+      <div class="header-bar">
+        <div class="d-flex align-items-center">
+          <button class="menu-toggle" (click)="toggleSidebar()">
+            <i class="bi bi-list"></i>
+          </button>
+          <div class="search-bar">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm">
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="theme-toggle">
+            <i class="bi bi-moon"></i>
+          </div>
+          <div class="notification-icon">
+            <i class="bi bi-bell"></i>
+            <span class="notification-badge"></span>
+          </div>
+          <div class="user-profile" #profileElement (click)="toggleProfileDropdown()">
+            <img *ngIf="authService.currentUserValue?.profilePhotoUrl" 
+                 [src]="authService.currentUserValue?.profilePhotoUrl" 
+                 class="profile-image" 
+                 alt="Profile photo" 
+                 (error)="handleImageError($event)">
+            <div *ngIf="!authService.currentUserValue?.profilePhotoUrl" 
+                 class="avatar-circle" 
+                 [ngStyle]="{'background-color': authService.currentUserValue?.team === 'DEV' ? '#2563EB' : 
+                            authService.currentUserValue?.team === 'QA' ? '#16A34A' : 
+                            authService.currentUserValue?.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+              {{ authService.currentUserValue?.firstName?.charAt(0) || '' }}{{ authService.currentUserValue?.lastName?.charAt(0) || '' }}
+            </div>
+            
+            <!-- Profile Dropdown Menu -->
+            <div class="profile-dropdown" *ngIf="isProfileDropdownOpen" [class.show]="isProfileDropdownOpen">
+              <div class="profile-header">
+                <div class="profile-name">{{ authService.currentUserValue?.firstName }} {{ authService.currentUserValue?.lastName }}</div>
+                <div class="profile-email">{{ authService.currentUserValue?.email }}</div>
+              </div>
+              
+              <div class="profile-menu-items">
+                <a class="profile-menu-item" (click)="editProfile()">
+                  <i class="bi bi-person"></i>
+                  <span>Edit profile</span>
+                </a>
+                <a class="profile-menu-item" (click)="openAccountSettings()">
+                  <i class="bi bi-gear"></i>
+                  <span>Account settings</span>
+                </a>
+                <a class="profile-menu-item" (click)="getSupport()">
+                  <i class="bi bi-info-circle"></i>
+                  <span>Support</span>
+                </a>
+              </div>
+              
+              <div class="profile-divider"></div>
+              
+              <div class="profile-menu-items">
+                <a class="profile-menu-item sign-out" (click)="logout()">
+                  <i class="bi bi-box-arrow-left"></i>
+                  <span>Sign out</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Dashboard Content -->
+      <div class="dashboard-content">
+        <!-- Loading indicator -->
+        <div *ngIf="isLoading" class="loading-container">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+          <p>Chargement des données...</p>
+        </div>
+        
+        <!-- Error message -->
+        <div *ngIf="error" class="error-container">
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {{ error }}
+          </div>
+        </div>
+        
+        <!-- Main content -->
+        <div *ngIf="!isLoading && !error" class="content">
+          <!-- Header -->
+          <div class="dashboard-header">
+            <div class="d-flex align-items-center">
+              <div class="card-logo">
+                <i class="bi bi-headset"></i>
+              </div>
+              <div class="header-text">
+                <h5>Gestion des Reclamations</h5>
+                <div class="subtitle">Gérez et suivez les réclamations et demandes de support de votre équipe</div>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="date-badge">
+                <div class="date-line"></div>
+                <span>{{ formattedDate }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Card -->
+          <div class="content-card">
+            <div class="content-card-header">
+              <div class="header-left">
+                <div class="card-logo">
+                  <i class="bi bi-list-check"></i>
+                </div>
+                <div class="header-text">
+                  <h5>Liste des réclamations</h5>
+                  <div class="subtitle">Consultez et gérez les réclamations et demandes de support</div>
+                </div>
+              </div>
+              <div class="header-actions">
+                <div class="search-input">
+                  <i class="bi bi-search"></i>
+                  <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
+                </div>
+                <button class="action-button" title="Exporter les données" (click)="exportData()">
+                  <i class="bi bi-download"></i>
+                </button>
+                <button class="action-button" title="Actualiser" (click)="loadRequests()">
+                  <i class="bi bi-arrow-repeat"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="content-card-body">
+              <!-- Filters Section -->
+              <div class="filters-section">
+                <div class="filter-group">
+                  <label for="statusFilter">Statut</label>
+                  <select id="statusFilter" class="form-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+                    <option value="">Tous</option>
+                    <option value="pending">En attente</option>
+                    <option value="in_progress">En cours</option>
+                    <option value="resolved">Résolu</option>
+                    <option value="rejected">Rejeté</option>
+                  </select>
+                </div>
+                
+                <div class="filter-group">
+                  <label for="priorityFilter">Priorité</label>
+                  <select id="priorityFilter" class="form-select" [(ngModel)]="selectedPriority" (change)="applyFilters()">
+                    <option value="">Tous</option>
+                    <option value="HIGH">Haute</option>
+                    <option value="NORMAL">Normale</option>
+                    <option value="URGENT">Urgente</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Table Section -->
+              <div class="table-responsive">
+                <table class="requests-table">
+                  <thead>
+                    <tr>
+                      <th (click)="onSort('createdAt')" class="sortable">
+                        Date
+                        <i class="fas" [class.fa-sort-up]="sortField === 'createdAt' && sortDirection === 'asc'"
+                           [class.fa-sort-down]="sortField === 'createdAt' && sortDirection === 'desc'"></i>
+                      </th>
+                      <th (click)="onSort('employeeName')" class="sortable">
+                        Employé
+                        <i class="fas" [class.fa-sort-up]="sortField === 'employeeName' && sortDirection === 'asc'"
+                           [class.fa-sort-down]="sortField === 'employeeName' && sortDirection === 'desc'"></i>
+                      </th>
+                      <th (click)="onSort('subject')" class="sortable">
+                        Sujet
+                        <i class="fas" [class.fa-sort-up]="sortField === 'subject' && sortDirection === 'asc'"
+                           [class.fa-sort-down]="sortField === 'subject' && sortDirection === 'desc'"></i>
+                      </th>
+                      <th (click)="onSort('priority')" class="sortable">
+                        Priorité
+                        <i class="fas" [class.fa-sort-up]="sortField === 'priority' && sortDirection === 'asc'"
+                           [class.fa-sort-down]="sortField === 'priority' && sortDirection === 'desc'"></i>
+                      </th>
+                      <th (click)="onSort('status')" class="sortable">
+                        Statut
+                        <i class="fas" [class.fa-sort-up]="sortField === 'status' && sortDirection === 'asc'"
+                           [class.fa-sort-down]="sortField === 'status' && sortDirection === 'desc'"></i>
+                      </th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let request of paginatedRequests">
+                      <td>{{ request.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                      <td>{{ request.employeeName }}</td>
+                      <td>{{ request.subject }}</td>
+                      <td data-label="Priorité">
+                        <span class="priority-badge" [ngClass]="getPriorityClass(request.priority)">
+                          {{ request.priority === 'HIGH' ? 'Haute' : 
+                             request.priority === 'URGENT' ? 'Urgente' : 
+                             request.priority === 'NORMAL' ? 'Normale' : request.priority }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="status-badge" [ngClass]="getStatusClass(request.status || 'pending')">
+                          {{ request.status || 'pending' }}
+                        </span>
+                      </td>
+                      <td class="actions-cell">
+                        <div class="action-buttons">
+                          <button class="action-btn view" title="Voir les détails" (click)="viewRequestDetails(request)">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button class="action-btn edit" 
+                                  title="Répondre" 
+                                  (click)="respondToRequest(request)"
+                                  [disabled]="request.response">
+                            <i class="fas fa-reply"></i>
+                          </button>
+                          <button class="action-btn delete" (click)="deleteRequest(request.id!)" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="filteredRequests.length === 0">
+                      <td colspan="8">
+                        <div class="no-data-message">
+                          <i class="bi bi-inbox"></i>
+                          <h4>Aucune demande trouvée</h4>
+                          <p>Aucune réclamation ne correspond à vos critères de recherche.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="6">
+                        <div class="table-footer">
+                          <div class="footer-left">
+                            <span class="total-count">Total: {{ filteredRequests.length }} réclamations</span>
+                          </div>
+                          <div class="footer-right">
+                            <div class="pagination-info">
+                              <span>Page {{ currentPage }} sur {{ totalPages }}</span>
+                            </div>
+                            <div class="pagination-controls">
+                              <button class="pagination-button" [disabled]="currentPage === 1" (click)="previousPage()">
+                                <i class="bi bi-chevron-left"></i>
+                              </button>
+                              <ng-container *ngFor="let page of [].constructor(totalPages); let i = index">
+                                <button class="page-number" [ngClass]="{'active': currentPage === i + 1}" (click)="goToPage(i + 1)">
+                                  {{ i + 1 }}
+                                </button>
+                              </ng-container>
+                              <button class="pagination-button" [disabled]="currentPage === totalPages" (click)="nextPage()">
+                                <i class="bi bi-chevron-right"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  

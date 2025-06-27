@@ -6,6 +6,7 @@ import { ReservationService, Desk as ApiDesk, Plan as ApiPlan, Wall as ApiWall, 
 import { AuthService, UserProfile } from '../login/AuthService';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { ContactService, ContactRequest } from '../services/contact.service';
 
 export interface Desk {
   id: number;
@@ -43,6 +44,20 @@ export interface Plan {
   walls: Wall[];
 }
 
+export interface WeeklyStatus {
+  date: string;
+  status: 'available' | 'reserved' | 'own';
+}
+
+export interface TooltipData {
+  x: number;
+  y: number;
+  type: 'simple' | 'weekly';
+  simpleContent?: string;
+  status?: 'available' | 'reserved' | 'info' | 'own';
+  weeklyStatus?: WeeklyStatus[];
+}
+
 @Component({
   selector: 'app-reservation',
   templateUrl: './reservation.component.html',
@@ -53,6 +68,7 @@ export class ReservationComponent implements OnInit {
   isContactModalOpen = false;
   private currentUser: UserProfile | null = null;
   public isManager: boolean = false;
+  public isAdmin: boolean = false;
   @ViewChild('designContainer', { static: true }) designContainer!: ElementRef<HTMLElement>;
   @ViewChild('statusBar', { static: true }) statusBar!: ElementRef<HTMLElement>;
   
@@ -127,7 +143,8 @@ export class ReservationComponent implements OnInit {
   constructor(
     private reservationService: ReservationService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private contactService: ContactService
   ) {}
 
   // Method to handle logout
@@ -137,21 +154,89 @@ export class ReservationComponent implements OnInit {
   }
 
   // Contact modal methods
-  openContactModal() {
+  openContactModal(): void {
     this.isContactModalOpen = true;
     document.body.classList.add('modal-open');
   }
 
-  closeContactModal() {
+  closeContactModal(): void {
     this.isContactModalOpen = false;
     document.body.classList.remove('modal-open');
   }
 
-  sendContactMessage() {
-    // Here you would implement actual message sending functionality
-    // For now, we'll just close the modal and show an alert
-    alert('Votre message a été envoyé. Nous vous contacterons bientôt.');
-    this.closeContactModal();
+  sendContactMessage(): void {
+    const priority = (document.getElementById('priority') as HTMLSelectElement).value;
+    const subject = (document.getElementById('subject') as HTMLInputElement).value;
+    const message = (document.getElementById('message') as HTMLTextAreaElement).value;
+
+    if (!subject || !message) {
+      Swal.fire({
+        toast: true,
+        position: 'bottom-end',
+        icon: 'warning',
+        title: 'Veuillez remplir tous les champs obligatoires',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: '#fff',
+        iconColor: '#f39c12',
+        customClass: {
+          popup: 'swal-toast-popup',
+          title: 'swal-toast-title'
+        }
+      });
+      return;
+    }
+
+    const contactRequest: ContactRequest = {
+      priority,
+      subject,
+      message,
+      userEmail: this.currentUser?.email || 'anonymous@example.com',
+      employeeName: this.currentUser?.firstName && this.currentUser?.lastName 
+        ? `${this.currentUser.firstName} ${this.currentUser.lastName}`
+        : 'Unknown User'
+    };
+
+    this.contactService.createContactRequest(contactRequest)
+      .subscribe({
+        next: () => {
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'success',
+            title: 'Votre message a été envoyé avec succès',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#7b1dbd',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+          this.closeContactModal();
+        },
+        error: (error) => {
+          console.error('Error sending contact request:', error);
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'error',
+            title: 'Une erreur est survenue lors de l\'envoi du message',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#e74c3c',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+        }
+      });
   }
 
   // Toggle mobile menu
@@ -177,14 +262,15 @@ export class ReservationComponent implements OnInit {
     // Add specific event listener for when dev tools are closed
     this.setupDevToolsCloseListener();
 
-    // Check if the user is a manager
+    // Check if the user is an admin
     this.authService.currentUser.subscribe({
       next: (user: UserProfile | null) => {
         if (user) {
           this.currentUser = user;
-          // Set isManager flag based on user role
-          this.isManager = user.role === 'MANAGER' || user.role === 'ROLE_MANAGER';
-          console.log('User has manager role:', this.isManager);
+          this.isAdmin = user.role === 'ADMIN' || user.role === 'ROLE_ADMIN';
+          // Set isManager flag based on user role (now admin)
+          this.isManager = user.role === 'ADMIN' || user.role === 'ROLE_ADMIN';
+          console.log('User has admin role:', this.isManager);
           
           // Update layout after role is determined
           setTimeout(() => {
@@ -269,13 +355,13 @@ export class ReservationComponent implements OnInit {
       statusBar.style.width = `${containerWidth}px`;
       
       if (!this.isManager) {
-        // For non-managers with hidden sidebar
+        // For non-admins with hidden sidebar
         container.style.marginLeft = 'auto';
         container.style.marginRight = 'auto';
         statusBar.style.marginLeft = 'auto';
         statusBar.style.marginRight = 'auto';
       } else {
-        // For managers with visible sidebar - responsive margins
+        // For admins with visible sidebar - responsive margins
         if (windowWidth <= 768) {
           // Mobile view - center the container
           container.style.marginLeft = 'auto';
@@ -339,7 +425,7 @@ export class ReservationComponent implements OnInit {
         } else {
           // No plans found, but don't automatically create one
           if (this.authService.isManager()) {
-            // Show a message to the manager that they can create a plan
+            // Show a message to the admin that they can create a plan
             Swal.fire({
               title: 'No Floor Plans Available',
               text: 'You can create a new floor plan using the "Create New Plan" button.',
@@ -349,7 +435,7 @@ export class ReservationComponent implements OnInit {
           } else {
             Swal.fire({
               title: 'No Floor Plans Available',
-              text: 'Please contact a manager to create a floor plan.',
+              text: 'Please contact an admin to create a floor plan.',
               icon: 'info',
               confirmButtonText: 'OK'
             });
@@ -512,8 +598,8 @@ export class ReservationComponent implements OnInit {
   public createPlan(): void {
     if (!this.authService.isManager()) {
       Swal.fire({
-        title: 'Only Managers Can Create Plans',
-        text: 'Please contact a manager to create a floor plan.',
+        title: 'Only Admins Can Create Plans',
+        text: 'Please contact an admin to create a floor plan.',
         icon: 'info',
         confirmButtonText: 'OK'
       });
@@ -599,11 +685,11 @@ export class ReservationComponent implements OnInit {
   public confirmDesign(): void {
     if (!this.currentPlan) return;
     
-    // Only managers can confirm the design and save changes
+    // Only admins can confirm the design and save changes
     if (!this.authService.isManager()) {
       Swal.fire({
-        title: 'Only Managers Can Save Changes',
-        text: 'Please contact a manager to save floor plan changes.',
+        title: 'Only Admins Can Save Changes',
+        text: 'Please contact an admin to save floor plan changes.',
         icon: 'info',
         confirmButtonText: 'OK'
       });
@@ -959,8 +1045,8 @@ export class ReservationComponent implements OnInit {
   public deletePlan(): void {
     if (!this.currentPlan || !this.authService.isManager()) {
       Swal.fire({
-        title: 'Only Managers Can Delete Plans',
-        text: 'Please contact a manager to delete this floor plan.',
+        title: 'Only Admins Can Delete Plans',
+        text: 'Please contact an admin to delete this floor plan.',
         icon: 'info',
         confirmButtonText: 'OK'
       });
@@ -1339,9 +1425,9 @@ export class ReservationComponent implements OnInit {
     console.log(`Checking desk ${deskId} reservations from ${startDate} to ${endDate}`);
     console.log('Booking dates to check:', this.bookingWeekDates);
     
-    // Check if user is manager (has more permissions)
-    const isManager = this.authService.isManager();
-    console.log(`User is manager: ${isManager}`);
+    // Check if user is admin (has more permissions)
+    const isManager = this.authService.isAdmin();
+    console.log(`User is admin: ${isManager}`);
     
     // For regular users, we need a different approach since they don't have access to getAllReservations
     if (!isManager) {
@@ -1350,7 +1436,7 @@ export class ReservationComponent implements OnInit {
       return;
     }
     
-    // For managers, we can use the original approach
+    // For admins, we can use the original approach
     this.reservationService.getAllReservationsInDateRange(startDate, endDate).subscribe({
       next: (reservations: Reservation[]) => {
         console.log(`Received ${reservations.length} total reservations in date range`);
@@ -1396,7 +1482,7 @@ export class ReservationComponent implements OnInit {
   // Fallback method to check each date individually if the date range API fails
   // Special method for regular users to load reservations information
   private loadReservationsForRegularUser(deskId: number, startDate: string, endDate: string, callback?: () => void): void {
-    console.log('Loading reservations for regular user (non-manager)');
+    console.log('Loading reservations for regular user (non-admin)');
     
     // We need to combine two methods for regular users to get the full picture:
     // 1. getUserReservationsInDateRange - to get the user's own reservations
@@ -1665,11 +1751,11 @@ export class ReservationComponent implements OnInit {
     // Stop propagation to prevent plan selection
     event.stopPropagation();
     
-    // Check if manager - only managers can modify plans
+    // Check if admin - only admins can modify plans
     if (!this.authService.isManager()) {
       Swal.fire({
-        title: 'Only Managers Can Remove Desks',
-        text: 'Please contact a manager to remove this desk.',
+        title: 'Only Admins Can Remove Desks',
+        text: 'Please contact an admin to remove this desk.',
         icon: 'info',
         confirmButtonText: 'OK'
       });
@@ -2256,11 +2342,11 @@ export class ReservationComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
     
-    // Check if manager - only managers can modify plans
-    if (!this.authService.isManager()) {
+    // Check if admin - only admins can modify plans
+    if (!this.authService.isAdmin()) {
       Swal.fire({
-        title: 'Only Managers Can Modify Walls',
-        text: 'Please contact a manager to modify walls.',
+        title: 'Only Admins Can Modify Walls',
+        text: 'Please contact an admin to modify walls.',
         icon: 'info',
         confirmButtonText: 'OK'
       });
@@ -3427,4 +3513,110 @@ export class ReservationComponent implements OnInit {
     
     return false; // No overlap
   }
+  
+ public tooltip: TooltipData | null = null;
+
+ private isReservationByCurrentUser(reservation: Reservation): boolean {
+   if (!this.currentUser) {
+       return false;
+   }
+   // Prioritize ID match
+   if (reservation.userId && this.currentUser.id) {
+       return String(reservation.userId) === String(this.currentUser.id);
+   }
+   // Fallback to name match
+   if (reservation.employeeName && this.currentUser.firstName && this.currentUser.lastName) {
+       const currentUserFullName = `${this.currentUser.firstName} ${this.currentUser.lastName}`;
+       return reservation.employeeName.toLowerCase().includes(currentUserFullName.toLowerCase());
+   }
+   return false;
+ }
+
+ showDeskTooltip(desk: Desk, event: MouseEvent) {
+   if (this.showBookingDialog) return;
+   
+   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+   const x = rect.left + rect.width / 2;
+   const y = rect.top - 8;
+
+   if (this.viewMode === 'week') {
+     const weeklyStatus: WeeklyStatus[] = this.weekDates.map(date => {
+       const reservations = this.reservationsByDate.get(date) || [];
+       const reservation = reservations.find(r => r.deskId === desk.id);
+       let dayStatus: 'available' | 'reserved' | 'own' = 'available';
+
+       if (reservation) {
+           dayStatus = this.isReservationByCurrentUser(reservation) ? 'own' : 'reserved';
+       }
+       return { date, status: dayStatus };
+     });
+
+     this.tooltip = {
+       type: 'weekly',
+       x: x,
+       y: y,
+       weeklyStatus: weeklyStatus
+     };
+   } else { // 'day' view
+     let content = '';
+     let status: 'available' | 'reserved' = 'available';
+
+     if (desk.available) {
+       content = 'Available';
+       status = 'available';
+     } else {
+       content = `${desk.employeeName}, ${desk.duration === '4' ? 'Half day' : 'Full day'}`;
+       status = 'reserved';
+     }
+
+     this.tooltip = {
+       type: 'simple',
+       x: x,
+       y: y,
+       simpleContent: content,
+       status: status
+     };
+   }
+ }
+ 
+ showDateTooltip(date: string, event: MouseEvent) {
+   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+   const x = rect.left + rect.width / 2;
+   const y = rect.top - 8; // Position it 8px above the button
+
+   let content = '';
+   let status: 'available' | 'reserved' | 'info' = 'available';
+
+   if (this.isDeskReservedOnDate(date)) {
+       if (this.isCurrentUserReservation(date)) {
+           content = 'Your reservation';
+           status = 'info';
+       } else {
+           content = 'Reserved by another user';
+           status = 'reserved';
+       }
+   } else if (this.isPastDate(date)) {
+       content = 'Past date';
+       status = 'reserved';
+   }
+   else {
+     content = 'Available';
+     status = 'available';
+   }
+
+   this.tooltip = {
+     type: 'simple',
+     x: x,
+     y: y,
+     simpleContent: content,
+     status: status
+   };
+ }
+
+ hideTooltip() {
+   this.tooltip = null;
+ }
 }
+
+
+

@@ -6,6 +6,9 @@
   justify-content: center;
   height: 100vh;
 }
+.eye-icon {
+  display: none;
+}
 
 .form {
   display: flex;

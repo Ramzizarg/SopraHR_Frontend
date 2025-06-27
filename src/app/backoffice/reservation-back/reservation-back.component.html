@@ -1,0 +1,427 @@
+<!-- Main Layout -->
+<div class="d-flex" [ngClass]="{'sidebar-collapsed-layout': !isSidebarOpen}">
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" (click)="toggleSidebar()"></div>
+  
+  <!-- Sidebar -->
+  <div class="sidebar" [ngClass]="{'sidebar-mini': !isSidebarOpen}">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <img *ngIf="isSidebarOpen" src="assets/img/sopra_hr.png" alt="Sopra HR" class="sopra-logo">
+        <img *ngIf="!isSidebarOpen" src="assets/img/sopraa.png" alt="Sopra" class="sopra-icon">
+      </div>
+    </div>
+    
+    <div class="sidebar-menu">
+      <p class="menu-label">MENU</p>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/dashboard">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/users">
+            <i class="bi bi-people"></i>
+            <span>Utilisateurs</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" routerLink="/backoffice/reservation-back">
+            <i class="bi bi-calendar-check me-1"></i>
+            <span>Réservation</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/planning-back">
+            <i class="bi bi-calendar3"></i>
+            <span>Planning</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/teletravail-back">
+            <i class="bi bi-laptop"></i>
+            <span>Télétravail</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/reclamation-back">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>Réclamation</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <button class="logout-button" (click)="logout()">
+        <i class="bi bi-power"></i>
+        <span>Déconnexion</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Header Bar -->
+    <div class="header-bar">
+      <div class="d-flex align-items-center">
+        <button class="menu-toggle" (click)="toggleSidebar()">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="search-bar">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm">
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="theme-toggle">
+          <i class="bi bi-moon"></i>
+        </div>
+        <div class="notification-icon">
+          <i class="bi bi-bell"></i>
+          <span class="notification-badge"></span>
+        </div>
+        <div class="user-profile" #profileElement (click)="toggleProfileDropdown()">
+          <img *ngIf="authService.currentUserValue?.profilePhotoUrl" 
+               [src]="authService.currentUserValue?.profilePhotoUrl" 
+               class="profile-image" 
+               alt="Profile photo" 
+               (error)="handleImageError($event)">
+          <div *ngIf="!authService.currentUserValue?.profilePhotoUrl" 
+               class="avatar-circle" 
+               [ngStyle]="{'background-color': authService.currentUserValue?.team === 'DEV' ? '#2563EB' : 
+                          authService.currentUserValue?.team === 'QA' ? '#16A34A' : 
+                          authService.currentUserValue?.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+            {{ authService.currentUserValue?.firstName?.charAt(0) || '' }}{{ authService.currentUserValue?.lastName?.charAt(0) || '' }}
+          </div>
+          
+          <!-- Profile Dropdown Menu -->
+          <div class="profile-dropdown" *ngIf="isProfileDropdownOpen" [class.show]="isProfileDropdownOpen">
+            <div class="profile-header">
+              <div class="profile-name">{{ authService.currentUserValue?.firstName }} {{ authService.currentUserValue?.lastName }}</div>
+              <div class="profile-email">{{ authService.currentUserValue?.email }}</div>
+            </div>
+            
+            <div class="profile-menu-items">
+              <a class="profile-menu-item" (click)="editProfile()">
+                <i class="bi bi-person"></i>
+                <span>Edit profile</span>
+              </a>
+              <a class="profile-menu-item" (click)="openAccountSettings()">
+                <i class="bi bi-gear"></i>
+                <span>Account settings</span>
+              </a>
+              <a class="profile-menu-item" (click)="getSupport()">
+                <i class="bi bi-info-circle"></i>
+                <span>Support</span>
+              </a>
+            </div>
+            
+            <div class="profile-divider"></div>
+            
+            <div class="profile-menu-items">
+              <a class="profile-menu-item sign-out" (click)="logout()">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Sign out</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p>Chargement des données...</p>
+      </div>
+      
+      <!-- Error message -->
+      <div *ngIf="error" class="error-container">
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ error }}
+        </div>
+      </div>
+      
+      <!-- Main content -->
+      <div *ngIf="!isLoading && !error" class="content">
+        <!-- Reservation UI from reservation.component.html starts here -->
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" *ngIf="isLoading">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">Loading...</span>
+        </div>
+
+        <!-- Sidebar - only visible for admins -->
+        <div class="dashboard-content" [class.hidden]="!isAdmin">
+          <div class="button-container">
+            <button id="createPlanButton" class="primary-button" (click)="createPlan()" [disabled]="plans.length >= 1"
+                    aria-label="Create new plan" title="Create new plan">
+              <i class="fas fa-plus"></i>
+              Create New Plan
+            </button>
+            <button id="createWallButton" class="secondary-button" (click)="createWall()" [disabled]="!currentPlan || isPlanConfirmed"
+                    aria-label="Create wall" title="Create wall">
+              <i class="fa-wall"></i>
+              Create Wall
+            </button>
+            <button id="deletePlanButton" class="danger-button" (click)="deletePlan()" [disabled]="!currentPlan"
+                    aria-label="Delete plan" title="Delete plan">
+              <i class="fas fa-trash"></i>
+              Delete Plan
+            </button>
+            <button id="confirmDesignButton" class="success-button" (click)="confirmDesign()" [disabled]="!currentPlan || isPlanConfirmed"
+                    aria-label="Confirm design" title="Confirm design">
+              <i class="fas fa-check"></i>
+              Confirm Design
+            </button>
+            <button id="modifyButton" class="warning-button" (click)="modifyDesign()" [disabled]="!currentPlan || !isPlanConfirmed"
+                    aria-label="Modify design" title="Modify design">
+              <i class="fas fa-edit"></i>
+              Modify
+            </button>
+          </div>
+         
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content-wrapper" [class.centered]="!isAdmin">
+          <div id="designContainer" #designContainer>
+            <div *ngIf="!currentPlan" class="empty-state">
+              <i class="fas fa-drafting-compass"></i>
+              <h3>No Plan Created</h3>
+              <p>Click "Create New Plan" to start designing your workspace</p>
+            </div>
+            <div *ngFor="let plan of plans" class="plan"
+                 [ngStyle]="{'left.px': plan.left, 'top.px': plan.top, 'width.px': plan.width, 'height.px': plan.height}"
+                 [class.selected]="plan === selectedPlan"
+                 [class.confirmed]="isPlanConfirmed"
+                 (click)="selectPlan(plan, $event)"
+                 (contextmenu)="createDeskAtPosition($event, plan)"
+                 (mousedown)="startPlanDragging($event, plan)">
+               <!-- Desks with hover-triggered tooltips -->
+              <ng-container *ngIf="currentPlan">
+                <!-- Each desk with its own tooltip in a wrapper -->
+                <div *ngFor="let desk of currentPlan.desks" class="desk-container">
+                  <div class="desk"
+                       [ngStyle]="{'left.px': desk.left, 'top.px': desk.top, 'transform': 'rotate(' + desk.rotation + 'deg)'}"
+                       [class.selected]="desk === selectedDesk"
+                       [class.available]="desk.available"
+                       [class.reserved]="!desk.available"
+                       [attr.data-desk-id]="desk.id"
+                       (click)="selectDesk(desk, $event)"
+                       (contextmenu)="selectDesk(desk, $event)"
+                       (mousedown)="!isPlanConfirmed && startDeskDragging($event, desk)"
+                       (dblclick)="!isPlanConfirmed && rotateDesk(desk)"
+                       (mouseenter)="showDeskTooltip(desk, $event)"
+                       (mouseleave)="hideTooltip()">
+                    <div *ngIf="!isPlanConfirmed" class="desk-remove-button" (click)="removeDesk(desk, $event)" title="Remove desk">
+                      <i class="fas fa-times"></i>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+              <!-- Walls -->
+              <div *ngFor="let wall of currentPlan?.walls" class="wall"
+                   [ngStyle]="{'left.px': wall.left, 'top.px': wall.top, 'width.px': wall.width, 'height.px': wall.height}"
+                   [class.selected]="wall === selectedWall"
+                   (contextmenu)="!isPlanConfirmed && onWallContextMenu($event, wall)"
+                   (mousedown)="!isPlanConfirmed && startWallDragging($event, wall)">
+                <div *ngFor="let handle of resizeHandles" class="wall-resize-handle {{handle}}"
+                     (mousedown)="!isPlanConfirmed && startWallResizing($event, wall, handle)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Tooltip shown only when hoveredDesk is set - MOVED OUTSIDE of clipping containers -->
+        <div *ngIf="tooltip" 
+            class="desk-info-tooltip" 
+            [ngClass]="tooltip.status || (tooltip.type === 'weekly' ? 'info' : '')" 
+            [style.left.px]="tooltip.x" 
+            [style.top.px]="tooltip.y">
+            
+            <ng-container *ngIf="tooltip.type === 'simple'">
+                {{ tooltip.simpleContent }}
+            </ng-container>
+        
+            <ng-container *ngIf="tooltip.type === 'weekly'">
+                <div class="weekly-status-tooltip">
+                    <div *ngFor="let day of tooltip.weeklyStatus" class="day-status">
+                        <span class="day-initial">{{ getDayInitial(day.date) }}</span>
+                        <span class="status-dot" [ngClass]="day.status"></span>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar" #statusBar>
+          <div class="status-left">
+            <div class="status-item-group">
+              <div class="status-item">
+                <div class="status-indicator available"></div>
+                <span>Libre</span>
+                <span class="count-badge">{{getAvailableDeskCount()}}</span>
+              </div>
+              <div class="status-item">
+                <div class="status-indicator reserved"></div>
+                <span>Réservé</span>
+                <span class="count-badge">{{getReservedDeskCount()}}</span>
+              </div>
+            </div>
+            <div class="status-item-group">
+              <div class="status-item">
+                <i class="fas fa-chair"></i>
+                <span id="deskCount">{{currentPlan ? currentPlan.desks.length : 0}}</span>
+              </div>
+              <ng-container *ngIf="isAdmin">
+                <div class="status-item">
+                  <i class="fas fa-wall"></i>
+                  <span id="wallCount">{{currentPlan ? currentPlan.walls.length : 0}}</span>
+                </div>
+                <div class="status-item">
+                  <i class="fas fa-ruler"></i>
+                  <span id="planDimensions">{{currentPlan ? (roundDimension(currentPlan.width) + 'x' + roundDimension(currentPlan.height)) : '0x0'}}</span>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+          <div class="status-right">
+            <div class="view-mode-toggle">
+              <button class="view-mode-button" [class.active]="viewMode === 'day'" (click)="toggleViewMode()">
+                <i class="fas fa-calendar-day"></i>
+                Jour
+              </button>
+              <button class="view-mode-button" [class.active]="viewMode === 'week'" (click)="toggleViewMode()">
+                <i class="fas fa-calendar-week"></i>
+                Sem.
+              </button>
+            </div>
+            <div class="date-navigation">
+              <button class="date-nav-button small" (click)="previousDate()" [disabled]="viewMode === 'week' || !canGoToPreviousDate()">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span class="date-display" *ngIf="viewMode === 'day'">{{formatDate(currentDate)}}</span>
+              <span class="date-display" *ngIf="viewMode === 'week'">
+                {{formatDate(weekDates[0])}} - {{formatDate(weekDates[weekDates.length-1])}}
+              </span>
+              <button class="date-nav-button small" (click)="nextDate()" [disabled]="viewMode === 'week' || !canGoToNextDate()">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Booking Dialog -->
+        <div class="booking-dialog" [class.show]="showBookingDialog" *ngIf="showBookingDialog || isLoading">
+          <div class="booking-dialog-content" [class.loading]="isLoading">
+            <!-- Dialog loading overlay -->
+            <div class="dialog-loading-overlay" *ngIf="isLoading">
+              <div class="loading-spinner"></div>
+              <p>Loading desk availability...</p>
+            </div>
+            <div class="booking-dialog-header">
+              <h3>{{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'Update Reservation' : 'Book Desk' }}</h3>
+              <button class="close-button" (click)="closeBookingDialog()" aria-label="Close dialog">
+                <i class="fas fa-xmark"></i>
+              </button>
+            </div>
+            <div class="booking-dialog-body">
+              <!-- Status indicator -->
+              <div class="desk-status-indicator" *ngIf="selectedDeskForBooking">
+                <div class="status-indicator-label">Desk {{selectedDeskForBooking.id}}</div>
+                <div class="status-indicator-badge" 
+                     [class.available]="selectedDeskForBooking.available" 
+                     [class.reserved]="!selectedDeskForBooking.available">
+                  {{selectedDeskForBooking.available ? 'Available' : 'Reserved'}}{{!selectedDeskForBooking.available && selectedDeskForBooking.employeeName ? ', ' + selectedDeskForBooking.employeeName : ''}}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="bookingDuration">Duration</label>
+                <select id="bookingDuration" [(ngModel)]="bookingDuration">
+                  <option value="4">Half Day (4h)</option>
+                  <option value="8">Full Day (8h)</option>
+                </select>
+              </div>
+              <div class="form-group" *ngIf="viewMode === 'week'">
+                <label>Select Date</label>
+                <div class="booking-info" *ngIf="selectedDeskForBooking">
+                  <p *ngIf="deskReservationDates.size > 0" class="warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    This desk is already reserved on {{deskReservationDates.size}} date(s)
+                  </p>
+                  <p *ngIf="deskReservationDates.size === 0" class="success">
+                    <i class="fas fa-check-circle"></i>
+                    All dates are available for booking
+                  </p>
+                </div>
+                <div class="booking-week-days">
+                  <button *ngFor="let date of bookingWeekDates" 
+                          class="booking-day-button"
+                          [class.selected]="isSelectedBookingDate(date)"
+                          [class.today]="isToday(date)"
+                          [class.past]="isPastDate(date)"
+                          [class.user-reserved]="isUserReservedDate(date)"
+                          [class.desk-reserved]="isDeskReservedOnDate(date) && !isCurrentUserReservation(date)"
+                          [class.own-reservation]="isCurrentUserReservation(date)"
+                          [disabled]="isPastDate(date) || (isDeskReservedOnDate(date) && !isCurrentUserReservation(date))"
+                          (mouseenter)="showDateTooltip(date, $event)"
+                          (mouseleave)="hideTooltip()"
+                          (click)="toggleBookingDate(date)">
+                    <span class="booking-day-name">{{formatDate(date)}}</span>
+                    <!-- Show checkmark for selected dates -->
+                    <span class="booking-day-status" *ngIf="isSelectedBookingDate(date)">
+                      <i class="fas fa-check"></i>
+                    </span>
+                    <!-- Show user icon for your own reservations that are not selected -->
+                    <span class="user-reservation-indicator" *ngIf="isCurrentUserReservation(date) && !isSelectedBookingDate(date)">
+                      <i class="fas fa-user"></i>
+                    </span>
+                    <!-- Only show lock icon for reservations by OTHER users -->
+                    <span class="desk-reserved-indicator" *ngIf="isDeskReservedOnDate(date) && !isCurrentUserReservation(date)">
+                      <i class="fas fa-lock"></i>
+                    </span>
+                  </button>
+                </div>
+                <div class="booking-hint" *ngIf="viewMode === 'week'">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Select dates for your reservation</span>
+                </div>
+                <!-- Deselect All button moved to footer -->
+              </div>
+            </div>
+            <div class="booking-dialog-footer">
+              <button class="tertiary-button"
+                      (click)="deselectAllDates()"
+                      *ngIf="selectedBookingDates.size > 0 && viewMode === 'week'"
+                      [ngStyle]="{
+                        'background-color': '#e5e7eb',
+                        'color': '#1f2937',
+                        'border': '1px solid #d1d5db'
+                      }">
+                <i class="fas fa-times"></i> Deselect All
+              </button>
+              <button class="secondary-button" (click)="closeBookingDialog()">
+                <i class="fas fa-times"></i> Cancel
+              </button>
+              <button class="primary-button" (click)="confirmBooking()">
+                <i class="fas fa-{{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'edit' : 'check' }}"></i>
+                {{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'Update' : 'Book' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservation UI from reservation.component.html ends here -->
+      </div>
+    </div>
+  </div>
+</div>

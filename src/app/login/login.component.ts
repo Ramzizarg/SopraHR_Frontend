@@ -47,8 +47,8 @@ export class LoginComponent {
         // Check if user is admin and redirect accordingly
         setTimeout(() => {
           if (this.authService.isAdmin()) {
-            console.log('LoginComponent: Admin user detected, navigating to users');
-            this.router.navigate(['/users']);
+            console.log('LoginComponent: Admin user detected, navigating to dashboard');
+            this.router.navigate(['/backoffice/dashboard']);
           } else {
             console.log('LoginComponent: Regular user, navigating to home');
             this.router.navigate(['/home']);

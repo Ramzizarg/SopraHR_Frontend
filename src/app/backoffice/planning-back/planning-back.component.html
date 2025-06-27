@@ -1,0 +1,369 @@
+<div class="d-flex" [ngClass]="{'sidebar-collapsed-layout': !isSidebarOpen}">
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" (click)="toggleSidebar()"></div>
+  <!-- Sidebar -->
+  <div class="sidebar" [ngClass]="{'sidebar-mini': !isSidebarOpen}">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <img *ngIf="isSidebarOpen" src="assets/img/sopra_hr.png" alt="Sopra HR" class="sopra-logo">
+        <img *ngIf="!isSidebarOpen" src="assets/img/sopraa.png" alt="Sopra" class="sopra-icon">
+      </div>
+    </div>
+    
+    <div class="sidebar-menu">
+      <p class="menu-label">MENU</p>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/dashboard">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/users">
+            <i class="bi bi-people"></i>
+            <span>Utilisateurs</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/reservation-back">
+            <i class="bi bi-calendar-check me-1"></i>
+            <span>Réservation</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" routerLink="/backoffice/planning-back">
+            <i class="bi bi-calendar3"></i>
+            <span>Planning</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/teletravail-back">
+            <i class="bi bi-laptop"></i>
+            <span>Télétravail</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/reclamation-back">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>Réclamation</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="sidebar-footer">
+      <button class="logout-button" (click)="logout()">
+        <i class="bi bi-power"></i>
+        <span>Déconnexion</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    
+    <!-- Top Header Bar -->
+    <div class="header-bar">
+      <div class="d-flex align-items-center">
+        <button class="menu-toggle" (click)="toggleSidebar()">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="search-bar">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm">
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="theme-toggle">
+          <i class="bi bi-moon"></i>
+        </div>
+        <div class="notification-icon">
+          <i class="bi bi-bell"></i>
+          <span class="notification-badge"></span>
+        </div>
+        <div class="user-profile" #profileElement (click)="toggleProfileDropdown()">
+          <img *ngIf="authService.currentUserValue?.profilePhotoUrl" [src]="authService.currentUserValue?.profilePhotoUrl" 
+            class="profile-image" alt="Profile photo" (error)="handleImageError($event)">
+          <div *ngIf="!authService.currentUserValue?.profilePhotoUrl" 
+            class="avatar-circle" 
+            [ngStyle]="{'background-color': authService.currentUserValue?.team === 'DEV' ? '#2563EB' : 
+                        authService.currentUserValue?.team === 'QA' ? '#16A34A' : 
+                        authService.currentUserValue?.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+            {{ authService.currentUserValue?.firstName?.charAt(0) || '' }}{{ authService.currentUserValue?.lastName?.charAt(0) || '' }}
+          </div>
+          
+          <!-- Profile Dropdown Menu -->
+          <div class="profile-dropdown" *ngIf="isProfileDropdownOpen" [class.show]="isProfileDropdownOpen">
+            <div class="profile-header">
+              <div class="profile-name">{{ authService.currentUserValue?.firstName }} {{ authService.currentUserValue?.lastName }}</div>
+              <div class="profile-email">{{ authService.currentUserValue?.email }}</div>
+            </div>
+            
+            <div class="profile-menu-items">
+              <a class="profile-menu-item" (click)="editProfile()">
+                <i class="bi bi-person"></i>
+                <span>Edit profile</span>
+              </a>
+              <a class="profile-menu-item" (click)="openAccountSettings()">
+                <i class="bi bi-gear"></i>
+                <span>Account settings</span>
+              </a>
+              <a class="profile-menu-item" (click)="getSupport()">
+                <i class="bi bi-info-circle"></i>
+                <span>Support</span>
+              </a>
+            </div>
+            
+            <div class="profile-divider"></div>
+            
+            <div class="profile-menu-items">
+              <a class="profile-menu-item sign-out" (click)="logout()">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Sign out</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <!-- Date and analytics refresh section -->
+     <!-- Dashboard Header -->
+      <div class="dashboard-header">
+      <div class="d-flex align-items-center">
+        <div class="card-logo">
+          <i class="bi bi-calendar-week"></i>
+        </div>
+        <div class="header-text">
+          <h5>Gestion du Planning</h5>
+          <div class="subtitle">Gérez et suivez le planning de télétravail de votre équipe</div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+          <div class="date-badge">
+            <div class="date-line"></div>
+            <span>{{ formattedDate }}</span>
+          </div>
+        </div>
+      </div>
+
+      
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p>Chargement des données...</p>
+      </div>
+      
+      <!-- Error message -->
+      <div *ngIf="error" class="error-container">
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ error }}
+        </div>
+      </div>
+      
+      <!-- Main content -->
+      <div *ngIf="!isLoading && !error" class="content">
+        <!-- Planning Section with minimal header -->
+        <section class="planning-section">
+          <div class="container">
+            <!-- Statistics Summary Cards -->
+            <!-- Planning Section (Calendar-Style) -->
+            <div class="row justify-content-center">
+              <div class="col-lg-10 col-xl-9 mb-4 mx-auto">
+                <div class="card larger-calendar-card">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <h5 class="card-title">
+                        <i class="bi bi-calendar-week me-2"></i>Planning de Télétravail
+                      </h5>
+                      <div class="search-wrapper" *ngIf="isManager || isTeamLeader || isAdmin">
+                        <div class="search-icon">
+                          <i class="bi bi-search"></i>
+                        </div>
+                        <input type="text" class="search-input" placeholder="Rechercher un employé..." [(ngModel)]="searchEmployeeName" (input)="filterEmployeesByName()">
+                        <div *ngIf="searchEmployeeName" class="search-clear" (click)="clearEmployeeSearch()">
+                          <i class="bi bi-x-circle-fill"></i>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div class="d-flex align-items-center gap-3">
+                        <!-- Manager toggle to show team leaders only -->
+                        <div class="form-check form-switch" *ngIf="isManager">
+                          <input class="form-check-input" type="checkbox" id="showTeamLeadersOnly" 
+                            [(ngModel)]="showTeamLeadersOnly" (change)="toggleTeamLeadersOnly()">
+                          <label class="form-check-label" for="showTeamLeadersOnly">
+                            <i class="bi bi-people-fill me-1"></i>Afficher les chefs d'équipe
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Team Calendar View -->
+                    <div class="team-calendar-container">
+                      <!-- Calendar navigation -->
+                      <div class="calendar-header mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                          <div class="team-title-container">
+                            <div class="team-badge" [ngClass]="{'manager-badge': isManager && showAllUsers, 'admin-badge': isAdmin}">
+                              <i class="bi" [ngClass]="{'bi-people-fill': !(isManager && showAllUsers) && !isAdmin, 'bi-diagram-3-fill': isManager && showAllUsers, 'bi-shield-fill': isAdmin}"></i>
+                            </div>
+                            <div class="team-title-content">
+                              <h5 class="team-title mb-0">{{ (isManager && showAllUsers) ? 'Manager' : isAdmin ? 'Administrateur' : (currentTeamName || 'Executive team') }}</h5>
+                              <small class="text-muted">
+                                <span *ngIf="isManager && showAllUsers">Vue globale : </span>
+                                <span *ngIf="!(isManager && showAllUsers)">Équipe </span>
+                                {{ uniqueEmployees.length }} utilisateur<span *ngIf="uniqueEmployees.length > 1">s</span>
+                              </small>
+                            </div>
+                          </div>
+                          <div class="week-navigator">
+                            <button class="nav-arrow" (click)="showPreviousWeek()" title="Semaine précédente">
+                              <i class="bi bi-chevron-left"></i>
+                              <span class="visually-hidden">Semaine précédente</span>
+                            </button>
+                            <span class="date-range">
+                              {{ getFormattedDateRange() }}
+                            </span>
+                            <button class="nav-arrow" (click)="showNextWeek()" title="Semaine suivante">
+                              <i class="bi bi-chevron-right"></i>
+                              <span class="visually-hidden">Semaine suivante</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Calendar grid -->
+                      <div class="team-calendar">
+                        <div class="team-header">
+                          <div class="team-name-header">Employé</div>
+                          <div class="day-headers">
+                            <!-- Day Headers -->
+                            <div class="day-header" *ngFor="let day of getWeekDays(); let i = index">
+                              <div class="day-letter" *ngIf="i < 5">{{ getDayLetter(i) }}</div>
+                              <div class="day-number" *ngIf="i < 5">{{ day | date:'d' }}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Employee rows -->
+                        <div class="team-row" *ngFor="let employee of filteredEmployees" 
+                             [hidden]="(showTeamLeadersOnly && employee.role !== 'TEAM_LEADER')">
+                          <div class="team-member" [ngClass]="{'current-user': employee.userId === currentUserId}">
+                            <!-- User profile photo -->
+                            <img *ngIf="getUserProfilePhoto(employee.userId)" 
+                                 [src]="getUserProfilePhoto(employee.userId)" 
+                                 class="user-profile-photo" 
+                                 alt="Photo de profil">
+                            <div *ngIf="!getUserProfilePhoto(employee.userId)" 
+                                 class="avatar-circle" 
+                                 [ngStyle]="{'background-color': employee.team === 'DEV' ? '#3B82F6' : 
+                                            employee.team === 'QA' ? '#16A34A' : 
+                                            employee.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+                              {{ (employee.employeeName || employee.userName || '')?.charAt(0) || 'U' }}
+                            </div>
+                            
+                            <!-- Employee info -->
+                            <div class="member-info">
+                              <div class="member-name" [title]="employee.employeeName || employee.userName || 'Utilisateur #' + employee.userId">
+                                {{ employee.employeeName || employee.userName || 'Utilisateur #' + employee.userId }}
+                              </div>
+                              <div class="role-badge" *ngIf="employee.role">
+                                {{ getRoleLabel(employee.role) }}
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Day cells -->
+                          <div class="day-cells">
+                            <ng-container *ngFor="let day of getWeekDays(); let i = index">
+                              <div class="day-cell" *ngIf="i < 5">
+                                <ng-container *ngIf="getEmployeeStatusForDate(employee.userId, day) as status">
+                                  <!-- Status icons -->
+                                  <i *ngIf="status === 'TELETRAVAIL' && getWorkTypeForDate(employee.userId, day) === 'Regular'" 
+                                     class="bi bi-house-door teletravail-icon teletravail-approved-icon tooltip-icon"
+                                     [class.clickable]="isTeamLeader || isManager"
+                                     [title]="(isTeamLeader || isManager) ? 'Télétravail régulier approuvé - Cliquez pour annuler - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Télétravail régulier approuvé - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                                     (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                                     (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+
+                                    <i *ngIf="status === 'TELETRAVAIL' && getWorkTypeForDate(employee.userId, day) === 'Exceptional'" 
+                                       class="bi bi-house-door teletravail-icon teletravail-approved-icon tooltip-icon"
+                                       [class.clickable]="isTeamLeader || isManager"
+                                       [title]="(isTeamLeader || isManager) ? 'Télétravail exceptionnel approuvé - Cliquez pour annuler - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Télétravail exceptionnel approuvé - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                                       (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                                       (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+
+                                    <i *ngIf="status === 'OFFICE'" 
+                                       class="bi bi-building office-icon tooltip-icon"
+                                       [title]="'Présence au bureau - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
+
+                                    <i *ngIf="status === 'PENDING' && getWorkTypeForDate(employee.userId, day) === 'Regular'" 
+                                       class="bi bi-house-door teletravail-icon pending-icon tooltip-icon"
+                                       [class.clickable]="isTeamLeader || isManager"
+                                       [title]="(isTeamLeader || isManager) ? 'Demande de télétravail régulier en attente - Cliquez pour approuver/refuser - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Demande de télétravail régulier en attente - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                                       (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                                       (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+
+                                    <i *ngIf="status === 'PENDING' && getWorkTypeForDate(employee.userId, day) === 'Exceptional'" 
+                                       class="bi bi-house-door teletravail-icon pending-icon teletravail-exceptional-icon tooltip-icon"
+                                       style="color: #dc3545;"
+                                       [class.clickable]="isTeamLeader || isManager"
+                                       [title]="(isTeamLeader || isManager) ? 'Demande de télétravail exceptionnel en attente - Cliquez pour approuver/refuser - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR') : 'Demande de télétravail exceptionnel en attente - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"
+                                       (click)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"
+                                       (contextmenu)="handleStatusClick($event, getPlanningEntry(employee.userId, day))"></i>
+
+                                    <i *ngIf="!status" 
+                                       class="bi bi-building office-icon tooltip-icon"
+                                       [title]="'Présence au bureau - ' + (day | date:'EEEE dd MMMM yyyy':'':'fr-FR')"></i>
+                                </ng-container>
+                              </div>
+                            </ng-container>
+                          </div>
+                        </div>
+
+                        <!-- No employees message -->
+                        <div *ngIf="filteredEmployees.length === 0" class="text-center py-4">
+                          <div class="text-muted">
+                            <i class="bi bi-search me-2"></i>
+                            Aucun employé trouvé pour cette recherche
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Legend -->
+                      <div class="calendar-legend mt-3">
+                        <div class="legend-item">
+                          <i class="bi bi-house-door teletravail-icon"></i>
+                          <span>Télétravail</span>
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-building office-icon"></i>
+                          <span>Sur site</span>
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-house-door teletravail-icon pending-icon"></i>
+                          <span>En attente régulière</span>
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-house-door teletravail-exceptional-icon pending-icon"></i>
+                          <span>En attente exceptionnelle</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

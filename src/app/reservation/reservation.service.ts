@@ -75,9 +75,9 @@ export class ReservationService {
     console.log('Fetching plans from:', `${this.apiUrl}/plans`);
     console.log('With auth token:', this.authService.getToken() ? 'Present' : 'Missing');
     
-    // For debugging - check if user is logged in and has manager role
+    // For debugging - check if user is logged in and has admin role
     console.log('User logged in:', this.authService.isLoggedIn());
-    console.log('User is manager:', this.authService.isManager());
+    console.log('User is admin:', this.authService.isAdmin());
     
     return this.http.get<Plan[]>(`${this.apiUrl}/plans`, { 
       headers: this.getHeaders(),
@@ -105,7 +105,7 @@ export class ReservationService {
   createPlan(plan: Plan): Observable<Plan> {
     return this.http.post<Plan>(`${this.apiUrl}/plans`, plan, { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -113,14 +113,14 @@ export class ReservationService {
     console.log(`Updating plan ${planId} with dimensions:`, { width: plan.width, height: plan.height });
     return this.http.put<Plan>(`${this.apiUrl}/plans/${planId}`, plan, { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
   deletePlan(planId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/plans/${planId}`, { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -128,7 +128,7 @@ export class ReservationService {
   getDesksByPlanId(planId: number): Observable<Desk[]> {
     return this.http.get<Desk[]>(`${this.apiUrl}/desks/plan/${planId}`, { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -136,7 +136,7 @@ export class ReservationService {
     return this.http.get<Desk[]>(`${this.apiUrl}/desks/available?planId=${planId}&date=${date}`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -144,7 +144,7 @@ export class ReservationService {
     return this.http.post<Desk>(`${this.apiUrl}/desks/plan/${planId}`, desk, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -152,7 +152,7 @@ export class ReservationService {
     return this.http.put<Desk>(`${this.apiUrl}/desks/${deskId}`, desk, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -160,7 +160,7 @@ export class ReservationService {
     return this.http.delete<void>(`${this.apiUrl}/desks/${deskId}`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -169,7 +169,7 @@ export class ReservationService {
     return this.http.get<Wall[]>(`${this.apiUrl}/walls/plan/${planId}`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -177,7 +177,7 @@ export class ReservationService {
     return this.http.post<Wall>(`${this.apiUrl}/walls/plan/${planId}`, wall, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -185,7 +185,7 @@ export class ReservationService {
     return this.http.put<Wall>(`${this.apiUrl}/walls/${wallId}`, wall, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -193,7 +193,7 @@ export class ReservationService {
     return this.http.delete<void>(`${this.apiUrl}/walls/${wallId}`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -206,7 +206,7 @@ export class ReservationService {
       { duration: duration },
       { headers: this.getHeaders() }
     ).pipe(
-      catchError(this.handleError)
+      catchError(error => this.handleError(error))
     );
   }
   
@@ -214,7 +214,7 @@ export class ReservationService {
     return this.http.get<Reservation[]>(`${this.apiUrl}/reservations/user`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -222,7 +222,7 @@ export class ReservationService {
     return this.http.get<Reservation[]>(`${this.apiUrl}/reservations/date?date=${date}`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -231,7 +231,7 @@ export class ReservationService {
       `${this.apiUrl}/reservations/user/daterange?startDate=${startDate}&endDate=${endDate}`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
   
@@ -337,7 +337,7 @@ export class ReservationService {
     return this.http.put<Reservation>(`${this.apiUrl}/reservations/${id}`, reservation, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -345,7 +345,7 @@ export class ReservationService {
     return this.http.delete<void>(`${this.apiUrl}/reservations/${id}`, 
       { headers: this.getHeaders() })
       .pipe(
-        catchError(this.handleError)
+        catchError(error => this.handleError(error))
       );
   }
 
@@ -381,10 +381,10 @@ export class ReservationService {
         
         if (isPlansEndpoint) {
           // Plans-specific 403 error - likely a permissions issue
-          errorMsg = 'You don\'t have permission to modify floor plans. This action requires manager privileges.';
+          errorMsg = 'You don\'t have permission to modify floor plans. This action requires admin privileges.';
         } else {
           // Generic 403 error
-          errorMsg = 'Access denied. Your current role doesn\'t have permission to perform this action.';
+          errorMsg = 'Access denied. Your current role doesn\'t have permission to perform this action. Admin privileges may be required.';
         }
       } else if (error.status === 409 && error.url?.includes('/plans')) {
         // Conflict for plans - could be the "only one floor plan" business rule

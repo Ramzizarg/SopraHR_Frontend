@@ -1,46 +1,96 @@
-/* Desk container - holds both desk and its tooltip */
-.desk-container {
-  position: absolute;
-  width: 0;
-  height: 0;
-  z-index: 3;
-}
-
-/* New fixed position tooltip that doesn't rotate with the desk */
 .desk-info-tooltip {
-  position: absolute;
-  background: var(--card-background);
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
-  z-index: 25;
-  color: var(--text-primary);
-  opacity: 0;
+  position: fixed;
+  z-index: 9999;
   pointer-events: none;
-  transition: opacity 0.2s ease;
-  transform: translateX(-50%);
+  background: #fff;
+  color: #333;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 1.5px 6px rgba(0,0,0,0.08);
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  min-width: 120px;
+  max-width: 260px;
+  white-space: pre-line;
+  transition: opacity 0.15s, transform 0.15s;
+  opacity: 1;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -100%);
 }
 
-/* Show tooltip only when hovering the desk in the same container */
-.desk-container:hover .desk-info-tooltip {
-  opacity: 1;
-  animation: fadeInTooltip 0.2s ease;
+.desk-info-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%; /* At the bottom of the tooltip */
+  left: 50%;
+  margin-left: -8px;
+  border-width: 8px;
+  border-style: solid;
+  border-color: #fff transparent transparent transparent;
 }
 
 .desk-info-tooltip.available {
-  border-color: var(--success-color);
+  background: #e6fbe6;
+  color: #1a7f37;
+}
+
+.desk-info-tooltip.available::after {
+  border-top-color: #e6fbe6;
 }
 
 .desk-info-tooltip.reserved {
-  border-color: var(--danger-color);
-  background: #fee2e2;
-  color: #991b1b;
+  background: #fdeaea;
+  color: #b91c1c;
 }
 
-@keyframes fadeInTooltip {
-  from { opacity: 0; transform: translateX(-50%) translateY(5px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+.desk-info-tooltip.reserved::after {
+  border-top-color: #fdeaea;
 }
+
+.desk-info-tooltip.info {
+  background: #ffffff;
+  color: #0369a1;
+}
+
+.desk-info-tooltip.info::after {
+  border-top-color: #ffffff;
+}
+
+.weekly-status-tooltip {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.day-initial {
+  font-weight: 500;
+  color: #4b5563; /* gray-600 */
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+.status-dot.available {
+  background-color: #00a42f; /* Same as available text color */
+}
+
+.status-dot.reserved {
+  background-color: #b91c1c; /* Same as reserved text color */
+}
+
+.status-dot.own {
+  background-color: #ff0000; /* Same as info text color */
+}
+

@@ -9,9 +9,11 @@ export interface AnalyticsMetrics {
   totalEmployees: number;
   officePresence: number;
   remoteWork: number;
-  undefinedStatus: number;
   reservationCount: number;
   occupancyRate: number;
+  employeeGrowthRate: number;
+  officePresencePercentage: number;
+  officePresenceChange: number;
   teamDistribution: {
     team: string;
     count: number;
@@ -25,10 +27,12 @@ export interface AnalyticsMetrics {
     rejected: number;
     pending: number;
   };
-  topEmployees: {
-    name: string;
-    days: number;
+  allEmployees: {
+    id: number;
+    firstName: string;
+    lastName: string;
     team: string;
+    email: string;
   }[];
 }
 

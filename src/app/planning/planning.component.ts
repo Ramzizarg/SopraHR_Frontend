@@ -5,6 +5,7 @@ import { PlanningService } from './services/planning.service';
 import { PlanningResponse, TeletravailRequest } from './models/planning.model';
 import { formatDate } from '@angular/common';
 import Swal from 'sweetalert2';
+import { ContactService, ContactRequest } from '../services/contact.service';
 declare var bootstrap: any; // Bootstrap JS declaration
 
 
@@ -49,7 +50,8 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     private authService: AuthService,
     private planningService: PlanningService,
     private router: Router,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private contactService: ContactService
   ) { 
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -111,11 +113,16 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       this.startDate = formatDate(monday, 'yyyy-MM-dd', 'en');
       this.endDate = formatDate(friday, 'yyyy-MM-dd', 'en');
       
-      // Set navigation flags
-      this.isCurrentWeek = true;
-      this.isNextWeek = false;
+      // Set navigation flags - always disable previous week button on current week
+      this.isCurrentWeek = true;  // This disables the "Previous Week" button
+      this.isNextWeek = false;    // Enable "Next Week" button
       
-      console.log('Current week dates set:', { start: this.startDate, end: this.endDate });
+      console.log('Current week dates set:', { 
+        start: this.startDate, 
+        end: this.endDate,
+        isCurrentWeek: this.isCurrentWeek,
+        isNextWeek: this.isNextWeek
+      });
     } catch (error) {
       console.error('Error setting current week dates:', error);
       // Fallback: calculate dates manually
@@ -127,8 +134,9 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       this.startDate = formatDate(monday, 'yyyy-MM-dd', 'en');
       this.endDate = formatDate(friday, 'yyyy-MM-dd', 'en');
       
-      this.isCurrentWeek = true;
-      this.isNextWeek = false;
+      // Set navigation flags - always disable previous week button on current week
+      this.isCurrentWeek = true;  // This disables the "Previous Week" button
+      this.isNextWeek = false;    // Enable "Next Week" button
     }
   }
 
@@ -291,11 +299,106 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Send contact message
+   * Send a contact message
    */
   sendContactMessage(): void {
-    alert('Votre message a été envoyé. Nous vous contacterons bientôt.');
-    this.closeContactModal();
+    const priority = (document.getElementById('priority') as HTMLSelectElement).value;
+    const subject = (document.getElementById('subject') as HTMLInputElement).value;
+    const message = (document.getElementById('message') as HTMLTextAreaElement).value;
+
+    // Validate required fields
+    if (!subject || !message) {
+      Swal.fire({
+        toast: true,
+        position: 'bottom-end',
+        icon: 'warning',
+        title: 'Veuillez remplir tous les champs obligatoires',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: '#fff',
+        iconColor: '#f39c12',
+        customClass: {
+          popup: 'swal-toast-popup',
+          title: 'swal-toast-title'
+        }
+      });
+      return;
+    }
+
+    // Get current user info
+    this.authService.currentUser.subscribe(user => {
+      if (!user) {
+        Swal.fire({
+          toast: true,
+          position: 'bottom-end',
+          icon: 'error',
+          title: 'Vous devez être connecté pour envoyer un message',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          background: '#fff',
+          iconColor: '#e74c3c',
+          customClass: {
+            popup: 'swal-toast-popup',
+            title: 'swal-toast-title'
+          }
+        });
+        return;
+      }
+
+      // Create contact request
+      const contactRequest: ContactRequest = {
+        userEmail: user.email,
+        employeeName: user.firstName && user.lastName ? 
+          `${user.firstName} ${user.lastName}` : 'Unknown User',
+        priority: priority,
+        subject: subject,
+        message: message,
+        status: 'PENDING',
+        createdAt: new Date()
+      };
+
+      // Send the request
+      this.contactService.createContactRequest(contactRequest).subscribe({
+        next: (response) => {
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'success',
+            title: 'Votre message a été envoyé avec succès',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#7b1dbd',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+          this.closeContactModal();
+        },
+        error: (error) => {
+          console.error('Error sending contact message:', error);
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'error',
+            title: 'Une erreur est survenue lors de l\'envoi du message',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#e74c3c',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+        }
+      });
+    });
   }
   
   /**
@@ -920,6 +1023,61 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   }
   
   /**
+   * Show previous week's dates (Monday-Friday)
+   */
+  showPreviousWeek(): void {
+    try {
+      let startDateObj: Date;
+      
+      // Validate current startDate before using it
+      if (!this.startDate || isNaN(new Date(this.startDate).getTime())) {
+        // If current startDate is invalid, use current week's Monday
+        startDateObj = this.getMonday(new Date());
+      } else {
+        startDateObj = new Date(this.startDate);
+      }
+      
+      // Calculate previous Monday (1 week before current date)
+      const prevMonday = new Date(startDateObj);
+      prevMonday.setDate(startDateObj.getDate() - 7); // Previous Monday is 7 days earlier
+      
+      // Get current week's Monday for comparison
+      const currentWeekMonday = this.getMonday(new Date());
+      
+      // If we're trying to go back to current week or before
+      if (prevMonday <= currentWeekMonday) {
+        // Immediately set to current week and disable previous week button
+        this.setCurrentWeekDates();
+        return;
+      }
+      
+      const prevFriday = new Date(prevMonday);
+      prevFriday.setDate(prevMonday.getDate() + 4); // 4 days after Previous Monday = Previous Friday
+      
+      this.startDate = formatDate(prevMonday, 'yyyy-MM-dd', 'en');
+      this.endDate = formatDate(prevFriday, 'yyyy-MM-dd', 'en');
+      
+      // Set navigation flags
+      this.isCurrentWeek = false; // Enable left arrow since we're not on current week
+      this.isNextWeek = false;    // Enable right arrow when viewing previous week
+      
+      console.log('Previous week dates set:', { 
+        start: this.startDate, 
+        end: this.endDate,
+        isCurrentWeek: this.isCurrentWeek,
+        isNextWeek: this.isNextWeek
+      });
+      
+      // Reload planning data for the new date range
+      this.loadPlanning();
+    } catch (error) {
+      console.error('Error setting previous week dates:', error);
+      // Reset to current week on error
+      this.setCurrentWeekDates();
+    }
+  }
+  
+  /**
    * Show next week's dates (Monday-Friday)
    */
   showNextWeek(): void {
@@ -948,7 +1106,15 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       this.isCurrentWeek = false; // Enable left arrow (we can now go back to current week)
       this.isNextWeek = true;     // Disable right arrow (we can only see one week ahead)
       
-      console.log('Next week dates set:', { start: this.startDate, end: this.endDate });
+      console.log('Next week dates set:', { 
+        start: this.startDate, 
+        end: this.endDate,
+        isCurrentWeek: this.isCurrentWeek,
+        isNextWeek: this.isNextWeek
+      });
+      
+      // Reload planning data for the new date range
+      this.loadPlanning();
     } catch (error) {
       console.error('Error setting next week dates:', error);
       // Set fallback dates
@@ -966,48 +1132,10 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       // Set navigation flags
       this.isCurrentWeek = false;
       this.isNextWeek = true;
+      
+      // Reload planning data for the new date range
+      this.loadPlanning();
     }
-    
-    // Reload planning data for the new date range
-    this.loadPlanning();
-  }
-  
-  /**
-   * Show previous week's dates (May 26-30) when left arrow is clicked
-   */
-  showPreviousWeek(): void {
-    try {
-      let startDateObj: Date;
-      
-      // Validate current startDate before using it
-      if (!this.startDate || isNaN(new Date(this.startDate).getTime())) {
-        // If current startDate is invalid, use current week's Monday
-        startDateObj = this.getMonday(new Date());
-      } else {
-        startDateObj = new Date(this.startDate);
-      }
-      
-      // Calculate previous Monday (1 week before current date)
-      const prevMonday = new Date(startDateObj);
-      prevMonday.setDate(startDateObj.getDate() - 7); // Previous Monday is 7 days earlier
-      
-      const prevFriday = new Date(prevMonday);
-      prevFriday.setDate(prevMonday.getDate() + 4); // 4 days after Previous Monday = Previous Friday
-      
-      this.startDate = formatDate(prevMonday, 'yyyy-MM-dd', 'en');
-      this.endDate = formatDate(prevFriday, 'yyyy-MM-dd', 'en');
-      
-      // Set navigation flags for previous week
-      this.isCurrentWeek = false; // We're now viewing a previous week, so left arrow can be enabled
-      this.isNextWeek = false;    // Enable right arrow when viewing previous week
-      
-      console.log('Previous week dates set:', { start: this.startDate, end: this.endDate });
-    } catch (error) {
-      console.error('Error setting previous week dates:', error);
-    }
-    
-    // Reload planning data for the new date range
-    this.loadPlanning();
   }
   
   /**

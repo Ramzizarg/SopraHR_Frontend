@@ -40,6 +40,8 @@ export interface TeletravailRequest {
   rejectionReason?: string;
   statusUpdatedAt?: string;
   createdAt: string;
+  profilePhotoUrl?: string; // URL for the user's profile photo
+  selected?: boolean; // Property for selection state
 }
 
 // Transform TeletravailRequest to PlanningResponse for backward compatibility

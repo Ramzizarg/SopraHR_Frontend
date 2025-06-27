@@ -14,33 +14,39 @@
       <p class="menu-label">MENU</p>
       <ul class="nav flex-column">
         <li class="nav-item">
-          <a class="nav-link active" routerLink="/dashboard">
+          <a class="nav-link active" routerLink="/backoffice/dashboard">
             <i class="bi bi-speedometer2"></i>
             <span>Dashboard</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/users">
+          <a class="nav-link" routerLink="/backoffice/users">
             <i class="bi bi-people"></i>
             <span>Utilisateurs</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/reservation">
-            <i class="bi bi-geo-alt"></i>
+          <a class="nav-link" routerLink="/backoffice/reservation-back">
+            <i class="bi bi-calendar-check me-1"></i>
             <span>Réservation</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/planning">
+          <a class="nav-link" routerLink="/backoffice/planning-back">
             <i class="bi bi-calendar3"></i>
             <span>Planning</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/teletravail">
+          <a class="nav-link" routerLink="/backoffice/teletravail-back">
             <i class="bi bi-laptop"></i>
             <span>Télétravail</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/backoffice/reclamation-back">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>Réclamation</span>
           </a>
         </li>
       </ul>
@@ -156,77 +162,92 @@
       <div *ngIf="!isLoading && !error && analytics" class="analytics-content">
         <!-- Global metrics row -->
         <div class="metrics-row">
-          <div class="metric-card">
-            <div class="metric-icon" style="background-color: #3B82F6;">
-              <i class="bi bi-people-fill"></i>
+          <div class="metric-card-v2">
+            <div class="metric-card-v2-icon-wrapper">
+              <div class="metric-card-v2-icon">
+                <i class="bi bi-people"></i>
+              </div>
             </div>
-            <div class="metric-content">
-              <h3>Employés</h3>
-              <p class="metric-value">{{ analytics.totalEmployees }}</p>
+            <div class="metric-card-v2-content">
+              <h3 class="metric-card-v2-title">Employés</h3>
+              <p class="metric-card-v2-value">{{ analytics.totalEmployees | number:'1.0-0' }}</p>
             </div>
-          </div>
-          
-          <div class="metric-card">
-            <div class="metric-icon" style="background-color: #10B981;">
-              <i class="bi bi-building"></i>
-            </div>
-            <div class="metric-content">
-              <h3>Présence au bureau</h3>
-              <p class="metric-value">{{ analytics.officePresence }}</p>
-              <p class="metric-percentage" *ngIf="analytics.totalEmployees > 0">
-                {{ (analytics.officePresence / analytics.totalEmployees * 100) | number:'1.0-0' }}%
-              </p>
+            <div class="metric-card-v2-footer" *ngIf="analytics.employeeGrowthRate as growthRate">
+              <div class="growth-badge" [ngClass]="{'positive': growthRate >= 0, 'negative': growthRate < 0}">
+                <i class="bi" [ngClass]="{'bi-arrow-up': growthRate >= 0, 'bi-arrow-down': growthRate < 0}"></i>
+                <span>{{ growthRate | number:'1.2-2' }}%</span>
+              </div>
             </div>
           </div>
-          
-          <div class="metric-card">
-            <div class="metric-icon" style="background-color: #6366F1;">
-              <i class="bi bi-laptop"></i>
+          <div class="metric-card-v2">
+            <div class="metric-card-v2-icon-wrapper">
+              <div class="metric-card-v2-icon">
+                <i class="bi bi-person-check"></i>
+              </div>
             </div>
-            <div class="metric-content">
-              <h3>Télétravail</h3>
-              <p class="metric-value">{{ analytics.remoteWork }}</p>
-              <p class="metric-percentage" *ngIf="analytics.totalEmployees > 0">
-                {{ (analytics.remoteWork / analytics.totalEmployees * 100) | number:'1.0-0' }}%
-              </p>
+            <div class="metric-card-v2-content">
+              <h3 class="metric-card-v2-title">Présents</h3>
+              <p class="metric-card-v2-value">{{ analytics.officePresence | number:'1.0-0' }}</p>
+            </div>
+            <div class="metric-card-v2-footer" *ngIf="analytics.officePresenceChange as presenceChange">
+              <div class="growth-badge" [ngClass]="{'positive': presenceChange >= 0, 'negative': presenceChange < 0}">
+                <i class="bi" [ngClass]="{'bi-arrow-up': presenceChange >= 0, 'bi-arrow-down': presenceChange < 0}"></i>
+                <span>{{ presenceChange | number:'1.2-2' }}%</span>
+              </div>
             </div>
           </div>
-          
-          <div class="metric-card">
-            <div class="metric-icon" style="background-color: #F59E0B;">
-              <i class="bi bi-question-circle"></i>
+          <div class="chart-card presence-card" *ngIf="presenceChartOptions">
+            <div class="card-header upgraded-header">
+              <div class="header-row">
+                <div class="header-icon">
+                  <i class="bi bi-building"></i>
+                </div>
+                <div class="header-text">
+                  <h2 class="header-title">Présence au bureau</h2>
+                  <div class="header-subtitle">Suivi en temps réel de la présence aujourd'hui</div>
+                </div>
+                <div class="header-actions">
+                  <button class="header-action-btn" title="Plus d'options"><i class="bi bi-three-dots-vertical"></i></button>
+                </div>
+              </div>
             </div>
-            <div class="metric-content">
-              <h3>Non défini</h3>
-              <p class="metric-value">{{ analytics.undefinedStatus }}</p>
-              <p class="metric-percentage" *ngIf="analytics.totalEmployees > 0">
-                {{ (analytics.undefinedStatus / analytics.totalEmployees * 100) | number:'1.0-0' }}%
-              </p>
+            <div class="card-body">
+              <div id="presence-chart">
+                <apx-chart
+                  [series]="presenceChartOptions.series!"
+                  [chart]="presenceChartOptions.chart!"
+                  [plotOptions]="presenceChartOptions.plotOptions!"
+                  [fill]="presenceChartOptions.fill!"
+                  [stroke]="presenceChartOptions.stroke!"
+                  [labels]="presenceChartOptions.labels!"
+                  [dataLabels]="presenceChartOptions.dataLabels!"
+                ></apx-chart>
+              </div>
+              <div class="presence-summary">
+                <p *ngIf="analytics">
+                  Il y a <strong>{{ analytics.officePresence }} employés</strong> au bureau aujourd'hui.
+                </p>
+              </div>
+            </div>
+            <div class="presence-footer">
+              <div class="footer-stat">
+                <span>Total</span>
+                <p *ngIf="analytics">{{ analytics.totalEmployees }}</p>
+              </div>
+              <div class="footer-stat">
+                <span>Présents</span>
+                <p *ngIf="analytics">{{ analytics.officePresence }} <i class="bi bi-arrow-up"></i></p>
+              </div>
+              <div class="footer-stat">
+                <span>Télétravail</span>
+                <p *ngIf="analytics">{{ analytics.remoteWork }} <i class="bi bi-arrow-down"></i></p>
+              </div>
             </div>
           </div>
         </div>
         
         <!-- Team distribution and weekly occupancy -->
         <div class="charts-row">
-          <!-- Team distribution -->
-          <div class="chart-card">
-            <div class="card-header">
-              <h3>Distribution par équipe</h3>
-            </div>
-            <div class="card-body">
-              <div class="team-distribution">
-                <div *ngFor="let team of analytics.teamDistribution" class="team-item">
-                  <div class="team-name">{{ team.team }}</div>
-                  <div class="team-bar-container">
-                    <div class="team-bar" [style.width.%]="(team.count / analytics.totalEmployees * 100)">
-                      {{ team.count }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
           <!-- Weekly occupancy -->
           <div class="chart-card">
             <div class="card-header">
@@ -278,20 +299,17 @@
             </div>
           </div>
           
-          <!-- Top employees -->
+          <!-- All employees -->
           <div class="chart-card">
             <div class="card-header">
-              <h3>Top employés</h3>
+              <h3>Liste des employés</h3>
             </div>
             <div class="card-body">
               <div class="top-employees">
-                <div *ngFor="let employee of analytics.topEmployees" class="employee-item">
+                <div *ngFor="let employee of analytics.allEmployees" class="employee-item">
                   <div class="employee-info">
-                    <div class="employee-name">{{ employee.name }}</div>
+                    <div class="employee-name">{{ employee.firstName }} {{ employee.lastName }}</div>
                     <div class="employee-team">{{ employee.team }}</div>
-                  </div>
-                  <div class="employee-days">
-                    <span class="badge">{{ employee.days }} jours</span>
                   </div>
                 </div>
               </div>

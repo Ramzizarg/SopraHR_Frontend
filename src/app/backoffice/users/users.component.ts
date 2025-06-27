@@ -1,13 +1,16 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserService, User, UserRequest } from './user.service';
 import { AuthService } from '../../login/AuthService';
 import Swal from 'sweetalert2';
+import { DatePipe } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
-  styleUrls: ['./users.component.css']
+  styleUrls: ['./users.component.css'],
+  providers: [DatePipe]
 })
 export class UsersComponent implements OnInit {
   searchTerm: string = '';
@@ -35,8 +38,13 @@ export class UsersComponent implements OnInit {
   showSuccess: boolean = false;
   itemsPerPage: number = 10;
   currentPage: number = 1;
+  isLoading: boolean = false;
+  formattedDate: string = '';
+  today: Date = new Date();
 
-  constructor(private userService: UserService, private router: Router, public authService: AuthService) {}
+  constructor(private userService: UserService, private router: Router, public authService: AuthService, private datePipe: DatePipe) {
+    this.formattedDate = this.datePipe.transform(this.today, 'dd MMMM yyyy') || '';
+  }
   
   // Profile dropdown methods
   toggleProfileDropdown(): void {
@@ -723,13 +731,14 @@ export class UsersComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.loading = true;
+    this.isLoading = true;
     this.error = '';
+    
     this.userService.getAllUsers().subscribe({
       next: (users: User[]) => {
         this.users = users;
-        this.filteredUsers = [...this.users];
-        this.loading = false;
+        this.filteredUsers = users;
+        this.isLoading = false;
         
         // Apply initial pagination
         this.updatePagination();
@@ -739,10 +748,10 @@ export class UsersComponent implements OnInit {
           this.fetchUserProfilePhoto(user.id);
         });
       },
-      error: (err) => {
-        this.error = 'Erreur lors du chargement des utilisateurs';
-        this.loading = false;
-        console.error(err);
+      error: (err: any) => {
+        console.error('Error loading users:', err);
+        this.error = 'Failed to load users. Please try again.';
+        this.isLoading = false;
       }
     });
   }
@@ -2080,38 +2089,38 @@ export class UsersComponent implements OnInit {
   // This function has been moved below with enhanced functionality
   
   // Action button methods
-  exportUserData(): void {
+  exportData(): void {
     console.log('Exporting user data...');
     
     try {
-      // For Excel compatibility with French characters
-      const BOM = '\uFEFF'; // UTF-8 BOM for Excel
+      const BOM = '\uFEFF'; // UTF-8 BOM for Excel compatibility with French characters
       
-      // Create Excel-compatible CSV data
-      const headers = ['ID', 'Nom', 'Prénom', 'Email', 'Rôle', 'Équipe'];
+      const headers = [
+        'ID',
+        'Nom',
+        'Prénom',
+        'Email',
+        'Équipe',
+        'Rôle'
+      ];
       let csvContent = BOM; // Add BOM at the beginning
-      
-      // Add the headers
       csvContent += this.formatCSVRow(headers);
       
-      // Add the data rows
-      this.users.forEach(user => {
+      this.filteredUsers.forEach(user => {
         const row = [
-          user.id.toString(),
-          user.lastName,
-          user.firstName,
-          user.email,
-          user.role.replace('ROLE_', ''),
-          user.team
+          user.id?.toString() || '',
+          user.lastName || '',
+          user.firstName || '',
+          user.email || '',
+          user.team || '',
+          user.role || ''
         ];
         csvContent += this.formatCSVRow(row);
       });
       
-      // Create and download the file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
       const url = window.URL.createObjectURL(blob);
       
-      // Trigger download with visible feedback
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
@@ -2119,14 +2128,31 @@ export class UsersComponent implements OnInit {
       document.body.appendChild(a);
       a.click();
       
-      // Clean up
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      this.showSuccessMessage('Données utilisateurs exportées avec succès');
+      Swal.fire({
+        icon: 'success',
+        title: 'Succès',
+        text: 'Données des utilisateurs exportées avec succès',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     } catch (error) {
       console.error('Export failed:', error);
-      this.showErrorMessage('Échec de l\'export. Veuillez réessayer.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Échec de l\'export. Veuillez réessayer.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
   }
   
@@ -2217,7 +2243,6 @@ export class UsersComponent implements OnInit {
     
     // Reload the user data
     this.loadUsers();
-    this.showSuccessMessage('Données utilisateurs actualisées');
   }
   
   /**

@@ -40,9 +40,11 @@ export class AuthGuard implements CanActivate {
         // Check route requirements
         const requiresAdmin = route.data && route.data['requiresAdmin'] === true;
         const requiresManager = route.data && route.data['requiresManager'] === true;
+        const requiresManagerOrTeamLeader = route.data && route.data['requiresManagerOrTeamLeader'] === true;
         
         console.log('Route requires admin:', requiresAdmin);
         console.log('Route requires manager:', requiresManager);
+        console.log('Route requires manager or team leader:', requiresManagerOrTeamLeader);
         
         // Handle admin-only routes
         if (requiresAdmin) {
@@ -54,6 +56,13 @@ export class AuthGuard implements CanActivate {
         // Handle manager-only routes
         if (requiresManager && !this.authService.isManager()) {
           console.log('✗ Route requires MANAGER role');
+          this.router.navigate(['/home']);
+          return false;
+        }
+
+        // Handle manager or team leader routes
+        if (requiresManagerOrTeamLeader && !this.authService.isManager() && !this.authService.isTeamLeader()) {
+          console.log('✗ Route requires MANAGER or TEAM_LEADER role');
           this.router.navigate(['/home']);
           return false;
         }
@@ -69,4 +78,4 @@ export class AuthGuard implements CanActivate {
       })
     );
   }
-  }
+}

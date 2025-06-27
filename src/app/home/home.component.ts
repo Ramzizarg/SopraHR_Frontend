@@ -8,6 +8,8 @@ import { formatDate } from '@angular/common';
 import { ReservationService } from '../reservation/reservation.service';
 import { ProfileService } from '../services/profile.service';
 import Swal from 'sweetalert2';
+import { HttpClient } from '@angular/common/http';
+import { ContactService, ContactRequest } from '../services/contact.service';
 
 @Component({
   selector: 'app-home',
@@ -74,7 +76,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     private renderer: Renderer2,
     private planningService: PlanningService,
     private reservationService: ReservationService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private http: HttpClient,
+    private contactService: ContactService
   ) {
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -1108,8 +1112,78 @@ export class HomeComponent implements OnInit, OnDestroy {
     document.body.classList.remove('modal-open');
   }
 
-  sendContactMessage() {
-    alert('Votre message a été envoyé. Nous vous contacterons bientôt.');
-    this.closeContactModal();
+  sendContactMessage(): void {
+    const priority = (document.getElementById('priority') as HTMLSelectElement).value;
+    const subject = (document.getElementById('subject') as HTMLInputElement).value;
+    const message = (document.getElementById('message') as HTMLTextAreaElement).value;
+
+    if (!subject || !message) {
+      Swal.fire({
+        toast: true,
+        position: 'bottom-end',
+        icon: 'warning',
+        title: 'Veuillez remplir tous les champs obligatoires',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: '#fff',
+        iconColor: '#f39c12',
+        customClass: {
+          popup: 'swal-toast-popup',
+          title: 'swal-toast-title'
+        }
+      });
+      return;
+    }
+
+    const contactRequest: ContactRequest = {
+      priority,
+      subject,
+      message,
+      userEmail: this.currentUser?.email || 'anonymous@example.com',
+      employeeName: this.currentUser?.firstName && this.currentUser?.lastName 
+        ? `${this.currentUser.firstName} ${this.currentUser.lastName}`
+        : this.currentUser?.name || 'Unknown User'
+    };
+
+    this.contactService.createContactRequest(contactRequest)
+      .subscribe({
+        next: () => {
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'success',
+            title: 'Votre message a été envoyé avec succès',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#7b1dbd',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+          this.closeContactModal();
+        },
+        error: (error) => {
+          console.error('Error sending contact request:', error);
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'error',
+            title: 'Une erreur est survenue lors de l\'envoi du message',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: '#e74c3c',
+            customClass: {
+              popup: 'swal-toast-popup',
+              title: 'swal-toast-title'
+            }
+          });
+        }
+      });
   }
 }

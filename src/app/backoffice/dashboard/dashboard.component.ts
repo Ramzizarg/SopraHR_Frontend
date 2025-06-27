@@ -7,6 +7,24 @@ import { Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { UserService } from '../users/user.service';
+import {
+  ApexChart,
+  ApexNonAxisChartSeries,
+  ApexPlotOptions,
+  ApexFill,
+  ApexStroke,
+  ApexDataLabels
+} from "ng-apexcharts";
+
+export type ChartOptions = {
+  series: ApexNonAxisChartSeries;
+  chart: ApexChart;
+  plotOptions: ApexPlotOptions;
+  fill: ApexFill;
+  stroke: ApexStroke;
+  labels: string[];
+  dataLabels: ApexDataLabels;
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -34,6 +52,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   error: string | null = null;
   private subscriptions: Subscription = new Subscription();
+  public presenceChartOptions!: Partial<ChartOptions>;
 
   // Profile photo storage
   userProfilePhotos: Map<number, string> = new Map(); // Store user profile photos by userId
@@ -157,6 +176,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         next: (data) => {
           this.analytics = data;
           this.isLoading = false;
+          this.setupPresenceChart();
         },
         error: () => {
           // Error already handled in catchError
@@ -164,6 +184,85 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
     
     this.subscriptions.add(subscription);
+  }
+
+  setupPresenceChart(): void {
+    const percentage = this.analytics ? this.analytics.officePresencePercentage : 0;
+    const change = this.analytics ? this.analytics.officePresenceChange : 0;
+
+    const dataLabels: any = {
+      show: true,
+      name: {
+        offsetY: 20,
+        show: true,
+        color: '#6b7280',
+        fontSize: '16px',
+        fontWeight: 500,
+        formatter: () => 'Présence',
+      },
+      value: {
+        formatter: (val: number) => val.toFixed(2) + '%',
+        offsetY: -10,
+        color: '#111827',
+        fontSize: '36px',
+        fontWeight: 700,
+        show: true,
+      }
+    };
+
+    this.presenceChartOptions = {
+      series: [percentage],
+      chart: {
+        height: 240,
+        type: "radialBar",
+        sparkline: { enabled: true }
+      },
+      plotOptions: {
+        radialBar: {
+          startAngle: -120,
+          endAngle: 120,
+          hollow: {
+            margin: 0,
+            size: "70%",
+            background: "#fff",
+            dropShadow: {
+              enabled: true,
+              top: 2,
+              left: 0,
+              blur: 6,
+              opacity: 0.12
+            }
+          },
+          track: {
+            background: '#f3f4f6',
+            strokeWidth: '100%',
+            margin: 0,
+            dropShadow: {
+              enabled: false
+            }
+          },
+          dataLabels: dataLabels
+        }
+      },
+      fill: {
+        type: "gradient",
+        gradient: {
+          shade: "light",
+          type: "horizontal",
+          shadeIntensity: 0.5,
+          gradientToColors: ["#6366f1"],
+          inverseColors: false,
+          opacityFrom: 1,
+          opacityTo: 1,
+          colorStops: []
+        },
+        colors: ["#3b82f6"]
+      },
+      stroke: {
+        lineCap: "round"
+      },
+      labels: ["Présence"]
+    };
   }
 
   /**

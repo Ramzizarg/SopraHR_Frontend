@@ -11,6 +11,11 @@ import { PlanningComponent } from './planning/planning.component';
 import { AuthGuard } from './login/AuthGuard';
 import { UsersComponent } from './backoffice/users/users.component';
 import { DashboardComponent } from './backoffice/dashboard/dashboard.component';
+import { TeletravailBackComponent } from './backoffice/teletravail-back/teletravail-back.component';
+import { PlanningBackComponent } from './backoffice/planning-back/planning-back.component';
+import { ReservationBackComponent } from './backoffice/reservation-back/reservation-back.component';
+import { ReclamationBackComponent } from './backoffice/reclamation-back/reclamation-back.component';
+import { GererDemandeComponent } from './gerer-demande/gerer-demande.component';
 
 const routes: Routes = [
   // Public routes - accessible without login
@@ -25,12 +30,20 @@ const routes: Routes = [
   { path: 'api-test', component: ApiTesterComponent, canActivate: [AuthGuard]},
   { path: 'planning', component: PlanningComponent, canActivate: [AuthGuard]},
   { path: 'teletravail', component: TeletravailComponent, canActivate: [AuthGuard]},
-  { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
-
+  { path: 'gestion-demandes', component: GererDemandeComponent, canActivate: [AuthGuard], data: { requiresManagerOrTeamLeader: true }},
+  
+  // Backoffice routes
+  { path: 'backoffice', children: [
+    { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+    { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+    { path: 'teletravail-back', component: TeletravailBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+    { path: 'planning-back', component: PlanningBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } }, 
+    { path: 'reservation-back', component: ReservationBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } }, 
+    { path: 'reclamation-back', component: ReclamationBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } }, 
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+  ]},
 
   { path: '**', redirectTo: 'login' },
-
 ];
 
 @NgModule({

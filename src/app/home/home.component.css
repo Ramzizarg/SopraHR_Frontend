@@ -40,7 +40,7 @@
   }
 }
 
-@media (max-width: 991px) {
+@media (max-width: 992px) {
   /* Make mobile header match desktop header exactly */
   .header {
     padding: 15px 0;
@@ -336,7 +336,7 @@
   opacity: 0.8;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 992px) {
   .mobile-nav-toggle {
     display: flex;
     margin-left: auto;
@@ -591,7 +591,7 @@
   padding-top: 0;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 992px) {
   .main {
     padding-top: 60px;
   }
@@ -672,7 +672,7 @@
   font-family: 'Raleway', sans-serif;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 992px) {
   .hero-section {
     height: 60vh;
     min-height: 400px;
@@ -770,7 +770,7 @@
   font-family: 'Raleway', sans-serif;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 992px) {
   .vision-title {
     font-size: 2.8rem;
   }
@@ -906,7 +906,7 @@
   }
 }
 
-@media (min-width: 768px) and (max-width: 991px) {
+@media (min-width: 768px) and (max-width: 992px) {
   .hero-overlay .greeting {
     font-size: 2rem;
   }
@@ -1246,7 +1246,7 @@
   font-size: 1.1em;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 992px) {
   .work-status-block {
     margin-bottom: 40px;
     padding: 25px;
@@ -1476,7 +1476,7 @@
   }
 }
 
-@media (max-width: 991px) {
+@media (max-width: 992px) {
   .about .our-story {
     margin-top: 30px;
     padding: 30px;
