@@ -347,33 +347,21 @@ body.reservation-page {
   gap: 1rem; /* Reduced gap */
 }
 
+/* --- BEGIN: main-content-wrapper (merged from reservation-back.component.css) --- */
 .main-content-wrapper {
   position: relative;
   width: 100%;
-  height: 100%;
   transition: transform 0.2s ease-out;
   display: flex;
   flex-direction: column;
   align-items: center; /* Center horizontally */
-  justify-content: center; /* Center vertically */
   padding: 0.25rem; /* Minimal padding */
   gap: 0.5rem; /* Reduced gap */
   will-change: transform;
   transform: translate3d(0, 0, 0);
   contain: layout style;
+  justify-content: center;
 }
-
-/* For managers (with sidebar visible) */
-.main-content-wrapper:not(.centered) #designContainer {
-  margin-left: auto;
-  margin-right: auto;
-  width: 1150px; /* Fixed width based on plan dimensions */
-  position: relative;
-  left: -90px; /* Reduced left offset to move right */
-}
-
-/* Add spacing for all main-content-wrapper variants */
-
 
 .main-content-wrapper:not(.centered) .status-bar {
   margin-left: auto;
@@ -383,7 +371,6 @@ body.reservation-page {
   left: -90px; /* Reduced left offset to move right */
 }
 
-/* For regular users (without sidebar) - center the content */
 .main-content-wrapper.centered {
   align-items: center;
   justify-content: center; /* Center vertically too */
@@ -391,12 +378,24 @@ body.reservation-page {
   margin-top: 4rem; /* Increased space between header and content */
 }
 
-.main-content-wrapper.centered #designContainer {
-  margin-left: auto;
-  margin-right: auto;
-  width: 1150px; /* Fixed width to match manager view */
+/* For managers (sidebar visible) - position to the right */
+.main-content-wrapper:not(.centered) .status-bar {
+  margin-left: 195px;
+  margin-right: 0;
 }
 
+/* For regular users - center the content but keep the same width */
+.main-content-wrapper.centered {
+  align-items: center;
+  justify-content: center;
+}
+
+.main-content-wrapper.centered .status-bar {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* --- END: main-content-wrapper (merged) --- */
 
 .design-container {
   flex-grow: 1;
@@ -411,32 +410,6 @@ body.reservation-page {
 }
 
 
-#designContainer {
-  position: relative;
-  width: 1150px;
-  height: 600px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--card-background);
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow-xl);
-  overflow: visible;
-  transition: transform 0.2s ease-out, margin 0.2s ease-out;
-  padding: 0.5rem;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.95);
-  backface-visibility: hidden;
-  transform: translate3d(0, 0, 0);
-  will-change: transform;
-  contain: content;
-  transform-origin: center center;
-  margin-left: auto;
-  margin-right: auto;
-  left: 0;
-}
-
-
 /* For non-manager users, hide sidebar but keep design container size */
 .sidebar.hidden {
   position: absolute;
@@ -445,20 +418,7 @@ body.reservation-page {
   opacity: 0;
 }
 
-/* Remove duplicate styles for .main-content-wrapper.centered .status-bar (already defined above) */
-/* .main-content-wrapper.centered .status-bar {
-  width: calc(100% - 300px - 3rem);
-  margin-left: auto;
-  margin-right: auto;
-} */
 
-#designContainer.shifted {
-  --content-width: calc(100% - 3rem - 3rem);
-  --sidebar-width: 0;
-  margin-left: 240px; /* Match sidebar width + padding */
-  transform: translate3d(0, 0, 0);
-  transition: transform 0.2s ease-out, margin-left 0.2s ease-out;
-}
 
 .sidebar {
   position: absolute; /* Changed from fixed to absolute for scroll behavior */
@@ -580,22 +540,6 @@ body.reservation-page {
   width: 200px; /* Reduced container width */
 }
 
-
-button:not(.logout-button) {
-  padding: 0.75rem 1rem; /* Reduced padding */
-  border: none;
-  border-radius: 0.75rem;
-  font-size: 0.8rem; /* Smaller font */
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem; /* Reduced gap */
-  position: relative;
-  overflow: hidden;
-  width: 100%; /* Full width of container */
-}
 
 button:not(.logout-button):not(:disabled):hover {
   transform: translateY(-2px);
@@ -1721,23 +1665,10 @@ button:hover:not(:disabled) i {
 
 /* Responsive Design - Maintain fixed size with scaling on smaller screens */
 @media (max-width: 1200px) {
-  .main-content-wrapper:not(.centered) #designContainer,
-  .main-content-wrapper:not(.centered) .status-bar {
-    left: -60px; /* Reduce offset for medium screens */
-  }
-  
   /* Add a container to enable horizontal scrolling if needed */
-  .main-content-wrapper {
-    overflow-x: auto;
-  }
 }
 
 @media (max-width: 992px) {
-  .main-content-wrapper:not(.centered) #designContainer,
-  .main-content-wrapper:not(.centered) .status-bar {
-    left: -30px; /* Further reduce offset for smaller screens */
-  }
-  
   .sidebar {
     width: 180px; /* Slightly narrower sidebar */
   }
@@ -1749,37 +1680,13 @@ button:hover:not(:disabled) i {
     max-width: 300px;
   }
 
-  /* Fixed size maintained, but centered */
-  #designContainer, .status-bar {
-    margin-left: auto !important;
-    margin-right: auto !important;
-    left: 0 !important; /* Remove left offset completely */
-  }
-  
-  /* Scale down for mobile when width is too small */
-  .main-content-wrapper {
-    transform-origin: center top;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    display: flex;
-  }
-  
   /* Mobile-specific plan scaling */
   .plan {
     transform-origin: center center;
   }
 }
 
-/* Small screens (mobile) */
 @media (max-width: 576px) {
-  /* Apply scaling transform for very small screens */
-  .main-content-wrapper {
-    transform: scale(0.8);
-    height: auto;
-    padding-bottom: 2rem;
-  }
-  
   /* Keep desk size proportional */
   .desk {
     transform-origin: center center;
@@ -1873,6 +1780,7 @@ button:hover:not(:disabled) i {
   padding: 0 10px;
 }
 
+
 .close-button {
   background: transparent;
   border: 1px solid var(--border-color);
@@ -1886,8 +1794,8 @@ button:hover:not(:disabled) i {
   color: var(--text-secondary);
   transition: all 0.2s ease;
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: -5x;
+  right: -5px;
   box-shadow: var(--shadow-xs);
   opacity: 0.8;
 }
@@ -1994,11 +1902,11 @@ button:hover:not(:disabled) i {
 }
 
 .booking-dialog-footer .primary-button,
-.booking-dialog-footer .secondary-button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
+.booking-dialog-footer .secondary-button,
+.booking-dialog-footer .tertiary-button {
+  padding: 0.3rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
   transition: all 0.2s ease;
   min-width: 110px;
   display: flex;
@@ -2046,6 +1954,31 @@ button:hover:not(:disabled) i {
 }
 
 .booking-dialog-footer .secondary-button i {
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+
+.booking-dialog-footer .tertiary-button {
+  background-color: gainsboro;
+  color: black;
+  border: 1px solid gray;
+}
+
+.booking-dialog-footer .tertiary-button:hover {
+  background-color: gray;
+  color: black;
+  border-color: gray;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.booking-dialog-footer .tertiary-button:active {
+  background-color: #fca5a5;
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.booking-dialog-footer .tertiary-button i {
   color: #ef4444;
   font-size: 0.75rem;
 }
@@ -2764,7 +2697,7 @@ body.modal-open {
 }
 
 .booking-day-button.selected.today::before {
-  background: #3b82f6;
+  background: #10b981;
 }
 
 .booking-day-button.past {
@@ -2817,7 +2750,6 @@ body.modal-open {
     position: relative;
     margin-bottom: 1.25rem;
     flex: 0 0 auto;
-    width: 45%;
     min-width: 300px;
     max-width: 480px;
     display: flex;
@@ -2835,7 +2767,6 @@ body.modal-open {
 
 .form-group select,
 .form-group input {
-  width: 135%;
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -2850,25 +2781,25 @@ body.modal-open {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-/* Week separator with gradient */
-.booking-week-days::after {
-  content: '';
-  grid-column: 1 / -1;
-  height: 2px;
-  background: linear-gradient(to right, 
-    transparent 0%, 
-    #e2e8f0 20%, 
-    #e2e8f0 80%, 
-    transparent 100%
-  );
-  margin: 1rem 0;
-  opacity: 0.5;
-}
+  /* Week separator with gradient */
+  .booking-week-days::after {
+    content: '';
+    grid-column: 1 / -1;
+    height: 2px;
+    background: linear-gradient(to right, 
+      transparent 0%, 
+      #e2e8f0 20%, 
+      #e2e8f0 80%, 
+      transparent 100%
+    );
+    margin: 1rem 0;
+    opacity: 0.5;
+  }
 
-/* Add subtle hover effect to the container */
-.booking-week-days:hover {
-  box-shadow: 0 6px 12px -1px rgba(0, 0, 0, 0.1), 0 3px 6px -1px rgba(0, 0, 0, 0.06);
-}
+  /* Add subtle hover effect to the container */
+  .booking-week-days:hover {
+    box-shadow: 0 6px 12px -1px rgba(0, 0, 0, 0.1), 0 3px 6px -1px rgba(0, 0, 0, 0.06);
+  }
 
 /* Add animation for selection */
 @keyframes selectPulse {
@@ -2966,35 +2897,11 @@ body.modal-open {
 }
 
 /* Ensure status bar has exactly the same width as design container */
-#designContainer, .status-bar {
-  box-sizing: border-box !important;
-}
+
 
 /* Set consistent width for both user types */
-#designContainer, .status-bar {
-  width: calc(100% - 300px - 3rem) !important; /* Same width for both user types */
-  box-sizing: border-box !important;
-  max-width: calc(100% - 300px - 3rem) !important;
-}
 
-/* For managers (sidebar visible) - position to the right */
-.main-content-wrapper:not(.centered) #designContainer,
-.main-content-wrapper:not(.centered) .status-bar {
-  margin-left: 340px;
-  margin-right: 0;
-}
 
-/* For regular users - center the content but keep the same width */
-.main-content-wrapper.centered {
-  align-items: center;
-  justify-content: center;
-}
-
-.main-content-wrapper.centered #designContainer,
-.main-content-wrapper.centered .status-bar {
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
 
 /* Keyboard movement feedback */
 .desk.keyboard-moved {
@@ -3103,12 +3010,6 @@ body.modal-open {
 }
 
 
-.status-bar, #designContainer {
-  width: 100%;
-  max-width: 89%;
-  left: 82;
-  box-sizing: border-box;
-}
 
 @media (max-width: 1200px) {
   .dashboard-content {
@@ -3116,11 +3017,210 @@ body.modal-open {
     gap: 1rem;
     max-width: 100%;
   }
+
+}
+
+/* --- BEGIN: main-content-wrapper (responsive/media queries from reservation-back.component.css) --- */
+@media (max-width: 1200px) {
+  .main-content-wrapper:not(.centered) .status-bar {
+    left: -60px; /* Reduce offset for medium screens */
+  }
+  .main-content-wrapper {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 992px) {
+  .main-content-wrapper:not(.centered) .status-bar {
+    left: -30px; /* Further reduce offset for smaller screens */
+  }
+  .sidebar {
+    width: 180px; /* Slightly narrower sidebar */
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .main-content-wrapper {
+    transform-origin: center top;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    display: flex;
+  }
+  .plan {
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 576px) {
+  .main-content-wrapper {
+    transform: scale(0.8);
+    height: auto;
+    padding-bottom: 2rem;
+  }
+  .desk {
+    transform-origin: center center;
+  }
+}
+
+/* Additional .main-content-wrapper rules for completeness */
+.main-content-wrapper {
+  justify-content: center;
+}
+
+/* --- BEGIN: #designContainer styles from reservation-back.component.css --- */
+
+.main-content-wrapper:not(.centered) #designContainer {
+  margin-left: auto;
+  margin-right: auto;
+  width: 1150px; /* Fixed width based on plan dimensions */
+  position: relative;
+  left: -90px; /* Reduced left offset to move right */
+}
+
+.main-content-wrapper.centered #designContainer {
+  margin-left: auto;
+  margin-right: auto;
+  width: 1150px; /* Fixed width to match manager view */
+}
+
+#designContainer {
+  position: relative;
+  width: 1150px;
+  height: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--card-background);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-xl);
+  overflow: visible;
+  transition: transform 0.2s ease-out, margin 0.2s ease-out;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  contain: content;
+  transform-origin: center center;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+}
+
+#designContainer.shifted {
+  --content-width: calc(100% - 3rem - 3rem);
+  --sidebar-width: 0;
+  margin-left: 240px; /* Match sidebar width + padding */
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.2s ease-out, margin-left 0.2s ease-out;
+}
+
+@media (max-width: 1200px) {
+  .main-content-wrapper:not(.centered) #designContainer,
+  .main-content-wrapper:not(.centered) .status-bar {
+    left: -60px; /* Reduce offset for medium screens */
+  }
+  .main-content-wrapper {
+    overflow-x: auto;
+  }
+}
+
+#designContainer,
+.status-bar {
+  width: 1000px;           /* or your desired fixed width */
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: 95px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 992px) {
+  .main-content-wrapper:not(.centered) #designContainer,
+  .main-content-wrapper:not(.centered) .status-bar {
+    left: -30px; /* Further reduce offset for smaller screens */
+  }
+  .sidebar {
+    width: 180px; /* Slightly narrower sidebar */
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+  #designContainer, .status-bar {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    left: 0 !important; /* Remove left offset completely */
+  }
+  .main-content-wrapper {
+    transform-origin: center top;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    display: flex;
+  }
+  .plan {
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 576px) {
+  .main-content-wrapper {
+    transform: scale(0.8);
+    height: auto;
+    padding-bottom: 2rem;
+  }
+  .desk {
+    transform-origin: center center;
+  }
+}
+
+/* Ensure status bar has exactly the same width as design container */
+#designContainer, .status-bar {
+  box-sizing: border-box !important;
+}
+
+.main-content-wrapper:not(.centered) #designContainer,
+.main-content-wrapper:not(.centered) .status-bar {
+  margin-left: 195px;
+  margin-right: 0;
+}
+
+.main-content-wrapper.centered #designContainer,
+.main-content-wrapper.centered .status-bar {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.status-bar, #designContainer {
+  width: 100%;
+  max-width: 89%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1200px) {
   .status-bar, #designContainer {
     width: 100%;
     max-width: 100%;
     margin: 0 auto;
   }
+}
+
+/* --- END: #designContainer styles from reservation-back.component.css --- */
+
+.booking-day-button.selected:hover {
+  background: #3b82f6 !important;
+  color: white !important;
+  border-color: #3b82f6 !important;
 }
 
 
