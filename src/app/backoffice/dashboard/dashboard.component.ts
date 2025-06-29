@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, AfterViewInit, ViewChildren, QueryList } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../login/AuthService';
 import { DatePipe } from '@angular/common';
@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { UserService } from '../users/user.service';
+import { TeletravailbackService, TeletravailRequest } from '../teletravail-back/teletravailback.service';
 import {
   ApexChart,
   ApexNonAxisChartSeries,
@@ -15,6 +16,7 @@ import {
   ApexStroke,
   ApexDataLabels
 } from "ng-apexcharts";
+import { ChangeDetectorRef } from '@angular/core';
 
 export type ChartOptions = {
   series: ApexNonAxisChartSeries;
@@ -32,8 +34,10 @@ export type ChartOptions = {
   styleUrls: ['./dashboard.component.css'],
   providers: [DatePipe]
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('profileElement') profileElement!: ElementRef;
+  @ViewChild('chartContainer', { static: false }) chartContainerRef!: ElementRef<HTMLDivElement>;
+  @ViewChildren('barRef') barRefs!: QueryList<ElementRef<HTMLDivElement>>;
 
   // Sidebar and UI states
   isSidebarOpen: boolean = true;
@@ -57,14 +61,149 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Profile photo storage
   userProfilePhotos: Map<number, string> = new Map(); // Store user profile photos by userId
 
+  public isWeekend: boolean = false;
+  topOfficeEmployees: any[] = [];
+  searchTopOfficeTerm: string = '';
+  selectedTeamFilter: string = '';
+  currentTopOfficePage: number = 1;
+  readonly topOfficePageSize: number = 10;
+
+  // Teletravail data
+  teletravailRequests: TeletravailRequest[] = [];
+  teletravailStats = {
+    total: 0,
+    approved: 0,
+    rejected: 0,
+    pending: 0
+  };
+  teletravailFilter: 'currentMonth' | 'allTime' = 'currentMonth';
+
+  hoveredBarIndex: number | null = null;
+
+  // Bar chart dimensions for SVG overlay
+  barCurveWidth = 500; // default, will be updated dynamically
+  barCurveHeight = 200;
+
+  public barCurvePointsValue: string = '';
+
+  get filteredTopOfficeEmployees() {
+    const term = this.searchTopOfficeTerm.trim().toLowerCase();
+    const teamFilter = this.selectedTeamFilter.trim();
+    
+    let filtered = this.topOfficeEmployees;
+    
+    // Filter by search term
+    if (term) {
+      filtered = filtered.filter(emp =>
+        (emp.firstName && emp.firstName.toLowerCase().includes(term)) ||
+        (emp.lastName && emp.lastName.toLowerCase().includes(term)) ||
+        (emp.email && emp.email.toLowerCase().includes(term))
+      );
+    }
+    
+    // Filter by team
+    if (teamFilter) {
+      filtered = filtered.filter(emp =>
+        emp.team && emp.team.toUpperCase() === teamFilter.toUpperCase()
+      );
+    }
+    
+    return filtered;
+  }
+
+  get paginatedTopOfficeEmployees() {
+    const start = (this.currentTopOfficePage - 1) * this.topOfficePageSize;
+    const end = start + this.topOfficePageSize;
+    return this.filteredTopOfficeEmployees.slice(start, end);
+  }
+
+  get topOfficeTotalPages() {
+    return Math.ceil(this.filteredTopOfficeEmployees.length / this.topOfficePageSize);
+  }
+
+  changeTopOfficePage(page: number) {
+    if (page >= 1 && page <= this.topOfficeTotalPages) {
+      this.currentTopOfficePage = page;
+    }
+  }
+
+  /**
+   * Get color for team distribution chart
+   * @param team The team name
+   * @returns The color for the team
+   */
+  getTeamColor(team: string): string {
+    switch (team.toUpperCase()) {
+      case 'DEV':
+        return '#F43F5E'; // Red-Orange for Development
+      case 'QA':
+        return '#16A34A'; // Green for QA
+      case 'OPS':
+        return '#0369A1'; // Blue for Operations
+      case 'RH':
+        return '#7E22CE'; // Purple for HR
+      default:
+        return '#3B82F6'; // Default blue
+    }
+  }
+
+  /**
+   * Get icon for team distribution chart
+   * @param team The team name
+   * @returns The Bootstrap icon class for the team
+   */
+  getTeamIcon(team: string): string {
+    switch (team.toUpperCase()) {
+      case 'DEV':
+        return 'bi-code-slash'; // Code icon for Development
+      case 'QA':
+        return 'bi-bug'; // Bug icon for QA
+      case 'OPS':
+        return 'bi-gear'; // Gear icon for Operations
+      case 'RH':
+        return 'bi-people'; // People icon for HR
+      default:
+        return 'bi-person'; // Default person icon
+    }
+  }
+
+  /**
+   * Get gradient for team distribution chart
+   * @param team The team name
+   * @returns The gradient background for the team
+   */
+  getTeamGradient(team: string): string {
+    switch (team.toUpperCase()) {
+      case 'DEV':
+        return 'linear-gradient(135deg, #F43F5E 0%, #FB7185 100%)'; // Red-Orange gradient
+      case 'QA':
+        return 'linear-gradient(135deg, #16A34A 0%, #4ADE80 100%)'; // Green gradient
+      case 'OPS':
+        return 'linear-gradient(135deg, #0369A1 0%, #38BDF8 100%)'; // Blue gradient
+      case 'RH':
+        return 'linear-gradient(135deg, #7E22CE 0%, #C084FC 100%)'; // Purple gradient
+      default:
+        return 'linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%)'; // Default blue gradient
+    }
+  }
+
   constructor(
     public authService: AuthService, 
     private router: Router, 
     private datePipe: DatePipe,
     private analyticsService: AnalyticsService,
-    private userService: UserService
+    private userService: UserService,
+    private teletravailbackService: TeletravailbackService,
+    private cdr: ChangeDetectorRef
   ) {
-    this.formattedDate = this.datePipe.transform(this.today, 'dd MMMM yyyy') || '';
+    // Determine if today is a weekend (Saturday: 6, Sunday: 0)
+    const dayOfWeek = this.today.getDay();
+    this.isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    if (this.isWeekend) {
+      this.formattedDate = 'Week-end'; // Or 'Weekend' if you prefer English
+    } else {
+      this.formattedDate = this.datePipe.transform(this.today, 'dd MMMM yyyy') || '';
+    }
   }
 
   ngOnInit(): void {
@@ -78,6 +217,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.authService.currentUserValue?.id) {
       this.fetchUserProfilePhoto(this.authService.currentUserValue.id);
     }
+    // Load top office employees
+    this.loadTopOfficeEmployees();
+    // Load teletravail data
+    this.loadTeletravailData();
   }
   
   /**
@@ -151,6 +294,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Clean up subscriptions when component is destroyed
    */
   ngOnDestroy(): void {
+    window.removeEventListener('resize', this.updateBarCurveWidth.bind(this));
     this.subscriptions.unsubscribe();
   }
   
@@ -175,8 +319,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.analytics = data;
+          console.log('Team Distribution:', this.analytics?.teamDistribution);
           this.isLoading = false;
           this.setupPresenceChart();
+          setTimeout(() => {
+            this.updateBarCurvePoints();
+            this.cdr.detectChanges();
+          }, 0);
         },
         error: () => {
           // Error already handled in catchError
@@ -819,5 +968,366 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Perform logout directly
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  /**
+   * Load top office employees: users who have NOT had any approved teletravail this month
+   */
+  loadTopOfficeEmployees(): void {
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+    const todayDate = now.getDate();
+    // Helper: count weekdays from 1st to today (inclusive)
+    function countWeekdaysToToday(month: number, year: number, today: number): number {
+      let count = 0;
+      for (let day = 1; day <= today; day++) {
+        const d = new Date(year, month, day);
+        const dayOfWeek = d.getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) count++;
+      }
+      return count;
+    }
+    const totalWeekdaysToToday = countWeekdaysToToday(month, year, todayDate);
+    this.userService.getAllUsers().subscribe(users => {
+      this.teletravailbackService.getAllRequests().subscribe(requests => {
+        // Filter requests for this month, up to today, and approved
+        const approvedTeletravail = requests.filter(r => {
+          const d = new Date(r.teletravailDate);
+          return r.status === 'APPROVED' &&
+            d.getMonth() === month &&
+            d.getFullYear() === year &&
+            d.getDate() <= todayDate;
+        });
+        // Count teletravail days per user (up to today)
+        const teletravailDaysPerUser: { [userId: number]: number } = {};
+        approvedTeletravail.forEach(r => {
+          teletravailDaysPerUser[r.userId] = (teletravailDaysPerUser[r.userId] || 0) + 1;
+        });
+        // Show ALL users with their office days calculation (weekdays up to today minus teletravail)
+        this.topOfficeEmployees = users.map(u => ({
+          ...u,
+          officeDaysThisMonth: totalWeekdaysToToday - (teletravailDaysPerUser[u.id] || 0)
+        })).sort((a, b) => b.officeDaysThisMonth - a.officeDaysThisMonth); // Sort descending (most office days first)
+      });
+    });
+  }
+
+  /**
+   * Filter employees by team
+   */
+  filterByTeam() {
+    this.currentTopOfficePage = 1; // Reset to first page when filtering
+  }
+
+  /**
+   * Load teletravail requests data
+   */
+  loadTeletravailData(): void {
+    this.teletravailbackService.getAllRequests().subscribe({
+      next: (requests: TeletravailRequest[]) => {
+        this.teletravailRequests = requests;
+        this.calculateTeletravailStats();
+      },
+      error: (error) => {
+        console.error('Error loading teletravail data:', error);
+        this.teletravailRequests = [];
+        this.calculateTeletravailStats();
+      }
+    });
+  }
+
+  /**
+   * Calculate teletravail statistics
+   */
+  calculateTeletravailStats(): void {
+    let filteredRequests = this.teletravailRequests;
+    
+    // Filter by current month if needed
+    if (this.teletravailFilter === 'currentMonth') {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      filteredRequests = this.teletravailRequests.filter(request => {
+        const requestDate = new Date(request.teletravailDate);
+        return requestDate.getMonth() === currentMonth && 
+               requestDate.getFullYear() === currentYear;
+      });
+    }
+    
+    this.teletravailStats = {
+      total: filteredRequests.length,
+      approved: filteredRequests.filter(req => req.status === 'APPROVED').length,
+      rejected: filteredRequests.filter(req => req.status === 'REJECTED').length,
+      pending: filteredRequests.filter(req => req.status === 'PENDING').length
+    };
+  }
+
+  /**
+   * Change teletravail filter
+   */
+  changeTeletravailFilter(filter: 'currentMonth' | 'allTime'): void {
+    this.teletravailFilter = filter;
+    this.calculateTeletravailStats();
+  }
+
+  /**
+   * Get teletravail status color
+   */
+  getTeletravailStatusColor(status: string): string {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        return '#10B981'; // Green
+      case 'REJECTED':
+        return '#EF4444'; // Red
+      case 'PENDING':
+        return '#F59E0B'; // Orange
+      default:
+        return '#6B7280'; // Gray
+    }
+  }
+
+  /**
+   * Get teletravail status icon
+   */
+  getTeletravailStatusIcon(status: string): string {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        return 'bi-check-circle'; // Check circle
+      case 'REJECTED':
+        return 'bi-x-circle'; // X circle
+      case 'PENDING':
+        return 'bi-clock'; // Clock
+      default:
+        return 'bi-question-circle'; // Question circle
+    }
+  }
+
+  /**
+   * Get approved requests percentage
+   */
+  getApprovedPercentage(): string {
+    if (this.teletravailStats.total === 0) return '0';
+    const percentage = (this.teletravailStats.approved / this.teletravailStats.total) * 100;
+    return percentage.toFixed(1);
+  }
+
+  /**
+   * Get pending requests percentage
+   */
+  getPendingPercentage(): string {
+    if (this.teletravailStats.total === 0) return '0';
+    const percentage = (this.teletravailStats.pending / this.teletravailStats.total) * 100;
+    return percentage.toFixed(1);
+  }
+
+  /**
+   * Get rejected requests percentage
+   */
+  getRejectedPercentage(): string {
+    if (this.teletravailStats.total === 0) return '0';
+    const percentage = (this.teletravailStats.rejected / this.teletravailStats.total) * 100;
+    return percentage.toFixed(1);
+  }
+
+  /**
+   * Get approved requests width percentage
+   */
+  getApprovedWidthPercentage(): number {
+    if (this.teletravailStats.total === 0) return 0;
+    return (this.teletravailStats.approved / this.teletravailStats.total) * 100;
+  }
+
+  /**
+   * Get pending requests width percentage
+   */
+  getPendingWidthPercentage(): number {
+    if (this.teletravailStats.total === 0) return 0;
+    return (this.teletravailStats.pending / this.teletravailStats.total) * 100;
+  }
+
+  /**
+   * Get rejected requests width percentage
+   */
+  getRejectedWidthPercentage(): number {
+    if (this.teletravailStats.total === 0) return 0;
+    return (this.teletravailStats.rejected / this.teletravailStats.total) * 100;
+  }
+
+  /**
+   * Get weekly average occupancy
+   */
+  getWeeklyAverage(): string {
+    if (!this.analytics?.weeklyOccupancy || this.analytics.weeklyOccupancy.length === 0) {
+      return '0';
+    }
+    const total = this.analytics.weeklyOccupancy.reduce((sum, day) => sum + day.percentage, 0);
+    const average = total / this.analytics.weeklyOccupancy.length;
+    return average.toFixed(1);
+  }
+
+  /**
+   * Get date for a specific day of the current week (0 = Monday, 4 = Friday)
+   * If current day is weekend, show next week's dates
+   */
+  getWeekDate(dayIndex: number): string {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // If it's weekend (Saturday = 6, Sunday = 0), show next week
+    let targetWeekStart: Date;
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      // It's weekend, so show next week
+      const nextMonday = new Date(today);
+      const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 2; // Sunday = 1 day, Saturday = 2 days
+      nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+      targetWeekStart = nextMonday;
+    } else {
+      // It's a weekday, show current week
+      const monday = new Date(today);
+      const daysToMonday = dayOfWeek - 1; // Monday = 1, so subtract 1
+      monday.setDate(today.getDate() - daysToMonday);
+      targetWeekStart = monday;
+    }
+    
+    // Calculate the target date for the specific day index
+    const targetDate = new Date(targetWeekStart);
+    targetDate.setDate(targetWeekStart.getDate() + dayIndex);
+    
+    // Get day name in French
+    const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const dayName = dayNames[targetDate.getDay()];
+    
+    // Get month name in French
+    const monthNames = [
+      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ];
+    const monthName = monthNames[targetDate.getMonth()];
+    
+    // Return format: "Lundi 30 juin"
+    return `${dayName} ${targetDate.getDate()} ${monthName}`;
+  }
+
+  /**
+   * Get day icon for weekly occupancy
+   */
+  getDayIcon(day: string): string {
+    switch (day.toLowerCase()) {
+      case 'lundi':
+        return 'bi-calendar-day';
+      case 'mardi':
+        return 'bi-calendar-day';
+      case 'mercredi':
+        return 'bi-calendar-day';
+      case 'jeudi':
+        return 'bi-calendar-day';
+      case 'vendredi':
+        return 'bi-calendar-day';
+      case 'samedi':
+        return 'bi-calendar-week';
+      case 'dimanche':
+        return 'bi-calendar-week';
+      default:
+        return 'bi-calendar-day';
+    }
+  }
+
+  /**
+   * Get day gradient based on percentage
+   */
+  getDayGradient(percentage: number): string {
+    if (percentage >= 80) {
+      return 'linear-gradient(135deg, #10B981 0%, #34D399 100%)'; // Green for high occupancy
+    } else if (percentage >= 60) {
+      return 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)'; // Orange for medium occupancy
+    } else if (percentage >= 40) {
+      return 'linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%)'; // Blue for moderate occupancy
+    } else {
+      return 'linear-gradient(135deg, #EF4444 0%, #F87171 100%)'; // Red for low occupancy
+    }
+  }
+
+  /**
+   * Returns true if the bar at index i is today (or next Monday if weekend)
+   */
+  isTodayOrNextMonday(i: number): boolean {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    let targetWeekStart: Date;
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      const nextMonday = new Date(today);
+      const daysUntilNextMonday = dayOfWeek === 0 ? 1 : 2;
+      nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+      targetWeekStart = nextMonday;
+    } else {
+      const monday = new Date(today);
+      const daysToMonday = dayOfWeek - 1;
+      monday.setDate(today.getDate() - daysToMonday);
+      targetWeekStart = monday;
+    }
+    const targetDate = new Date(targetWeekStart);
+    targetDate.setDate(targetWeekStart.getDate() + i);
+    return (
+      today.getDate() === targetDate.getDate() &&
+      today.getMonth() === targetDate.getMonth() &&
+      today.getFullYear() === targetDate.getFullYear()
+    );
+  }
+
+  /**
+   * Returns true if all weekly occupancy percentages are 0
+   */
+  get isWeeklyOccupancyEmpty(): boolean {
+    return !!(this.analytics?.weeklyOccupancy && this.analytics.weeklyOccupancy.length > 0 && this.analytics.weeklyOccupancy.every(day => day.percentage === 0));
+  }
+
+  /**
+   * Returns the scaled bar height in px for a given day
+   */
+  getBarHeight(day: { percentage: number }): number {
+    if (!day || typeof day.percentage !== 'number') return 0;
+    return day.percentage === 0 ? 0 : Math.max(day.percentage * 3, 4);
+  }
+
+  ngAfterViewInit() {
+    this.updateBarCurveWidth();
+    window.addEventListener('resize', () => {
+      this.updateBarCurveWidth();
+      this.updateBarCurvePoints();
+    });
+    setTimeout(() => {
+      this.updateBarCurvePoints();
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  updateBarCurveWidth() {
+    if (this.chartContainerRef && this.chartContainerRef.nativeElement) {
+      this.barCurveWidth = this.chartContainerRef.nativeElement.offsetWidth;
+    }
+  }
+
+  updateBarCurvePoints() {
+    if (!this.analytics?.weeklyOccupancy || !this.barRefs || !this.chartContainerRef) {
+      this.barCurvePointsValue = '';
+      return;
+    }
+    const bars = this.analytics.weeklyOccupancy;
+    const points: string[] = [];
+    const containerRect = this.chartContainerRef.nativeElement.getBoundingClientRect();
+    this.barRefs.forEach((barRef, i) => {
+      const rect = barRef.nativeElement.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - containerRect.left;
+      const y = this.barCurveHeight - this.getBarHeight(bars[i]);
+      points.push(`${x},${y}`);
+    });
+    // Add a final point at the right edge, at the same y as the last bar
+    if (bars.length > 0 && this.barRefs.length > 0) {
+      const lastY = this.barCurveHeight - this.getBarHeight(bars[bars.length - 1]);
+      points.push(`${this.barCurveWidth},${lastY}`);
+    }
+    this.barCurvePointsValue = points.join(' ');
   }
 }

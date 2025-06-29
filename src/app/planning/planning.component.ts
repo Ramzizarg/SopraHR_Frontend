@@ -1058,8 +1058,8 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       this.endDate = formatDate(prevFriday, 'yyyy-MM-dd', 'en');
       
       // Set navigation flags
-      this.isCurrentWeek = false; // Enable left arrow since we're not on current week
-      this.isNextWeek = false;    // Enable right arrow when viewing previous week
+      this.isCurrentWeek = true;  // Disable left arrow (can't go further back)
+      this.isNextWeek = false;    // Enable right arrow (can go forward to current week)
       
       console.log('Previous week dates set:', { 
         start: this.startDate, 

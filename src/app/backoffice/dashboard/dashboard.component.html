@@ -182,12 +182,12 @@
           <div class="metric-card-v2">
             <div class="metric-card-v2-icon-wrapper">
               <div class="metric-card-v2-icon">
-                <i class="bi bi-person-check"></i>
+                <i class="bi bi-building"></i>
               </div>
             </div>
             <div class="metric-card-v2-content">
               <h3 class="metric-card-v2-title">Présents</h3>
-              <p class="metric-card-v2-value">{{ analytics.officePresence | number:'1.0-0' }}</p>
+              <p class="metric-card-v2-value">{{ isWeekend ? 0 : (analytics.officePresence | number:'1.0-0') }}</p>
             </div>
             <div class="metric-card-v2-footer" *ngIf="analytics.officePresenceChange as presenceChange">
               <div class="growth-badge" [ngClass]="{'positive': presenceChange >= 0, 'negative': presenceChange < 0}">
@@ -196,11 +196,11 @@
               </div>
             </div>
           </div>
-          <div class="chart-card presence-card" *ngIf="presenceChartOptions">
+          <div class="chart-card presence-card" *ngIf="presenceChartOptions && !isWeekend">
             <div class="card-header upgraded-header">
               <div class="header-row">
                 <div class="header-icon">
-                  <i class="bi bi-building"></i>
+                  <i class="bi bi-person-workspace"></i>
                 </div>
                 <div class="header-text">
                   <h2 class="header-title">Présence au bureau</h2>
@@ -244,22 +244,152 @@
               </div>
             </div>
           </div>
+          <div class="chart-card presence-card" *ngIf="isWeekend">
+            <div class="card-header upgraded-header">
+              <div class="header-row">
+                <div class="header-icon">
+                  <i class="bi bi-person-workspace"></i>
+                </div>
+                <div class="header-text">
+                  <h2 class="header-title">Présence au bureau</h2>
+                  <div class="header-subtitle">Aucune présence enregistrée le week-end</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="presence-summary">
+                <p>Pas de présence au bureau le week-end.</p>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- Team distribution and weekly occupancy -->
         <div class="charts-row">
           <!-- Weekly occupancy -->
-          <div class="chart-card">
-            <div class="card-header">
-              <h3>Taux d'occupation hebdomadaire</h3>
+          <div class="chart-card team-distribution-card presence-card">
+            <div class="card-header upgraded-header">
+              <div class="header-row">
+                <div class="header-icon">
+                  <i class="bi bi-person-workspace"></i>
+                </div>
+                <div class="header-text">
+                  <h2 class="header-title">Taux d'occupation hebdomadaire</h2>
+                  <div class="header-subtitle">Suivi de l'occupation par jour de la semaine</div>
+                </div>
+                <div class="header-actions">
+                  <div class="total-employees-header">
+                    <span class="total-label-header">Moyenne</span>
+                    <span class="total-value-header">{{ getWeeklyAverage() }}%</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="card-body">
-              <div class="weekly-occupancy">
-                <div *ngFor="let day of analytics.weeklyOccupancy" class="day-item">
-                  <div class="day-name">{{ day.day }}</div>
-                  <div class="day-bar-container">
-                    <div class="day-bar" [style.width.%]="day.percentage">
-                      {{ day.percentage }}%
+              <div class="weekly-occupancy-chart">
+                <div class="chart-info">
+                  <i class="bi bi-info-circle"></i>
+                  <span>Survolez une barre pour plus de détails</span>
+                </div>
+                <div *ngIf="isWeeklyOccupancyEmpty" class="empty-state">
+                  <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+                  <div class="empty-title">Aucune donnée d'occupation</div>
+                  <div class="empty-subtitle">Aucune réservation enregistrée pour cette semaine.</div>
+                </div>
+                <div #chartContainer class="chart-container" *ngIf="!isWeeklyOccupancyEmpty" style="position: relative;">
+                  <svg class="bar-curve-svg"
+                       [attr.width]="barCurveWidth"
+                       [attr.height]="barCurveHeight"
+                       [attr.viewBox]="'0 0 ' + barCurveWidth + ' ' + barCurveHeight"
+                       style="position: absolute; left: 0; top: 0; pointer-events: none; z-index: 3;">
+                    <polyline
+                      [attr.points]="barCurvePointsValue"
+                      fill="none"
+                      stroke="#3b82f6"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      opacity="0.7"
+                    />
+                  </svg>
+                  <div class="average-line" [style.bottom.%]="getWeeklyAverage()"></div>
+                  <div class="chart-bars">
+                    <div *ngFor="let day of analytics.weeklyOccupancy; let i = index"
+                         class="chart-bar-item"
+                         [class.today-highlight]="isTodayOrNextMonday(i)">
+                      <div class="bar-container">
+                        <div class="bar"
+                             #barRef
+                             [style.height.px]="getBarHeight(day)"
+                             [style.background]="getDayGradient(day.percentage)"
+                             (mouseenter)="hoveredBarIndex = i"
+                             (mouseleave)="hoveredBarIndex = null"
+                             [attr.aria-label]="getWeekDate(i) + ': ' + day.percentage + '% d\'occupation'"
+                             tabindex="0">
+                          <div class="bar-value">{{ day.percentage }}%</div>
+                          <div class="bar-tooltip" *ngIf="hoveredBarIndex === i">
+                            {{ getWeekDate(i) }}<br>
+                            {{ day.percentage }}% d'occupation
+                          </div>
+                        </div>
+                      </div>
+                      <div class="bar-date-label">{{ getWeekDate(i) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Team distribution -->
+          <div class="chart-card team-distribution-card presence-card">
+            <div class="card-header upgraded-header">
+              <div class="header-row">
+                <div class="header-icon">
+                  <i class="bi bi-diagram-3"></i>
+                </div>
+                <div class="header-text">
+                  <h2 class="header-title">Répartition par équipe</h2>
+                  <div class="header-subtitle">Distribution des employés par équipe</div>
+                </div>
+                <div class="header-actions">
+                  <div class="total-employees-header">
+                    <span class="total-label-header">Total employés</span>
+                    <span class="total-value-header">{{ analytics.totalEmployees }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="team-distribution-container">
+                <div class="team-distribution-list">
+                  <div *ngFor="let team of analytics.teamDistribution; let i = index" class="team-item-upgraded">
+                    <div class="team-info">
+                      <div class="team-icon" [ngStyle]="{'background-color': getTeamColor(team.team)}">
+                        <i class="bi" [ngClass]="getTeamIcon(team.team)"></i>
+                      </div>
+                      <div class="team-details">
+                        <div class="team-name-upgraded">{{ team.team }}</div>
+                        <div class="team-count">{{ team.count }} employé{{ team.count > 1 ? 's' : '' }}</div>
+                      </div>
+                    </div>
+                    <div class="team-bar-section">
+                      <div class="team-bar-container-upgraded">
+                        <div class="team-bar-upgraded" 
+                             [style.width.%]="(team.count / analytics.totalEmployees) * 100"
+                             [style.background]="getTeamGradient(team.team)">
+                          <div class="bar-fill"></div>
+                        </div>
+                      </div>
+                      <div class="team-percentage">{{ ((team.count / analytics.totalEmployees) * 100) | number:'1.0-1' }}%</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="team-distribution-footer">
+                  <div class="legend">
+                    <div class="legend-item" *ngFor="let team of analytics.teamDistribution">
+                      <div class="legend-color" [ngStyle]="{'background-color': getTeamColor(team.team)}"></div>
+                      <span class="legend-text">{{ team.team }}</span>
                     </div>
                   </div>
                 </div>
@@ -270,48 +400,177 @@
         
         <!-- Approval rates and top employees -->
         <div class="charts-row">
-          <!-- Approval rates -->
-          <div class="chart-card">
-            <div class="card-header">
-              <h3>Demandes de télétravail</h3>
+          <!-- Teletravail requests chart -->
+          <div class="chart-card team-distribution-card presence-card">
+            <div class="card-header upgraded-header">
+              <div class="header-row">
+                <div class="header-icon">
+                  <i class="bi bi-laptop"></i>
+                </div>
+                <div class="header-text">
+                  <h2 class="header-title">Demandes de télétravail</h2>
+                  <div class="header-subtitle">Statistiques des demandes de télétravail</div>
+                </div>
+                <div class="header-actions">
+                  <select class="teletravail-filter" [(ngModel)]="teletravailFilter" (change)="changeTeletravailFilter(teletravailFilter)">
+                    <option value="currentMonth">Ce mois</option>
+                    <option value="allTime">Tout le temps</option>
+                  </select>
+                  <div class="total-employees-header">
+                    <span class="total-label-header">Total demandes</span>
+                    <span class="total-value-header">{{ teletravailStats.total }}</span>
             </div>
-            <div class="card-body approval-rates">
-              <div class="approval-stat">
-                <div class="approval-circle" style="background-color: #10B981;">
-                  {{ analytics.approvalRates.approved }}
                 </div>
-                <div class="approval-label">Approuvées</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="team-distribution-container">
+                <div class="team-distribution-list">
+                  <!-- Approved requests -->
+                  <div class="team-item-upgraded">
+                    <div class="team-info">
+                      <div class="team-icon" style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%);">
+                        <i class="bi bi-check-circle"></i>
+                      </div>
+                      <div class="team-details">
+                        <div class="team-name-upgraded">Approuvées</div>
+                        <div class="team-count">{{ teletravailStats.approved }} demande{{ teletravailStats.approved > 1 ? 's' : '' }}</div>
+                      </div>
+                    </div>
+                    <div class="team-bar-section">
+                      <div class="team-bar-container-upgraded">
+                        <div class="team-bar-upgraded" 
+                             [style.width.%]="getApprovedWidthPercentage()"
+                             style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%);">
+                          <div class="bar-fill"></div>
+                        </div>
+                      </div>
+                      <div class="team-percentage">{{ getApprovedPercentage() }}%</div>
+                    </div>
+                  </div>
+
+                  <!-- Pending requests -->
+                  <div class="team-item-upgraded">
+                    <div class="team-info">
+                      <div class="team-icon" style="background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);">
+                        <i class="bi bi-clock"></i>
+                      </div>
+                      <div class="team-details">
+                        <div class="team-name-upgraded">En attente</div>
+                        <div class="team-count">{{ teletravailStats.pending }} demande{{ teletravailStats.pending > 1 ? 's' : '' }}</div>
+                      </div>
+                    </div>
+                    <div class="team-bar-section">
+                      <div class="team-bar-container-upgraded">
+                        <div class="team-bar-upgraded" 
+                             [style.width.%]="getPendingWidthPercentage()"
+                             style="background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);">
+                          <div class="bar-fill"></div>
+                        </div>
+                      </div>
+                      <div class="team-percentage">{{ getPendingPercentage() }}%</div>
+                    </div>
               </div>
               
-              <div class="approval-stat">
-                <div class="approval-circle" style="background-color: #EF4444;">
-                  {{ analytics.approvalRates.rejected }}
+                  <!-- Rejected requests -->
+                  <div class="team-item-upgraded">
+                    <div class="team-info">
+                      <div class="team-icon" style="background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);">
+                        <i class="bi bi-x-circle"></i>
+                      </div>
+                      <div class="team-details">
+                        <div class="team-name-upgraded">Rejetées</div>
+                        <div class="team-count">{{ teletravailStats.rejected }} demande{{ teletravailStats.rejected > 1 ? 's' : '' }}</div>
+                      </div>
+                    </div>
+                    <div class="team-bar-section">
+                      <div class="team-bar-container-upgraded">
+                        <div class="team-bar-upgraded" 
+                             [style.width.%]="getRejectedWidthPercentage()"
+                             style="background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);">
+                          <div class="bar-fill"></div>
+                        </div>
+                      </div>
+                      <div class="team-percentage">{{ getRejectedPercentage() }}%</div>
+                    </div>
+                  </div>
                 </div>
-                <div class="approval-label">Rejetées</div>
+                <div class="team-distribution-footer">
+                  <div class="legend">
+                    <div class="legend-item">
+                      <div class="legend-color" style="background-color: #10B981;"></div>
+                      <span class="legend-text">Approuvées</span>
+                    </div>
+                    <div class="legend-item">
+                      <div class="legend-color" style="background-color: #F59E0B;"></div>
+                      <span class="legend-text">En attente</span>
+                    </div>
+                    <div class="legend-item">
+                      <div class="legend-color" style="background-color: #EF4444;"></div>
+                      <span class="legend-text">Rejetées</span>
+                    </div>
               </div>
-              
-              <div class="approval-stat">
-                <div class="approval-circle" style="background-color: #F59E0B;">
-                  {{ analytics.approvalRates.pending }}
                 </div>
-                <div class="approval-label">En attente</div>
               </div>
             </div>
           </div>
           
-          <!-- All employees -->
+          <!-- Top employees -->
           <div class="chart-card">
-            <div class="card-header">
-              <h3>Liste des employés</h3>
+            <div class="card-header top-office-header">
+              <div class="top-office-title">
+                <i class="bi bi-award"></i>
+                <h3>Top employés au bureau</h3>
+              </div>
+              <div class="top-office-header-right">
+                <input type="text" class="top-office-search-input" placeholder="Rechercher..." [(ngModel)]="searchTopOfficeTerm">
+                <select class="top-office-team-filter" [(ngModel)]="selectedTeamFilter" (change)="filterByTeam()">
+                  <option value="">Toutes les équipes</option>
+                  <option value="DEV">DEV</option>
+                  <option value="QA">QA</option>
+                  <option value="OPS">OPS</option>
+                  <option value="RH">RH</option>
+                </select>
+                <span class="month-indicator">{{ today | date:'MMMM yyyy' }}</span>
+              </div>
             </div>
+            <div class="top-office-divider"></div>
             <div class="card-body">
               <div class="top-employees">
-                <div *ngFor="let employee of analytics.allEmployees" class="employee-item">
-                  <div class="employee-info">
-                    <div class="employee-name">{{ employee.firstName }} {{ employee.lastName }}</div>
-                    <div class="employee-team">{{ employee.team }}</div>
+                <ng-container *ngIf="filteredTopOfficeEmployees && filteredTopOfficeEmployees.length; else noEmployees">
+                  <div *ngFor="let employee of paginatedTopOfficeEmployees" class="employee-item upgraded-employee-item">
+                    <div class="employee-avatar">
+                      <img *ngIf="getUserProfilePhoto(employee.id)" [src]="getUserProfilePhoto(employee.id)" class="profile-photo" [alt]="employee.firstName + ' ' + employee.lastName" (error)="handleImageError($event)">
+                      <div *ngIf="!getUserProfilePhoto(employee.id)" class="avatar-circle" [ngStyle]="{'background-color': employee.team === 'DEV' ? '#2563EB' : employee.team === 'QA' ? '#16A34A' : employee.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+                        {{ employee.firstName.charAt(0) || '' }}{{ employee.lastName.charAt(0) || '' }}
+                      </div>
+                    </div>
+                    <div class="employee-main-info">
+                      <div class="employee-name upgraded-employee-name">{{ employee.firstName }} {{ employee.lastName }}</div>
+                      <div class="employee-email" *ngIf="employee.email">
+                        <i class="bi bi-envelope"></i> {{ employee.email }}
+                      </div>
+                    </div>
+                    <div class="employee-team upgraded-employee-team">
+                      <span class="team-badge" [ngClass]="employee.team.toLowerCase()">{{ employee.team }}</span>
+                      <span class="office-days-badge">{{ employee.officeDaysThisMonth }} jours au bureau</span>
+                    </div>
                   </div>
+                </ng-container>
+                <ng-template #noEmployees>
+                  <div class="empty-state">
+                    <div class="empty-icon"><i class="bi bi-people"></i></div>
+                    <div class="empty-title">Aucun employé trouvé</div>
+                    <div class="empty-subtitle">La liste des employés est vide pour le moment.</div>
+                  </div>
+                </ng-template>
                 </div>
+              <div class="top-office-pagination" *ngIf="topOfficeTotalPages > 1">
+                <button class="top-office-page-btn" [disabled]="currentTopOfficePage === 1" (click)="changeTopOfficePage(currentTopOfficePage - 1)">&laquo;</button>
+                <ng-container *ngFor="let page of [].constructor(topOfficeTotalPages); let i = index">
+                  <button class="top-office-page-btn" [class.active]="currentTopOfficePage === (i+1)" (click)="changeTopOfficePage(i+1)">{{ i+1 }}</button>
+                </ng-container>
+                <button class="top-office-page-btn" [disabled]="currentTopOfficePage === topOfficeTotalPages" (click)="changeTopOfficePage(currentTopOfficePage + 1)">&raquo;</button>
               </div>
             </div>
           </div>
