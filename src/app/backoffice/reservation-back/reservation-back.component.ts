@@ -19,7 +19,7 @@ export interface Desk {
   moving?: boolean;
   available?: boolean; // True if available, false if reserved
   employeeName?: string;
-  duration?: '4' | '8'; // 4 for half day, 8 for full day
+  duration?: 'AM' | 'PM' | 'FULL'; // AM for 8h-12h, PM for 14h-18h, FULL for 8h-18h
   bookingDate?: string;
   isOwnReservation?: boolean;
 }
@@ -874,7 +874,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
  public showBookingDialog = false;
  public selectedDeskForBooking: Desk | null = null;
  public employeeName = '';
- public bookingDuration: '4' | '8' = '4';
+ public bookingDuration: 'AM' | 'PM' | 'FULL' = 'AM';
  public currentDate = '';
 
  private readonly MAX_FUTURE_DAYS = 14; // Maximum two weeks in the future
@@ -1264,7 +1264,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
      if (desk) {
        desk.available = false;
        desk.employeeName = reservation.employeeName;
-       desk.duration = reservation.duration as '4' | '8';
+       desk.duration = reservation.duration as 'AM' | 'PM' | 'FULL';
        desk.bookingDate = reservation.bookingDate;
        
        // If this is the user's own reservation, mark it as such
@@ -1863,7 +1863,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
        this.selectedDeskForBooking = desk;
        this.selectedBookingDates.clear();
        this.updateBookingWeekDates();
-       this.bookingDuration = '4'; // Default to half day
+       this.bookingDuration = 'AM'; // Default to AM
        
        // In day view, automatically select ONLY the current date being viewed
        if (this.viewMode === 'day' && this.bookingWeekDates.length > 0) {
@@ -1935,8 +1935,8 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
                // Set the booking duration to match the existing reservation's duration
                // This will show the correct value in the dropdown when editing a reservation
                if (reservation.duration) {
-                 // Ensure the duration is either '4' or '8' to match the type constraint
-                 this.bookingDuration = reservation.duration === '8' ? '8' : '4';
+                 // Ensure the duration is either 'AM' or 'PM' or 'FULL' to match the type constraint
+                 this.bookingDuration = reservation.duration === 'PM' ? 'PM' : reservation.duration === 'FULL' ? 'FULL' : 'AM';
                  console.log(`Setting booking duration to match existing reservation: ${this.bookingDuration}`);
                }
              }
@@ -2046,8 +2046,8 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
                );
                
                if (existingReservation && existingReservation.duration) {
-                 // Save the duration before opening dialog - ensure it's either '4' or '8'
-                 this.bookingDuration = existingReservation.duration === '8' ? '8' : '4';
+                 // Save the duration before opening dialog - ensure it's either 'AM' or 'PM' or 'FULL'
+                 this.bookingDuration = existingReservation.duration === 'PM' ? 'PM' : existingReservation.duration === 'FULL' ? 'FULL' : 'AM';
                  console.log(`Setting duration to existing value: ${this.bookingDuration}`);
                }
                
@@ -3416,7 +3416,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
              this.isLoading = false;
              this.showBookingDialog = false;
              this.selectedDeskForBooking = null;
-             this.bookingDuration = '4';
+             this.bookingDuration = 'AM';
              
              // IMPORTANT: Clear localStorage reservation entry
              // This prevents the cancelled reservation from appearing on the home page
@@ -3467,7 +3467,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
  public closeBookingDialog(): void {
    this.showBookingDialog = false;
    this.selectedDeskForBooking = null;
-   this.bookingDuration = '4';
+   this.bookingDuration = 'AM';
    this.selectedBookingDates.clear();
  }
  
@@ -3787,7 +3787,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
              if (date === this.currentDate) {
                desk.available = false;
                desk.employeeName = reservation.employeeName;
-               desk.duration = reservation.duration as '4' | '8';
+               desk.duration = reservation.duration as 'AM' | 'PM' | 'FULL';
                desk.bookingDate = reservation.bookingDate;
                
                // If this is the user's own reservation, mark it as such
@@ -3951,7 +3951,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
    const reservation = reservations.find((r: Reservation) => r.deskId === desk.id);
    
    if (reservation) {
-     const duration = reservation.duration === '8' ? 'Full day' : 'Half day';
+     const duration = reservation.duration === 'PM' ? 'Afternoon' : reservation.duration === 'FULL' ? 'Full day' : 'Morning';
      return `${reservation.employeeName || ''}, ${duration} on ${this.formatDate(date)}`;
    }
    
@@ -4265,7 +4265,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
         content = 'Available';
         status = 'available';
       } else {
-        content = `${desk.employeeName}, ${desk.duration === '4' ? 'Half day' : 'Full day'}`;
+        content = `${desk.employeeName}, ${desk.duration === 'PM' ? 'Afternoon' : desk.duration === 'FULL' ? 'Full day' : 'Morning'}`;
         status = 'reserved';
       }
 

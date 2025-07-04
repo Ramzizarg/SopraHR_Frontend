@@ -9,6 +9,7 @@ import { Subject, Observable, forkJoin, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap, catchError } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { ContactService, ContactRequest } from '../services/contact.service';
+import { NotificationService, Notification } from '../services/notification.service';
 
 @Component({
   selector: 'app-gerer-demande',
@@ -52,6 +53,10 @@ export class GererDemandeComponent implements OnInit, OnDestroy, AfterViewInit {
   totalPages: number = 1;
   allFilteredRequests: TeletravailRequest[] = [];
 
+  notifications: Notification[] = [];
+  unreadCount: number = 0;
+  showNotifications: boolean = false;
+
   constructor(
     private authService: AuthService,
     private planningService: PlanningService,
@@ -59,7 +64,8 @@ export class GererDemandeComponent implements OnInit, OnDestroy, AfterViewInit {
     private router: Router,
     private profileService: ProfileService,
     private http: HttpClient,
-    private contactService: ContactService
+    private contactService: ContactService,
+    private notificationService: NotificationService
   ) {
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -91,6 +97,23 @@ export class GererDemandeComponent implements OnInit, OnDestroy, AfterViewInit {
         
         // Load pending requests
         this.loadPendingRequests();
+
+        this.notificationService.getUserNotifications(user.id).subscribe({
+          next: (notifications) => {
+            this.notifications = notifications;
+          },
+          error: (err) => {
+            console.error('Error fetching notifications:', err);
+          }
+        });
+        this.notificationService.getUnreadNotificationCount(user.id).subscribe({
+          next: (count) => {
+            this.unreadCount = count;
+          },
+          error: (err) => {
+            console.error('Error fetching unread notification count:', err);
+          }
+        });
       }
     });
 
@@ -163,6 +186,7 @@ export class GererDemandeComponent implements OnInit, OnDestroy, AfterViewInit {
   // Contact modal handling
   openContactModal(): void {
     this.isContactModalOpen = true;
+    this.showNotifications = false;
     document.body.style.overflow = 'hidden';
   }
 
@@ -809,5 +833,37 @@ export class GererDemandeComponent implements OnInit, OnDestroy, AfterViewInit {
   // Add method to fetch user role from users API
   private fetchUserRole(userId: number) {
     return this.http.get<any>(`http://localhost:9001/api/users/${userId}`);
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      this.isContactModalOpen = false;
+    }
+  }
+
+  handleNotificationClick(notif: Notification) {
+    this.notificationService.markAsRead(notif.id).subscribe({
+      next: (notification) => {
+        const idx = this.notifications.findIndex(n => n.id === notif.id);
+        if (idx !== -1) {
+          this.notifications[idx] = notification;
+        }
+        if (this.unreadCount > 0) {
+          this.unreadCount--;
+        }
+      },
+      error: (err) => {
+        console.error('Error marking notification as read:', err);
+      }
+    });
+    if (notif.type === 'TELEWORK_REQUEST_CREATED') {
+      this.router.navigate(['/planning']);
+      this.showNotifications = false;
+    }
+  }
+
+  onProfilePopupOpened() {
+    this.showNotifications = false;
   }
 }

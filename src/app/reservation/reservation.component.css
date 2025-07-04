@@ -1780,38 +1780,30 @@ button:hover:not(:disabled) i {
   padding: 0 10px;
 }
 
-
-.close-button {
+.booking-dialog-header .close-button {
+  position: absolute;
+  top: 2px;
+  right: 5px;
   background: transparent;
-  border: 1px solid var(--border-color);
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+  border: none;
+  color: #333;
+  font-size: 18px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-  position: absolute;
-  top: -5x;
-  right: -5px;
-  box-shadow: var(--shadow-xs);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  transition: all 0.2s;
   opacity: 0.8;
+  padding: 0;
+  margin: 0;
 }
 
-.close-button:hover {
-  background-color: #f59e0b;
-  color: white;
-  border-color: #f59e0b;
-  transform: scale(1.1);
+.booking-dialog-header .close-button:hover {
   opacity: 1;
-  box-shadow: var(--shadow-sm);
-}
-
-.close-button i {
-  font-size: 12px;
-  font-weight: 600;
+  background-color: rgba(123, 29, 189, 0.08);
 }
 
 .booking-dialog-header h3 {
@@ -1896,68 +1888,55 @@ button:hover:not(:disabled) i {
 
 .booking-dialog-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-end; /* Align all buttons to the right */
   gap: 1rem;
   margin-top: 1.5rem;
+  align-items: center; /* Vertically align items */
 }
 
 .booking-dialog-footer .primary-button,
 .booking-dialog-footer .secondary-button,
-.booking-dialog-footer .tertiary-button {
-  padding: 0.3rem 1.2rem;
+.booking-dialog-footer .danger-button {
+  padding: 0.6rem 1.2rem; /* Reduced padding */
   border-radius: 0.5rem;
   font-weight: 600;
   transition: all 0.2s ease;
-  min-width: 110px;
+  min-width: 100px; /* Reduced min-width to fit */
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   cursor: pointer;
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .booking-dialog-footer .primary-button {
-  background-color: var(--primary-color, #3b82f6);
-  color: white;
-  border: none;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  background: var(--gradient-primary, linear-gradient(135deg, #3b82f6, #2563eb));
 }
 
 .booking-dialog-footer .primary-button:hover {
-  background-color: #2563eb;
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  filter: brightness(1.1);
   transform: translateY(-1px);
 }
 
-.booking-dialog-footer .primary-button:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
-}
-
 .booking-dialog-footer .secondary-button {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #ef4444;
+  background: var(--secondary-color, #64748b);
 }
 
 .booking-dialog-footer .secondary-button:hover {
-  background-color: #fecaca;
-  color: #991b1b;
-  border-color: #dc2626;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: var(--secondary-color, #64748b);
+  filter: brightness(1.1);
 }
 
-.booking-dialog-footer .secondary-button:active {
-  background-color: #fca5a5;
-  transform: translateY(1px);
-  box-shadow: none;
+.booking-dialog-footer .danger-button {
+  background: var(--gradient-danger, linear-gradient(135deg, #ef4444, #dc2626));
 }
 
-.booking-dialog-footer .secondary-button i {
-  color: #ef4444;
-  font-size: 0.75rem;
+.booking-dialog-footer .danger-button:hover {
+  filter: brightness(1.1);
 }
-
 
 .booking-dialog-footer .tertiary-button {
   background-color: gainsboro;
@@ -2279,6 +2258,7 @@ button:hover:not(:disabled) i {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
 }
 
 .contact-modal-header h4 {
@@ -2300,6 +2280,7 @@ button:hover:not(:disabled) i {
 }
 
 .contact-modal .close-button {
+  /* Remove absolute positioning and transform so it stays in the flex flow */
   background: transparent;
   border: none;
   color: white;
@@ -2371,17 +2352,6 @@ button:hover:not(:disabled) i {
   color: #333;
 }
 
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: #555;
-}
-
 .form-group label.required::after {
   content: '*';
   color: #ff0000;
@@ -2389,7 +2359,7 @@ button:hover:not(:disabled) i {
 }
 
 .form-control {
-  width: 135%;
+  width: 100%;
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -2431,21 +2401,6 @@ textarea.form-control {
 .form-required-note span {
   color: #ff0000;
   margin-right: 4px;
-}
-
-/* Contact Icon */
-.contact-icon {
-  color: white;
-  font-size: 20px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.contact-icon:hover {
-  color: #f8f8f8;
-  transform: scale(1.1);
 }
 
 .contact-modal .send-button {
@@ -2497,23 +2452,7 @@ textarea.form-control {
 }
 
 .contact-modal .send-button:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(123, 29, 189, 0.2);
   background: rgba(123, 29, 189, 1);
-}
-
-.form-required-note {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 9px;
-  color: #777;
-  margin-top: 15px;
-}
-
-.form-required-note span {
-  color: #7b1dbd;
-  font-weight: bold;
 }
 
 /* For very small screens */
@@ -3221,6 +3160,150 @@ body.modal-open {
   background: #3b82f6 !important;
   color: white !important;
   border-color: #3b82f6 !important;
+}
+
+.desk.halfday {
+  background-color: #ffe066 !important; /* yellow for half-day */
+  border-color: #ffd700 !important;
+}
+
+.desk.reserved.full {
+  background-color: #ff6b6b !important; /* red for full day */
+  border-color: #ff0000 !important;
+}
+
+.desk.reserved.am, .desk.reserved.pm {
+  background-color: #ffe066 !important; /* yellow for half-day */
+  border-color: #ffd700 !important;
+}
+
+.notification-bell-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Notification Dropdown Styles (EXACT COPY FROM HOME) */
+.notification-dropdown {
+  position: absolute;
+  top: 65px;
+  width: 360px;
+  max-height: 420px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  z-index: 2000;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ececec;
+}
+.notification-dropdown-header {
+  padding: 14px 20px 12px 20px;
+  background: linear-gradient(90deg, #7b1dbd 0%, #9e4ad7 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ececec;
+}
+.notification-dropdown-header .close-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.2em;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.notification-dropdown-header .close-btn:hover {
+  opacity: 1;
+}
+.notification-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  background: #faf9fd;
+}
+.notification-item {
+  padding: 16px 22px 12px 22px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.18s;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #faf9fd;
+}
+.notification-item:last-child {
+  border-bottom: none;
+}
+.notification-item:hover {
+  background: #f3eaff;
+}
+.notification-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 7px;
+  background: #7b1dbd;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px #7b1dbd44;
+  display: inline-block;
+}
+.notification-item.unread {
+  font-weight: 600;
+  background: #f6f2ff;
+}
+.notification-item.read {
+  opacity: 0.7;
+}
+.notification-item strong {
+  font-size: 1.08em;
+  color: #7b1dbd;
+  margin-bottom: 2px;
+}
+.notification-item p {
+  margin: 0 0 2px 0;
+  font-size: 0.98em;
+  color: #333;
+}
+.notification-item small {
+  color: #888;
+  font-size: 0.85em;
+}
+.notification-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: #bbb;
+  font-size: 1.05em;
+  background: #faf9fd;
+}
+.notification-bell-container .badge.bg-danger {
+  display: none !important;
+}
+/* End Notification Dropdown Styles */
+
+.notification-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 1em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  z-index: 10;
+  transition: background 0.2s;
 }
 
 

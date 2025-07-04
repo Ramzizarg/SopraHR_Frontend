@@ -7,6 +7,7 @@ import { AuthService, UserProfile } from '../login/AuthService';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { ContactService, ContactRequest } from '../services/contact.service';
+import { NotificationService, Notification } from '../services/notification.service';
 
 export interface Desk {
   id: number;
@@ -16,7 +17,7 @@ export interface Desk {
   moving?: boolean;
   available?: boolean; // True if available, false if reserved
   employeeName?: string;
-  duration?: '4' | '8'; // 4 for half day, 8 for full day
+  duration?: 'AM' | 'PM' | 'FULL'; // AM for 8h-12h, PM for 14h-18h, FULL for 8h-18h
   bookingDate?: string;
   isOwnReservation?: boolean;
 }
@@ -111,7 +112,7 @@ export class ReservationComponent implements OnInit {
   public showBookingDialog = false;
   public selectedDeskForBooking: Desk | null = null;
   public employeeName = '';
-  public bookingDuration: '4' | '8' = '4';
+  public bookingDuration: 'AM' | 'PM' | 'FULL' = 'AM';
   public currentDate = '';
 
   private readonly MAX_FUTURE_DAYS = 14; // Maximum two weeks in the future
@@ -140,11 +141,18 @@ export class ReservationComponent implements OnInit {
     this.updateContainerWidths();
   };
 
+  public availableDurations: ('AM' | 'PM' | 'FULL')[] = ['AM', 'PM', 'FULL'];
+
+  notifications: Notification[] = [];
+  unreadCount: number = 0;
+  showNotifications: boolean = false;
+
   constructor(
     private reservationService: ReservationService,
     private authService: AuthService,
     private router: Router,
-    private contactService: ContactService
+    private contactService: ContactService,
+    private notificationService: NotificationService
   ) {}
 
   // Method to handle logout
@@ -156,6 +164,7 @@ export class ReservationComponent implements OnInit {
   // Contact modal methods
   openContactModal(): void {
     this.isContactModalOpen = true;
+    this.showNotifications = false;
     document.body.classList.add('modal-open');
   }
 
@@ -299,6 +308,28 @@ export class ReservationComponent implements OnInit {
     
     // Load plans from API
     this.loadPlans();
+
+    this.authService.currentUser.subscribe((user) => {
+      if (user) {
+        this.currentUser = user;
+        this.notificationService.getUserNotifications(user.id).subscribe({
+          next: (notifications) => {
+            this.notifications = notifications;
+          },
+          error: (err) => {
+            console.error('Error fetching notifications:', err);
+          }
+        });
+        this.notificationService.getUnreadNotificationCount(user.id).subscribe({
+          next: (count) => {
+            this.unreadCount = count;
+          },
+          error: (err) => {
+            console.error('Error fetching unread notification count:', err);
+          }
+        });
+      }
+    });
   }
   
   /**
@@ -485,8 +516,8 @@ export class ReservationComponent implements OnInit {
               height: apiWall.height
             }));
             
-            // Load reservations for the current date
-            this.loadReservationsForCurrentView();
+            // Defer the initial status update to ensure the view is ready.
+            setTimeout(() => this.updateDeskStatuses(), 0);
             this.isLoading = false;
           },
           error: (error: any) => {
@@ -584,7 +615,7 @@ export class ReservationComponent implements OnInit {
       if (desk) {
         desk.available = false;
         desk.employeeName = reservation.employeeName;
-        desk.duration = reservation.duration as '4' | '8';
+        desk.duration = reservation.duration as 'AM' | 'PM' | 'FULL';
         desk.bookingDate = reservation.bookingDate;
         
         // If this is the user's own reservation, mark it as such
@@ -1162,244 +1193,110 @@ export class ReservationComponent implements OnInit {
   }
   
   public selectDesk(desk: Desk, event: MouseEvent): void {
-    if (this.isPlanConfirmed) {
-      // Check if this is a right-click (context menu) - works for all browsers
-      const isRightClick = event.button === 2 || (event as any).which === 3;
-      
-      // Set loading state immediately
-      this.isLoading = true;
-      
-      // Prevent context menu from appearing for right clicks
-      if (isRightClick) {
-        event.preventDefault();
-        event.stopPropagation();
-        console.log('Right click detected on desk:', desk.id);
-      }
-      
-      // Helper function to show booking dialog
-      const showBookingDialog = () => {
-        // Set up booking dialog data
-        this.selectedDeskForBooking = desk;
-        this.selectedBookingDates.clear();
-        this.updateBookingWeekDates();
-        this.bookingDuration = '4'; // Default to half day
-        
-        // In day view, automatically select ONLY the current date being viewed
-        if (this.viewMode === 'day' && this.bookingWeekDates.length > 0) {
-          // In day view, the booking week dates should contain only the current date
-          // We'll check if it's already reserved by someone else
-          if (!this.isDeskReservedOnDate(this.currentDate) || this.isCurrentUserReservation(this.currentDate)) {
-            this.selectedBookingDates.add(this.currentDate);
-            console.log('Auto-selected current date in day view:', this.currentDate);
+    // Immediately clear previous reservation data to prevent using stale state.
+    this.selectedDeskReservations = [];
+
+    // Add a guard to ensure the user's profile is loaded before proceeding.
+    if (!this.currentUser) {
+      console.warn('selectDesk called before currentUser is loaded.');
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'info',
+        title: 'Loading user data, please wait...',
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      return;
+    }
+    
+    if (!this.isPlanConfirmed) {
+      // In design mode, just select the desk for moving/rotating
+      if (this.selectedDesk === desk) {
+        this.clearSelections();
           } else {
-            console.log('Current date is reserved by someone else, cannot select:', this.currentDate);
-          }
-        } else if (this.viewMode === 'week') {
-          // In week view, automatically select days that are already reserved by the current user
-          for (const date of this.bookingWeekDates) {
-            // If this date is reserved by the current user, pre-select it
-            if (this.isCurrentUserReservation(date)) {
-              this.selectedBookingDates.add(date);
-              console.log('Pre-selected user reservation in week view:', date);
-            }
-          }
-        }
-                // Load reservations first, then show dialog when data is ready
-        this.loadDeskReservationsForBookingDates(desk.id, () => {
-          // Now that reservations are loaded, we can accurately preselect user's reservations
-          // Clear tracking sets for updating reservations
-          this.initialUserReservations.clear();
-          this.userReservationIds.clear();
-          
-          // Store current selections before clearing
-          const dayViewSelections = this.viewMode === 'day' ? new Set(this.selectedBookingDates) : new Set<string>();
+        this.selectedDesk = desk;
+        this.selectedWall = null;
+        this.selectedPlan = null;
+      }
+      return;
+    }
+
+    // In booking mode, load the latest reservation data before showing the dialog
+    this.isLoading = true;
+    this.selectedDeskForBooking = desk;
+
+    this.loadDeskReservationsForBookingDates(desk.id, () => {
+      this.isLoading = false;
           this.selectedBookingDates.clear();
           
-          // Track user reservations for both day and week view
-          for (const date of this.bookingWeekDates) {
-            // First check if date is reserved by another user and ensure it can't be selected
-            const isReservedByOthers = this.isDeskReservedOnDate(date) && !this.isCurrentUserReservation(date);
-            
-            if (isReservedByOthers) {
-              // This date is reserved by another user, so we must ensure it's not selected
-              if (this.selectedBookingDates.has(date)) {
-                this.selectedBookingDates.delete(date);
-                console.log(`Removing date ${date} from selection - it's reserved by another user`);
-              }
-              // Now skip to the next date
-              continue;
-            }
-            
-            // Handle user's own reservations
-            if (this.isCurrentUserReservation(date)) {
-              // Track all user reservations for update/delete operations
-              this.initialUserReservations.add(date);
-              
-              // For week view, preselect these dates
-              if (this.viewMode === 'week') {
-                this.selectedBookingDates.add(date);
-                console.log(`Pre-selected user reservation in week view: ${date}`);
-              }
-              
-              // Find reservation ID for this date to enable deletion
-              const reservation = this.selectedDeskReservations.find(res => 
-                res.bookingDate === date && 
-                res.deskId === this.selectedDeskForBooking!.id
-              );
-              
-              if (reservation && reservation.id) {
-                this.userReservationIds.set(date, reservation.id);
-                console.log(`Tracking user reservation ID ${reservation.id} for date ${date}`);
-                
-                // Set the booking duration to match the existing reservation's duration
-                // This will show the correct value in the dropdown when editing a reservation
-                if (reservation.duration) {
-                  // Ensure the duration is either '4' or '8' to match the type constraint
-                  this.bookingDuration = reservation.duration === '8' ? '8' : '4';
-                  console.log(`Setting booking duration to match existing reservation: ${this.bookingDuration}`);
-                }
-              }
-              
-              console.log('Found user reservation:', date);
-            }
-          }
-          
-          // For day view, restore the previously selected date(s)
-          if (this.viewMode === 'day') {
-            // If we had selections, restore them
-            if (dayViewSelections.size > 0) {
-              for (const date of dayViewSelections) {
-                this.selectedBookingDates.add(date);
-                console.log('Restored day view selection:', date);
-              }
-            } else {
-              // If no selections, try to select the current date or first available
-              const today = new Date();
-              const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-              
-              if (this.bookingWeekDates.includes(todayString) && 
-                  (!this.isDeskReservedOnDate(todayString) || this.isCurrentUserReservation(todayString))) {
-                this.selectedBookingDates.add(todayString);
-                console.log('Auto-selected today for day view:', todayString);
-              } else {
-                // Otherwise select first available date
-                for (const date of this.bookingWeekDates) {
-                  if (!this.isDeskReservedOnDate(date) || this.isCurrentUserReservation(date)) {
-                    this.selectedBookingDates.add(date);
-                    console.log('Auto-selected first available date for day view:', date);
-                    break;
-                  }
-                }
-              }
-            }
-          }
-          
-          // Show dialog after data is loaded
-          this.showBookingDialog = true;
-          console.log('Opening booking dialog for desk:', desk.id, 'Current status:', desk.available ? 'Available' : 'Reserved');
-        });
-      };
-      
-      // Check if this desk is already reserved and belongs to the current user
-      if (desk.available === false) {
-        this.findUserReservationForDesk(desk).then(reservationId => {
-          // Different behavior based on view mode
-          if (this.viewMode === 'day') {
-            // DAY VIEW - Allow cancellation of own reservations
-            if (reservationId !== null) {
-              // This is the user's own reservation
-              this.isLoading = false;
-              
-              // Check if this is a right-click (context menu)
-              const isRightClick = event.button === 2 || event.ctrlKey;
-              
-              if (isRightClick) {
-                // Right-click shows confirmation before canceling
-                this.isLoading = false;
-                Swal.fire({
-                  title: 'Cancel Reservation',
-                  text: 'Are you sure you want to cancel your reservation for this desk?',
-                  icon: 'warning',
-                  showCancelButton: true,
-                  confirmButtonText: 'Yes, cancel it',
-                  cancelButtonText: 'No, keep it'
-                }).then((result) => {
-                  if (result.isConfirmed) {
-                    this.isLoading = true;
-                    this.reservationService.deleteReservation(reservationId).subscribe({
-                      next: () => {
-                        // Update the desk status in UI
-                        desk.available = true;
-                        desk.employeeName = undefined;
-                        desk.duration = undefined;
-                        desk.bookingDate = undefined;
-                        
-                        this.isLoading = false;
-                        Swal.fire({
-                          title: 'Reservation Cancelled',
-                          text: 'Your reservation has been successfully cancelled.',
-                          icon: 'success',
-                          confirmButtonText: 'OK'
-                        });
-                        
-                        // Refresh reservations view
-                        this.loadReservationsForCurrentView();
-                      },
-                      error: (error) => {
-                        this.isLoading = false;
-                        Swal.fire({
-                          title: 'Error',
-                          text: `Failed to cancel reservation: ${error.message || 'Unknown error'}`,
-                          icon: 'error',
-                          confirmButtonText: 'OK'
-                        });
-                      }
-                    });
-                  }
-                });
-              } else {
-                // Left-click shows booking dialog to update reservation
-                // Also grab the duration from the existing reservation
-                const existingReservation = this.selectedDeskReservations.find(res => 
-                  res.id === reservationId
-                );
-                
-                if (existingReservation && existingReservation.duration) {
-                  // Save the duration before opening dialog - ensure it's either '4' or '8'
-                  this.bookingDuration = existingReservation.duration === '8' ? '8' : '4';
-                  console.log(`Setting duration to existing value: ${this.bookingDuration}`);
-                }
-                
-                showBookingDialog();
-              }
-            } else {
-              // In day view, desk reserved by someone else - just show an alert
-              this.isLoading = false;
-              Swal.fire({
-                title: 'Desk Reserved',
-                text: 'This desk is already reserved by another user.',
-                icon: 'info',
-                confirmButtonText: 'OK'
-              });
-              return;
-            }
-          } else {
-            // WEEK VIEW - Always show booking dialog
-            showBookingDialog();
-            return;
-          }
-        });
-      } else {
-        // Desk is available, show booking dialog
-        showBookingDialog();
+      // First, check if the user already has a reservation on another desk for this day.
+      if (this.viewMode === 'day') {
+        const allReservationsForDay = this.reservationsByDate.get(this.currentDate) || [];
+        const userReservation = allReservationsForDay.find(r => this.isReservationByCurrentUser(r));
+
+        if (userReservation && userReservation.deskId !== desk.id) {
+          Swal.fire({
+            title: 'Reservation Limit Reached',
+            text: 'You already have a reservation for another desk on this day. Only one desk may be reserved per day.',
+            icon: 'warning',
+          });
+          return; // Block the booking dialog
+        }
       }
-    } else {
-      event.stopPropagation();
-      this.clearSelections();
-      this.selectedDesk = desk;
-      // Focus the container to ensure keyboard events work properly
-      this.designContainer.nativeElement.focus();
-    }
+
+      const allReservationsForThisDesk = this.selectedDeskReservations.filter(
+        (res) => res.deskId === desk.id
+      );
+
+      const ownReservations = allReservationsForThisDesk.filter(res => this.isReservationByCurrentUser(res));
+
+      const reservationsOnCurrentDate = allReservationsForThisDesk.filter(res => res.bookingDate === this.currentDate);
+      const otherReservationsOnCurrentDate = reservationsOnCurrentDate.filter(res => !this.isReservationByCurrentUser(res));
+
+      const isReservedByOtherAM = otherReservationsOnCurrentDate.some((r) => r.duration === 'AM');
+      const isReservedByOtherPM = otherReservationsOnCurrentDate.some((r) => r.duration === 'PM');
+      const isReservedByOtherFull = otherReservationsOnCurrentDate.some((r) => r.duration === 'FULL');
+
+      if (this.viewMode === 'day' && (isReservedByOtherFull || (isReservedByOtherAM && isReservedByOtherPM))) {
+        Swal.fire({
+          title: 'Desk Reserved',
+          text: 'This desk is already reserved for the full day by another user.',
+          icon: 'info',
+        });
+        return;
+      }
+
+      if (ownReservations.length > 0) {
+        this.selectedBookingDates = new Set(this.initialUserReservations);
+        this.openBookingDialogForUpdate(isReservedByOtherAM, isReservedByOtherPM);
+        if (this.viewMode === 'week') {
+          this.updateAvailableDurations();
+        }
+        return;
+      }
+
+      if (this.viewMode === 'day') {
+        if (isReservedByOtherAM) {
+          this.availableDurations = ['PM'];
+          this.bookingDuration = 'PM';
+        } else if (isReservedByOtherPM) {
+          this.availableDurations = ['AM'];
+          this.bookingDuration = 'AM';
+        } else {
+          this.availableDurations = ['AM', 'PM', 'FULL'];
+          this.bookingDuration = 'AM';
+        }
+        this.selectedBookingDates.add(this.currentDate);
+      } else {
+        this.availableDurations = ['AM', 'PM', 'FULL'];
+        this.bookingDuration = 'AM';
+        // Ensure week dates are up to date before showing dialog
+        this.updateBookingWeekDates();
+      }
+
+      this.showBookingDialog = true;
+    });
   }
   
   // Load all reservations for the displayed booking dates to check for conflicts
@@ -1448,13 +1345,18 @@ export class ReservationComponent implements OnInit {
         // Store the filtered reservations
         this.selectedDeskReservations = deskReservations;
         
+        // Reset and populate initial user reservations before iterating
+        this.initialUserReservations.clear();
+        this.userReservationIds.clear();
+        
         // Mark each date as reserved
         for (const reservation of deskReservations) {
           this.deskReservationDates.add(reservation.bookingDate);
           
           // Track reservation IDs for dates to enable proper updating
-          if (this.isCurrentUserReservation(reservation.bookingDate) && reservation.id !== undefined) {
+          if (this.isReservationByCurrentUser(reservation) && reservation.id !== undefined) {
             this.userReservationIds.set(reservation.bookingDate, reservation.id);
+            this.initialUserReservations.add(reservation.bookingDate);
           }
           
           console.log(`\u2713 Desk ${deskId} is reserved on ${reservation.bookingDate}`);
@@ -1480,9 +1382,51 @@ export class ReservationComponent implements OnInit {
   }
   
   // Fallback method to check each date individually if the date range API fails
+  private checkIndividualDates(deskId: number, callback?: () => void): void {
+    let completedRequests = 0;
+    const totalRequests = this.bookingWeekDates.length;
+
+    if (totalRequests === 0) {
+      if (callback) callback();
+      return;
+    }
+
+    this.bookingWeekDates.forEach(date => {
+      this.reservationService.getReservationsByDate(date).subscribe({
+        next: (reservations: Reservation[]) => {
+          const deskReservations = reservations.filter(res => res.deskId === deskId);
+
+          if (deskReservations.length > 0) {
+            this.deskReservationDates.add(date);
+            // Also populate the details for the main logic to use
+            this.selectedDeskReservations.push(...deskReservations);
+          }
+
+          completedRequests++;
+          if (completedRequests === totalRequests) {
+            this.isLoading = false;
+            if (callback) callback();
+          }
+        },
+        error: (error: any) => {
+          console.error(`Failed to load reservations for date ${date}`, error);
+          completedRequests++;
+          if (completedRequests === totalRequests) {
+            this.isLoading = false;
+            if (callback) callback();
+          }
+        }
+      });
+    });
+  }
+  
   // Special method for regular users to load reservations information
   private loadReservationsForRegularUser(deskId: number, startDate: string, endDate: string, callback?: () => void): void {
     console.log('Loading reservations for regular user (non-admin)');
+    
+    // Clear previous user-specific reservation data to prevent stale state.
+    this.initialUserReservations.clear();
+    this.userReservationIds.clear();
     
     // We need to combine two methods for regular users to get the full picture:
     // 1. getUserReservationsInDateRange - to get the user's own reservations
@@ -1578,50 +1522,6 @@ export class ReservationComponent implements OnInit {
     });
   }
   
-  private checkIndividualDates(deskId: number, callback?: () => void): void {
-    // Counter to track completed requests
-    let completedRequests = 0;
-    const totalRequests = this.bookingWeekDates.length;
-    
-    // For each date, check reservations using the API endpoint we know exists
-    this.bookingWeekDates.forEach(date => {
-      // Use getReservationsByDate which is a confirmed working endpoint
-      this.reservationService.getReservationsByDate(date).subscribe({
-        next: (reservations: Reservation[]) => {
-          // For each reservation on this date
-          for (const reservation of reservations) {
-            // If this reservation is for the desk we're looking at
-            if (reservation.deskId === deskId) {
-              // This desk is reserved on this date
-              this.deskReservationDates.add(date);
-              console.log(`Desk ${deskId} is reserved on ${date}`);
-              break; // No need to check more reservations for this date
-            }
-          }
-          
-          // Count this request as completed
-          completedRequests++;
-          
-          // If all requests are done, finish loading
-          if (completedRequests === totalRequests) {
-            console.log(`Found ${this.deskReservationDates.size} dates when desk ${deskId} is reserved`);
-            this.isLoading = false;
-            if (callback) callback();
-          }
-        },
-        error: (error: any) => {
-          console.error(`Failed to load reservations for date ${date}`, error);
-          completedRequests++;
-          
-          // If all requests are done, finish loading
-          if (completedRequests === totalRequests) {
-            this.isLoading = false;
-            if (callback) callback();
-          }
-        }
-      });
-    });
-  }
   
   // Check if the selected desk is already reserved on a specific date by ANY user (including others)
   public isDeskReservedOnDate(date: string): boolean {
@@ -2063,7 +1963,7 @@ export class ReservationComponent implements OnInit {
                     });
                     
                     // Refresh reservations view
-                    this.loadReservationsForCurrentView();
+                    this.updateDeskStatuses();
                   },
                   error: (error) => {
                     this.isLoading = false;
@@ -2726,7 +2626,7 @@ export class ReservationComponent implements OnInit {
               this.isLoading = false;
               this.showBookingDialog = false;
               this.selectedDeskForBooking = null;
-              this.bookingDuration = '4';
+              this.bookingDuration = 'AM';
               
               // IMPORTANT: Clear localStorage reservation entry
               // This prevents the cancelled reservation from appearing on the home page
@@ -2737,7 +2637,7 @@ export class ReservationComponent implements OnInit {
               }
               
               // Refresh reservations
-              this.loadReservationsForCurrentView();
+              this.updateDeskStatuses();
             },
             error: (error: any) => {
               console.error('Failed to cancel reservation', error);
@@ -2777,7 +2677,7 @@ export class ReservationComponent implements OnInit {
   public closeBookingDialog(): void {
     this.showBookingDialog = false;
     this.selectedDeskForBooking = null;
-    this.bookingDuration = '4';
+    this.bookingDuration = 'AM';
     this.selectedBookingDates.clear();
   }
   
@@ -2923,14 +2823,41 @@ export class ReservationComponent implements OnInit {
       return;
     }
     
+    // In week view, check if user already has a reservation for this date on another desk
+    if (this.viewMode === 'week') {
+      const allReservationsForDate = this.reservationsByDate.get(date) || [];
+      const userReservationOnAnotherDesk = allReservationsForDate.find(
+        (r) =>
+          this.isReservationByCurrentUser(r) &&
+          r.deskId !== this.selectedDeskForBooking!.id
+      );
+
+      if (userReservationOnAnotherDesk) {
+        Swal.fire({
+          title: 'Reservation Limit Reached',
+          text: 'You already have a reservation for another desk on this day.',
+          icon: 'warning',
+        });
+        return;
+      }
+    }
+
     // Don't allow selecting dates reserved by other users for any user role
-    if (this.isDeskReservedOnDate(date) && !this.isCurrentUserReservation(date)) {
-      console.log('Date is reserved by someone else, cannot select:', date);
+    const otherReservationsOnDate = this.selectedDeskReservations.filter(
+      (res) => res.bookingDate === date && !this.isReservationByCurrentUser(res)
+    );
+
+    const isFullByOther = otherReservationsOnDate.some(r => r.duration === 'FULL') || 
+                         (otherReservationsOnDate.some(r => r.duration === 'AM') && otherReservationsOnDate.some(r => r.duration === 'PM'));
+
+
+    if (isFullByOther) {
+      console.log('Date is fully reserved by someone else, cannot select:', date);
       
       // Show a more user-friendly message
       Swal.fire({
         title: 'Date Reserved',
-        text: 'This date is already reserved by another user.',
+        text: 'This date is already fully reserved by another user.',
         icon: 'info',
         confirmButtonText: 'OK'
       });
@@ -2950,6 +2877,61 @@ export class ReservationComponent implements OnInit {
     } else {
       this.selectedBookingDates.add(date);
       console.log('Added date to selection:', date);
+    }
+
+    if (this.viewMode === 'week') {
+      this.updateAvailableDurations();
+    }
+  }
+
+  private updateAvailableDurations(): void {
+    if (this.selectedBookingDates.size === 0) {
+      this.availableDurations = ['AM', 'PM', 'FULL'];
+      if (!this.availableDurations.includes(this.bookingDuration)) {
+        this.bookingDuration = 'AM';
+      }
+      return;
+    }
+  
+    let commonAvailable: ('AM' | 'PM' | 'FULL')[] = ['AM', 'PM', 'FULL'];
+  
+    for (const date of this.selectedBookingDates) {
+      const reservationsOnDate = this.selectedDeskReservations.filter(
+        (res) => res.bookingDate === date && res.deskId === this.selectedDeskForBooking!.id
+      );
+  
+      const otherReservations = reservationsOnDate.filter(
+        (res) => !this.isReservationByCurrentUser(res)
+      );
+  
+      let availableForThisDate: ('AM' | 'PM' | 'FULL')[] = ['AM', 'PM', 'FULL'];
+  
+      if (otherReservations.length > 0) {
+        const isReservedAM = otherReservations.some((r) => r.duration === 'AM');
+        const isReservedPM = otherReservations.some((r) => r.duration === 'PM');
+        const isReservedFull = otherReservations.some((r) => r.duration === 'FULL');
+  
+        if (isReservedFull || (isReservedAM && isReservedPM)) {
+          availableForThisDate = [];
+        } else if (isReservedAM) {
+          availableForThisDate = ['PM'];
+        } else if (isReservedPM) {
+          availableForThisDate = ['AM'];
+        }
+      }
+  
+      commonAvailable = commonAvailable.filter((duration) => {
+        if (duration === 'FULL') {
+          return availableForThisDate.includes('AM') && availableForThisDate.includes('PM');
+        }
+        return availableForThisDate.includes(duration);
+      });
+    }
+  
+    this.availableDurations = commonAvailable;
+  
+    if (!this.availableDurations.includes(this.bookingDuration)) {
+      this.bookingDuration = this.availableDurations.length > 0 ? this.availableDurations[0] : 'AM';
     }
   }
 
@@ -3056,84 +3038,92 @@ export class ReservationComponent implements OnInit {
 
   private updateDeskStatuses(): void {
     if (!this.currentPlan) return;
-    console.log('Updating desk statuses, user:', this.currentUser?.role);
+    this.isLoading = true;
     
-    // Reset all desk statuses first
-    this.currentPlan.desks.forEach(desk => {
-      desk.available = true;
-      desk.employeeName = undefined;
-      desk.duration = undefined;
-      desk.bookingDate = undefined;
-      desk.isOwnReservation = false;
-    });
-
-    // Clear previous reservation data
     this.reservationsByDate.clear();
+    const datesToFetch = this.viewMode === 'week' ? this.weekDates : [this.currentDate];
+    let pendingRequests = datesToFetch.length;
 
-    // Get all reservations for the currently displayed dates
-    const dates = this.viewMode === 'week' ? this.weekDates : [this.currentDate];
-    console.log('Fetching reservations for dates:', dates);
-    
-    // Keep track of requests to know when all are complete
-    let pendingRequests = dates.length;
-    
-    // For each date, load and display the reservations
-    dates.forEach(date => {
-      console.log(`Loading reservations for date: ${date}`);
+    if (pendingRequests === 0) {
+      this.isLoading = false;
+      this.resetDeskVisuals(); // Reset visuals even if no requests.
+      return;
+    }
+
+    // Fetch reservation data for all visible dates (the week or just the day).
+    datesToFetch.forEach(date => {
       this.reservationService.getReservationsByDate(date).subscribe({
         next: (reservations) => {
-          console.log(`Got ${reservations.length} reservations for date ${date}`);
-          
-          // Store reservation data for this date
           this.reservationsByDate.set(date, reservations);
-          
-          // Process each reservation
-          reservations.forEach(reservation => {
-            const desk = this.currentPlan?.desks.find(d => d.id === reservation.deskId);
-            if (desk) {
-              console.log(`Desk ${desk.id} is reserved on ${date}`);
-              
-              // For current date view, or if this is the specific date in week view
-              if (date === this.currentDate) {
-                desk.available = false;
-                desk.employeeName = reservation.employeeName;
-                desk.duration = reservation.duration as '4' | '8';
-                desk.bookingDate = reservation.bookingDate;
-                
-                // If this is the user's own reservation, mark it as such
-                if (this.currentUser && reservation.userId === this.currentUser.id.toString()) {
-                  desk.isOwnReservation = true;
-                }
-              }
-            }
-          });
-          
-          // Decrement pending requests count
           pendingRequests--;
           
-          // If all requests are complete, update the UI
+          // Once all data for the view is loaded, update the desk visuals.
           if (pendingRequests === 0) {
-            console.log('All reservation data loaded');
+            this.updateDeskVisualsForSelectedDate();
+            this.isLoading = false;
           }
         },
         error: (error: any) => {
           console.error(`Failed to load reservations for ${date}`, error);
           pendingRequests--;
+          if (pendingRequests === 0) {
+            this.updateDeskVisualsForSelectedDate(); // Still update visuals on error
+            this.isLoading = false;
+          }
         }
       });
     });
   }
 
+  private resetDeskVisuals(): void {
+    if (!this.currentPlan) return;
+    this.currentPlan.desks.forEach(desk => {
+        desk.available = true;
+        desk.duration = undefined;
+        desk.bookingDate = undefined;
+        desk.isOwnReservation = false;
+        desk.employeeName = undefined;
+    });
+  }
+
+  private updateDeskVisualsForSelectedDate(): void {
+    if (!this.currentPlan) return;
+
+    this.resetDeskVisuals(); // Reset all desk visuals first.
+
+    const currentReservations = this.reservationsByDate.get(this.currentDate) || [];
+
+    this.currentPlan.desks.forEach(desk => {
+        const deskReservations = currentReservations.filter(r => r.deskId === desk.id);
+
+        if (deskReservations.length > 0) {
+            desk.available = false;
+            desk.bookingDate = this.currentDate;
+            desk.isOwnReservation = deskReservations.some(r => this.isReservationByCurrentUser(r));
+
+            const amRes = deskReservations.find(r => r.duration === 'AM');
+            const pmRes = deskReservations.find(r => r.duration === 'PM');
+            const fullRes = deskReservations.find(r => r.duration === 'FULL');
+
+            if (fullRes || (amRes && pmRes)) {
+                desk.duration = 'FULL';
+            } else if (amRes) {
+                desk.duration = 'AM';
+            } else if (pmRes) {
+                desk.duration = 'PM';
+            }
+        }
+    });
+  }
+
   private updateWeekDates(): void {
     this.weekDates = [];
+    const startDate = new Date(this.currentDate); // Renamed from 'today' for clarity
+    startDate.setHours(0, 0, 0, 0);
     
-    // Always start with today's date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Get exactly 10 business days (two weeks) starting from today
+    // Get exactly 10 business days (two weeks) starting from the start date
     let daysAdded = 0;
-    let currentDate = new Date(today);
+    let currentDate = new Date(startDate);
     
     // Maximum dates to look ahead to avoid infinite loop
     const maxDaysToCheck = 20; // Two weeks + some buffer for weekends
@@ -3187,28 +3177,28 @@ export class ReservationComponent implements OnInit {
   public toggleViewMode(): void {
     this.viewMode = this.viewMode === 'day' ? 'week' : 'day';
     if (this.viewMode === 'week') {
-      // Update to always show the next 10 business days starting from today
-      this.updateWeekDates();
-      
-      // Get today's date in YYYY-MM-DD format
+      // When switching to Week View, always reset the context to today's date,
+      // regardless of the date that was selected in Day View.
       const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      
-      // Clear any previous selections
-      this.selectedWeekDates.clear();
-      
-      // Set the current date to today if it's in the week dates
-      if (this.weekDates.includes(todayStr)) {
-        this.currentDate = todayStr;
-        this.selectedWeekDates.add(todayStr);
-      } else {
-        // If today is not in the week (rare case, could be all weekend days ahead), 
-        // select the first available day
-        this.currentDate = this.weekDates[0];
-        this.selectedWeekDates.add(this.weekDates[0]);
+      let initialDate = new Date(today);
+      // If today is a weekend, start from the next business day.
+      if (this.isWeekend(initialDate)) {
+          initialDate = this.getNextBusinessDay(initialDate);
       }
-      
-      // Update the desk statuses for the new selection
+  
+      const year = initialDate.getFullYear();
+      const month = String(initialDate.getMonth() + 1).padStart(2, '0');
+      const day = String(initialDate.getDate()).padStart(2, '0');
+      this.currentDate = `${year}-${month}-${day}`;
+  
+      // Now generate the week dates based on the reset current date.
+      this.updateWeekDates();
+  
+      // Select the current date in the week view.
+      this.selectedWeekDates.clear();
+      this.selectedWeekDates.add(this.currentDate);
+  
+      // Refresh the desk statuses for the new view.
       this.updateDeskStatuses();
     }
   }
@@ -3261,7 +3251,7 @@ export class ReservationComponent implements OnInit {
     const reservation = reservations.find((r: Reservation) => r.deskId === desk.id);
     
     if (reservation) {
-      const duration = reservation.duration === '8' ? 'Full day' : 'Half day';
+      const duration = reservation.duration === 'FULL' ? 'Full day' : reservation.duration === 'PM' ? 'Afternoon' : 'Morning';
       return `${reservation.employeeName || ''}, ${duration} on ${this.formatDate(date)}`;
     }
     
@@ -3270,7 +3260,14 @@ export class ReservationComponent implements OnInit {
 
   public isSelectedBookingDate(date: string): boolean {
     // First check if this date is reserved by someone else
-    if (this.isDeskReservedOnDate(date) && !this.isCurrentUserReservation(date)) {
+    const otherReservationsOnDate = this.selectedDeskReservations.filter(
+      (res) => res.bookingDate === date && !this.isReservationByCurrentUser(res)
+    );
+
+    const isFullByOther = otherReservationsOnDate.some(r => r.duration === 'FULL') || 
+                         (otherReservationsOnDate.some(r => r.duration === 'AM') && otherReservationsOnDate.some(r => r.duration === 'PM'));
+
+    if (isFullByOther) {
       // Never allow selection of dates reserved by others
       if (this.selectedBookingDates.has(date)) {
         console.warn(`Warning: Date ${date} is selected but reserved by someone else!`);
@@ -3470,14 +3467,14 @@ export class ReservationComponent implements OnInit {
 
   // Get count of available desks
   public getAvailableDeskCount(): number {
-    if (!this.currentPlan || !this.currentPlan.desks) return 0;
-    return this.currentPlan.desks.filter(desk => desk.available !== false).length;
+    if (!this.currentPlan) return 0;
+    return this.currentPlan.desks.filter(d => d.available).length;
   }
 
   // Get count of reserved desks
   public getReservedDeskCount(): number {
-    if (!this.currentPlan || !this.currentPlan.desks) return 0;
-    return this.currentPlan.desks.filter(desk => desk.available === false).length;
+    if (!this.currentPlan) return 0;
+    return this.currentPlan.desks.filter(d => !d.available).length;
   }
   
   // Check if a new desk would overlap with any existing desks
@@ -3542,11 +3539,11 @@ export class ReservationComponent implements OnInit {
    if (this.viewMode === 'week') {
      const weeklyStatus: WeeklyStatus[] = this.weekDates.map(date => {
        const reservations = this.reservationsByDate.get(date) || [];
-       const reservation = reservations.find(r => r.deskId === desk.id);
+       const deskReservations = reservations.filter(r => r.deskId === desk.id);
        let dayStatus: 'available' | 'reserved' | 'own' = 'available';
 
-       if (reservation) {
-           dayStatus = this.isReservationByCurrentUser(reservation) ? 'own' : 'reserved';
+       if (deskReservations.length > 0) {
+           dayStatus = deskReservations.some(r => this.isReservationByCurrentUser(r)) ? 'own' : 'reserved';
        }
        return { date, status: dayStatus };
      });
@@ -3558,15 +3555,36 @@ export class ReservationComponent implements OnInit {
        weeklyStatus: weeklyStatus
      };
    } else { // 'day' view
-     let content = '';
-     let status: 'available' | 'reserved' = 'available';
+     const reservations = this.reservationsByDate.get(this.currentDate)?.filter(r => r.deskId === desk.id) || [];
 
-     if (desk.available) {
+     let content = '';
+     let status: 'available' | 'reserved' | 'info' | 'own' = 'available';
+
+     if (reservations.length === 0) {
        content = 'Available';
        status = 'available';
+     } else if (reservations.length === 1) {
+       const res = reservations[0];
+       const duration = res.duration === 'FULL' ? 'Full day' : res.duration === 'PM' ? 'Afternoon' : 'Morning';
+       content = `${res.employeeName}, ${duration}`;
+       status = this.isReservationByCurrentUser(res) ? 'own' : 'reserved';
+     } else { // 2 or more reservations, assuming AM/PM split
+       const amRes = reservations.find(r => r.duration === 'AM');
+       const pmRes = reservations.find(r => r.duration === 'PM');
+       
+       const amText = amRes ? `AM: ${amRes.employeeName}` : 'AM: Available';
+       const pmText = pmRes ? `PM: ${pmRes.employeeName}` : 'PM: Available';
+       
+       content = `${amText}\n${pmText}`;
+       
+       const isOwnAM = amRes ? this.isReservationByCurrentUser(amRes) : false;
+       const isOwnPM = pmRes ? this.isReservationByCurrentUser(pmRes) : false;
+
+       if (isOwnAM || isOwnPM) {
+         status = 'own';
      } else {
-       content = `${desk.employeeName}, ${desk.duration === '4' ? 'Half day' : 'Full day'}`;
-       status = 'reserved';
+         status = 'info';
+       }
      }
 
      this.tooltip = {
@@ -3616,6 +3634,156 @@ export class ReservationComponent implements OnInit {
  hideTooltip() {
    this.tooltip = null;
  }
+
+ private getDeskReservationStatus(desk: Desk, date: string): {AM: boolean, PM: boolean, FULL: boolean, reservation?: Reservation} {
+   const reservations = this.selectedDeskReservations.filter(res => res.deskId === desk.id && res.bookingDate === date);
+   return {
+     AM: reservations.some(res => res.duration === 'AM'),
+     PM: reservations.some(res => res.duration === 'PM'),
+     FULL: reservations.some(res => res.duration === 'FULL'),
+     reservation: reservations.find(res => res.duration === 'FULL')
+   };
+ }
+
+ /**
+   * Opens the booking dialog with the correct duration options
+   * when the current user is updating their existing reservation.
+   */
+  private openBookingDialogForUpdate(isReservedByOtherAM: boolean, isReservedByOtherPM: boolean): void {
+    if (isReservedByOtherAM) {
+      // If another user has AM, current user can only book PM.
+      this.availableDurations = ['PM'];
+      this.bookingDuration = 'PM';
+    } else if (isReservedByOtherPM) {
+      // If another user has PM, current user can only book AM.
+      this.availableDurations = ['AM'];
+      this.bookingDuration = 'AM';
+    } else {
+      // If no other user has a reservation, all options are available.
+      this.availableDurations = ['AM', 'PM', 'FULL'];
+      this.bookingDuration = 'AM';
+    }
+    this.showBookingDialog = true;
+  }
+
+  public isUpdatingReservation(): boolean {
+    if (!this.selectedDeskForBooking) return false;
+  
+    // An update is any scenario where the current user already has at least one reservation
+    // for the selected desk within the currently loaded date range.
+    return this.selectedDeskReservations.some(r => this.isReservationByCurrentUser(r));
+  }
+
+  public async deleteSingleReservation(): Promise<void> {
+    if (!this.selectedDeskForBooking) return;
+
+    const result = await Swal.fire({
+      title: 'Cancel this reservation?',
+      text: "This action cannot be undone.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, cancel it!',
+      cancelButtonText: 'No, keep it'
+    });
+
+    if (!result.isConfirmed) return;
+
+    this.isLoading = true;
+
+    const reservationsToDelete = (this.reservationsByDate.get(this.currentDate) || []).filter(
+      (res) => res.deskId === this.selectedDeskForBooking?.id && this.isReservationByCurrentUser(res)
+    );
+
+    if (reservationsToDelete.length === 0) {
+      this.isLoading = false;
+      Swal.fire('Error', 'Could not find your reservation to cancel.', 'error');
+      return;
+    }
+
+    let completed = 0;
+    const errors: string[] = [];
+
+    for (const res of reservationsToDelete) {
+      if (res.id) {
+        this.reservationService.deleteReservation(res.id).subscribe({
+          next: () => {
+            completed++;
+            if (completed === reservationsToDelete.length) {
+              this.handleDeletionCompletion(errors);
+            }
+          },
+          error: (err: any) => {
+            errors.push(err.message);
+            completed++;
+            if (completed === reservationsToDelete.length) {
+              this.handleDeletionCompletion(errors);
+            }
+          }
+        });
+      } else {
+        completed++; // Count as completed if no ID exists to delete
+        if (completed === reservationsToDelete.length) {
+            this.handleDeletionCompletion(errors);
+        }
+      }
+    }
+  }
+
+  private handleDeletionCompletion(errors: string[]): void {
+    this.isLoading = false;
+    this.closeBookingDialog();
+
+    if (errors.length > 0) {
+      Swal.fire('Error', `Failed to cancel one or more reservations: ${errors.join(', ')}`, 'error');
+    } else {
+      Swal.fire('Cancelled!', 'Your reservation has been cancelled.', 'success');
+    }
+
+    // IMPORTANT: Clear localStorage reservation entry to update home page redirect
+    if (this.currentUser && this.currentUser.id) {
+      const storageKey = `desk_reservation_user_${this.currentUser.id}`;
+      localStorage.removeItem(storageKey);
+      console.log(`Cleared desk reservation from localStorage for user ${this.currentUser.id}`);
+    }
+
+    this.updateDeskStatuses();
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      this.isContactModalOpen = false;
+    }
+  }
+
+  handleNotificationClick(notif: Notification) {
+    this.notificationService.markAsRead(notif.id).subscribe({
+      next: (notification) => {
+        const idx = this.notifications.findIndex(n => n.id === notif.id);
+        if (idx !== -1) {
+          this.notifications[idx] = notification;
+        }
+        if (this.unreadCount > 0) {
+          this.unreadCount--;
+        }
+      },
+      error: (err) => {
+        console.error('Error marking notification as read:', err);
+      }
+    });
+    if (notif.type === 'TELEWORK_REQUEST_CREATED') {
+      this.router.navigate(['/planning']);
+      this.showNotifications = false;
+    }
+  }
+
+  onProfilePopupOpened() {
+    this.showNotifications = false;
+    this.isContactModalOpen = false;
+  }
+
 }
 
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../login/AuthService';
 import { ProfileService } from '../../../services/profile.service';
@@ -18,6 +18,7 @@ export class ProfileHeaderComponent implements OnInit {
   isUploadingPhoto: boolean = false;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('profilePopup') profilePopupElement!: ElementRef<HTMLElement>;
+  @Output() profilePopupOpened = new EventEmitter<void>();
 
   constructor(
     private authService: AuthService,
@@ -50,6 +51,7 @@ export class ProfileHeaderComponent implements OnInit {
 
     // Add click outside listener when popup is opened
     if (this.isProfilePopupOpen) {
+      this.profilePopupOpened.emit();
       setTimeout(() => {
         document.addEventListener('click', this.closePopupOnClickOutside);
       }, 0);
@@ -59,7 +61,7 @@ export class ProfileHeaderComponent implements OnInit {
   /**
    * Closes the profile popup
    */
-  closeProfilePopup(): void {
+  public closeProfilePopup(): void {
     this.isProfilePopupOpen = false;
     document.removeEventListener('click', this.closePopupOnClickOutside);
   }

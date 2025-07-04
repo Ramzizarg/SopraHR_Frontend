@@ -1,4 +1,3 @@
-
 :root {
   --accent-color: #7b1dbd;
   --accent-color-rgb: 123, 29, 189;
@@ -1383,4 +1382,134 @@ textarea.form-control {
 
 .remove-date-btn:hover {
   opacity: 1;
+}
+
+/* Notification Bell Container */
+.notification-bell-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Notification Dropdown Styles (EXACT COPY FROM HOME) */
+.notification-dropdown {
+  position: absolute;
+  top: 65px;
+  width: 360px;
+  max-height: 420px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  z-index: 2000;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ececec;
+}
+.notification-dropdown-header {
+  padding: 14px 20px 12px 20px;
+  background: linear-gradient(90deg, #7b1dbd 0%, #9e4ad7 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ececec;
+}
+.notification-dropdown-header .close-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.2em;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.notification-dropdown-header .close-btn:hover {
+  opacity: 1;
+}
+.notification-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  background: #faf9fd;
+}
+.notification-item {
+  padding: 16px 22px 12px 22px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.18s;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #faf9fd;
+}
+.notification-item:last-child {
+  border-bottom: none;
+}
+.notification-item:hover {
+  background: #f3eaff;
+}
+.notification-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 7px;
+  background: #7b1dbd;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px #7b1dbd44;
+  display: inline-block;
+}
+.notification-item.unread {
+  font-weight: 600;
+  background: #f6f2ff;
+}
+.notification-item.read {
+  opacity: 0.7;
+}
+.notification-item strong {
+  font-size: 1.08em;
+  color: #7b1dbd;
+  margin-bottom: 2px;
+}
+.notification-item p {
+  margin: 0 0 2px 0;
+  font-size: 0.98em;
+  color: #333;
+}
+.notification-item small {
+  color: #888;
+  font-size: 0.85em;
+}
+.notification-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: #bbb;
+  font-size: 1.05em;
+  background: #faf9fd;
+}
+.notification-bell-container .badge.bg-danger {
+  display: none !important;
+}
+/* End Notification Dropdown Styles */
+
+.notification-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 1em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  z-index: 10;
+  transition: background 0.2s;
 }

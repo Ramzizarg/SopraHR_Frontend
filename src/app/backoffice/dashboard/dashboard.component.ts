@@ -187,6 +187,18 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  /**
+   * Parses a date string (e.g., "YYYY-MM-DD") into a Date object in the local timezone.
+   * This avoids timezone conversion issues with `new Date()`.
+   * @param dateString The date string to parse.
+   * @returns A Date object.
+   */
+  private parseDate(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number);
+    // Note: month is 0-indexed in JavaScript Date
+    return new Date(year, month - 1, day);
+  }
+
   constructor(
     public authService: AuthService, 
     private router: Router, 
@@ -993,7 +1005,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       this.teletravailbackService.getAllRequests().subscribe(requests => {
         // Filter requests for this month, up to today, and approved
         const approvedTeletravail = requests.filter(r => {
-          const d = new Date(r.teletravailDate);
+          const d = this.parseDate(r.teletravailDate);
           return r.status === 'APPROVED' &&
             d.getMonth() === month &&
             d.getFullYear() === year &&
@@ -1050,7 +1062,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       const currentYear = now.getFullYear();
       
       filteredRequests = this.teletravailRequests.filter(request => {
-        const requestDate = new Date(request.teletravailDate);
+        const requestDate = this.parseDate(request.teletravailDate);
         return requestDate.getMonth() === currentMonth && 
                requestDate.getFullYear() === currentYear;
       });

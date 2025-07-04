@@ -5,6 +5,7 @@ import { AuthService } from '../login/AuthService';
 import { ProfileService } from '../services/profile.service';
 import Swal from 'sweetalert2';
 import { ContactService, ContactRequest } from '../services/contact.service';
+import { NotificationService, Notification } from '../services/notification.service';
 
 // tslint:disable-next-line:use-inline-template-type-checking
 @Component({
@@ -71,13 +72,18 @@ export class TeletravailComponent implements OnInit {
   profilePhotoUrl: string | null = null;
   currentUser: any = null;
 
+  notifications: Notification[] = [];
+  unreadCount: number = 0;
+  showNotifications: boolean = false;
+
   constructor(
     private teletravailService: TeletravailService,
     private authService: AuthService,
     private router: Router,
     private renderer: Renderer2,
     private profileService: ProfileService,
-    private contactService: ContactService
+    private contactService: ContactService,
+    private notificationService: NotificationService
   ) {
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -133,6 +139,22 @@ export class TeletravailComponent implements OnInit {
       if (user) {
         this.currentUser = user;
         this.fetchProfilePhoto(user.id);
+        this.notificationService.getUserNotifications(user.id).subscribe({
+          next: (notifications) => {
+            this.notifications = notifications;
+          },
+          error: (err) => {
+            console.error('Error fetching notifications:', err);
+          }
+        });
+        this.notificationService.getUnreadNotificationCount(user.id).subscribe({
+          next: (count) => {
+            this.unreadCount = count;
+          },
+          error: (err) => {
+            console.error('Error fetching unread notification count:', err);
+          }
+        });
       }
     });
     
@@ -968,6 +990,8 @@ export class TeletravailComponent implements OnInit {
   // Contact modal methods
   openContactModal(): void {
     this.isContactModalOpen = true;
+    this.showNotifications = false;
+    this.isProfilePopupOpen = false;
     document.body.classList.add('modal-open');
   }
 
@@ -1056,6 +1080,10 @@ export class TeletravailComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
     this.isProfilePopupOpen = !this.isProfilePopupOpen;
+    if (this.isProfilePopupOpen) {
+      this.showNotifications = false;
+      this.isContactModalOpen = false;
+    }
   }
 
   closeProfilePopup(): void {
@@ -1087,5 +1115,39 @@ export class TeletravailComponent implements OnInit {
         // No need to show an alert for this error as it's not user-initiated
       }
     });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      this.isProfilePopupOpen = false;
+      this.isContactModalOpen = false;
+    }
+  }
+
+  handleNotificationClick(notif: Notification) {
+    this.notificationService.markAsRead(notif.id).subscribe({
+      next: (notification) => {
+        const idx = this.notifications.findIndex(n => n.id === notif.id);
+        if (idx !== -1) {
+          this.notifications[idx] = notification;
+        }
+        if (this.unreadCount > 0) {
+          this.unreadCount--;
+        }
+        if (notif.type === 'TELEWORK_REQUEST_CREATED') {
+          this.router.navigate(['/planning']);
+          this.showNotifications = false;
+        }
+      },
+      error: (err) => {
+        console.error('Error marking notification as read:', err);
+      }
+    });
+  }
+
+  onProfilePopupOpened() {
+    this.showNotifications = false;
+    this.isContactModalOpen = false;
   }
 }

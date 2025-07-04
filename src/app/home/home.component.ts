@@ -10,6 +10,8 @@ import { ProfileService } from '../services/profile.service';
 import Swal from 'sweetalert2';
 import { HttpClient } from '@angular/common/http';
 import { ContactService, ContactRequest } from '../services/contact.service';
+import { NotificationService, Notification } from '../services/notification.service';
+import { ProfileHeaderComponent } from '../shared/components/profile/profile-header.component';
 
 @Component({
   selector: 'app-home',
@@ -70,6 +72,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('navmenu') navMenu!: ElementRef;
   @ViewChild('mobileNavToggle') mobileNavToggle!: ElementRef;
 
+  notifications: Notification[] = [];
+  unreadCount: number = 0;
+  showNotifications: boolean = false;
+
+  @ViewChild('profileHeader') profileHeader!: ProfileHeaderComponent;
+
   constructor(
     private authService: AuthService, 
     private router: Router,
@@ -78,7 +86,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private reservationService: ReservationService,
     private profileService: ProfileService,
     private http: HttpClient,
-    private contactService: ContactService
+    private contactService: ContactService,
+    private notificationService: NotificationService
   ) {
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -201,6 +210,24 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.setupWorkStatus();
           }
         }, 500); // Short delay to ensure planning data is loaded
+
+        this.notificationService.getUserNotifications(this.currentUser.id).subscribe({
+          next: (notifications) => {
+            console.log('Fetched notifications for user', this.currentUser.id, notifications);
+            this.notifications = notifications;
+          },
+          error: (err) => {
+            console.error('Error fetching notifications:', err);
+          }
+        });
+        this.notificationService.getUnreadNotificationCount(this.currentUser.id).subscribe({
+          next: (count) => {
+            this.unreadCount = count;
+          },
+          error: (err) => {
+            console.error('Error fetching unread notification count:', err);
+          }
+        });
       }
     }, 500); // Short delay to ensure currentUser is available
     
@@ -264,10 +291,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.isProfilePopupOpen = !this.isProfilePopupOpen;
-    
     // Close other modals if open
     if (this.isProfilePopupOpen) {
       this.isContactModalOpen = false;
+      this.showNotifications = false;
     }
   }
   
@@ -1185,5 +1212,42 @@ export class HomeComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      this.isProfilePopupOpen = false;
+      if (this.profileHeader && this.profileHeader.closeProfilePopup) {
+        this.profileHeader.closeProfilePopup();
+      }
+    }
+  }
+
+  markAsRead(notificationId: number) {
+    this.notificationService.markAsRead(notificationId).subscribe({
+      next: (notification) => {
+        // Update the notification in the list
+        const idx = this.notifications.findIndex(n => n.id === notificationId);
+        if (idx !== -1) {
+          this.notifications[idx] = notification;
+        }
+        // Decrement unread count
+        if (this.unreadCount > 0) {
+          this.unreadCount--;
+        }
+      },
+      error: (err) => {
+        console.error('Error marking notification as read:', err);
+      }
+    });
+  }
+
+  handleNotificationClick(notif: Notification) {
+    this.markAsRead(notif.id);
+    if (notif.type === 'TELEWORK_REQUEST_CREATED') {
+      this.router.navigate(['/planning']);
+      this.showNotifications = false;
+    }
   }
 }

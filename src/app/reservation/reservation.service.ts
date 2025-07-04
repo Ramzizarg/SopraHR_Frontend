@@ -8,7 +8,7 @@ export interface Reservation {
   id?: number;
   deskId: number;
   bookingDate: string;
-  duration: string;
+  duration: 'AM' | 'PM' | 'FULL';
   employeeName?: string; // Will be set automatically on the server from the user profile
   userId?: string;
   createdAt?: string;

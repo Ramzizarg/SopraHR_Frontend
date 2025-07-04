@@ -52,10 +52,34 @@
           <a href="javascript:void(0)" class="contact-icon ms-2" (click)="openContactModal()">
             <i class="bi bi-envelope-fill"></i>
           </a>
-          <a href="/notifications" class="notification-icon ms-2">
-            <i class="bi bi-bell-fill"></i>
-          </a>
-          <app-profile-header></app-profile-header>
+          <span class="notification-bell-container">
+            <a href="javascript:void(0)" class="notification-icon ms-2" (click)="toggleNotifications()">
+              <i class="bi bi-bell-fill"></i>
+            </a>
+            <span *ngIf="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+          </span>
+          <div class="notification-dropdown" *ngIf="showNotifications">
+            <div class="notification-dropdown-header">
+              Notifications
+              <button class="close-btn" (click)="showNotifications = false" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="notification-list">
+              <div *ngFor="let notif of notifications" class="notification-item" [ngClass]="notif.status === 'UNREAD' ? 'unread' : 'read'" (click)="handleNotificationClick(notif)">
+                <span *ngIf="notif.status === 'UNREAD'" class="notification-dot"></span>
+                <div style="flex:1;">
+                  <strong>{{ notif.title }}</strong>
+                  <p>{{ notif.message }}</p>
+                  <small>{{ notif.createdAt | date:'short' }}</small>
+                  <span *ngIf="notif.status === 'UNREAD'" class="badge bg-warning text-dark ms-2">Non lu</span>
+                </div>
+              </div>
+              <div *ngIf="!notifications.length" class="notification-empty">
+                <i class="bi bi-bell-slash" style="font-size:2em;opacity:0.5;"></i><br>
+                Aucune notification
+              </div>
+            </div>
+          </div>
+          <app-profile-header (profilePopupOpened)="onProfilePopupOpened()"></app-profile-header>
           
           <!-- Mobile menu toggle button removed -->
         </div>

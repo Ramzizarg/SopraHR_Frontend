@@ -52,10 +52,34 @@
           <a href="javascript:void(0)" class="contact-icon ms-2" (click)="openContactModal()">
             <i class="bi bi-envelope-fill"></i>
           </a>
-          <a href="/notifications" class="notification-icon ms-2">
-            <i class="bi bi-bell-fill"></i>
-          </a>
-          <app-profile-header></app-profile-header>
+          <span class="notification-bell-container">
+            <a href="javascript:void(0)" class="notification-icon ms-2" (click)="toggleNotifications()">
+              <i class="bi bi-bell-fill"></i>
+            </a>
+            <span *ngIf="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+          </span>
+          <div class="notification-dropdown" *ngIf="showNotifications">
+            <div class="notification-dropdown-header">
+              Notifications
+              <button class="close-btn" (click)="showNotifications = false" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="notification-list">
+              <div *ngFor="let notif of notifications" class="notification-item" [ngClass]="notif.status === 'UNREAD' ? 'unread' : 'read'" (click)="handleNotificationClick(notif)">
+                <span *ngIf="notif.status === 'UNREAD'" class="notification-dot"></span>
+                <div style="flex:1;">
+                  <strong>{{ notif.title }}</strong>
+                  <p>{{ notif.message }}</p>
+                  <small>{{ notif.createdAt | date:'short' }}</small>
+                  <span *ngIf="notif.status === 'UNREAD'" class="badge bg-warning text-dark ms-2">Non lu</span>
+                </div>
+              </div>
+              <div *ngIf="!notifications.length" class="notification-empty">
+                <i class="bi bi-bell-slash" style="font-size:2em;opacity:0.5;"></i><br>
+                Aucune notification
+              </div>
+            </div>
+          </div>
+          <app-profile-header (profilePopupOpened)="onProfilePopupOpened()"></app-profile-header>
           
           <!-- Mobile menu toggle button -->
           <a href="javascript:void(0)" class="d-lg-none ms-3">
@@ -237,7 +261,7 @@
             </div>
             <div class="status-item-group">
               <div class="status-item">
-                <i class="fas fa-chair"></i>
+                <i class="fas fa-chair" style="margin-right: 6px; color: #3b82f6;"></i>
                 <span id="deskCount">{{currentPlan ? currentPlan.desks.length : 0}}</span>
               </div>
               <ng-container *ngIf="isAdmin">
@@ -289,13 +313,16 @@
             <div class="booking-dialog-header">
               <h3>{{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'Update Reservation' : 'Book Desk' }}</h3>
               <button class="close-button" (click)="closeBookingDialog()" aria-label="Close dialog">
-                <i class="fas fa-xmark"></i>
+                <i class="bi bi-x-lg"></i>
               </button>
             </div>
             <div class="booking-dialog-body">
               <!-- Status indicator -->
               <div class="desk-status-indicator" *ngIf="selectedDeskForBooking">
-                <div class="status-indicator-label">Desk {{selectedDeskForBooking.id}}</div>
+                <div class="status-indicator-label">
+                  <i class="fas fa-chair" style="margin-right: 6px; color: #3b82f6;"></i>
+                  Desk {{selectedDeskForBooking.id}}
+                </div>
                 <div class="status-indicator-badge" 
                      [class.available]="selectedDeskForBooking.available" 
                      [class.reserved]="!selectedDeskForBooking.available">
@@ -303,10 +330,14 @@
                 </div>
               </div>
               <div class="form-group">
-                <label for="bookingDuration">Duration</label>
+                <label for="bookingDuration">
+                  <i class="fas fa-clock" style="margin-right: 6px; color: #3b82f6;"></i>
+                  Duration
+                </label>
                 <select id="bookingDuration" [(ngModel)]="bookingDuration">
-                  <option value="4">Half Day (4h)</option>
-                  <option value="8">Full Day (8h)</option>
+                  <option *ngFor="let d of availableDurations" [value]="d">
+                    {{ d === 'AM' ? 'Half Day (8h-12h)' : d === 'PM' ? 'Half Day (14h-18h)' : 'Full Day (8h-18h)' }}
+                  </option>
                 </select>
               </div>
               <div class="form-group" *ngIf="viewMode === 'week'">
@@ -357,22 +388,17 @@
               </div>
             </div>
             <div class="booking-dialog-footer">
-              <button class="tertiary-button"
-                      (click)="deselectAllDates()"
-                      *ngIf="selectedBookingDates.size > 0 && viewMode === 'week'"
-                      [ngStyle]="{
-                        'background-color': '#e5e7eb',
-                        'color': '#1f2937',
-                        'border': '1px solid #d1d5db'
-                      }">
-                <i class="fas fa-times"></i> Deselect All
+              <button class="danger-button"
+                      *ngIf="isUpdatingReservation()"
+                      (click)="deleteSingleReservation()">
+                <i class="fas fa-trash"></i> Cancel
               </button>
               <button class="secondary-button" (click)="closeBookingDialog()">
-                <i class="fas fa-times"></i> Cancel
+                <i class="fas fa-times"></i> Close
               </button>
               <button class="primary-button" (click)="confirmBooking()">
-                <i class="fas fa-{{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'edit' : 'check' }}"></i>
-                {{ selectedDeskForBooking && !selectedDeskForBooking.available ? 'Update' : 'Book' }}
+                <i class="fas fa-{{ isUpdatingReservation() ? 'edit' : 'check' }}"></i>
+                {{ isUpdatingReservation() ? 'Update' : 'Book' }}
               </button>
             </div>
           </div>
@@ -425,9 +451,7 @@
     <div class="contact-modal-header">
       <h4>Contactez l'équipe support</h4>
       <button class="close-button" (click)="closeContactModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
-          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-        </svg>
+        <i class="bi bi-x-lg"></i>
       </button>
     </div>
     <div class="contact-modal-body">
@@ -447,7 +471,6 @@
       </div>
       <div class="contact-form">
         <h5>Formulaire de contact interne</h5>
-        
         <div class="form-group">
           <label for="priority">Priorité</label>
           <select id="priority" class="form-control form-select">
@@ -456,18 +479,15 @@
             <option value="urgent">🔴 Urgente</option>
           </select>
         </div>
-        
         <div class="form-group">
           <label for="subject" class="required">Sujet</label>
           <input type="text" id="subject" class="form-control" placeholder="Titre de votre demande">
         </div>
-        
         <div class="form-group">
           <label for="message" class="required">Description</label>
           <textarea id="message" class="form-control" rows="4" placeholder="Décrivez votre problème ou demande en détail..."></textarea>
           <div class="form-note">Veuillez inclure autant de détails que possible pour faciliter le traitement de votre demande.</div>
         </div>
-        
         <div class="form-actions">
           <div class="form-required-note">
             <span>*</span> Champs obligatoires

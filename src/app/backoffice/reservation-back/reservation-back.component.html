@@ -347,8 +347,9 @@
               <div class="form-group">
                 <label for="bookingDuration">Duration</label>
                 <select id="bookingDuration" [(ngModel)]="bookingDuration">
-                  <option value="4">Half Day (4h)</option>
-                  <option value="8">Full Day (8h)</option>
+                  <option value="AM">Half Day (8h-12h)</option>
+                  <option value="PM">Half Day (14h-18h)</option>
+                  <option value="FULL">Full Day (8h-18h)</option>
                 </select>
               </div>
               <div class="form-group" *ngIf="viewMode === 'week'">

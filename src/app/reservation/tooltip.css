@@ -56,6 +56,19 @@
   border-top-color: #ffffff;
 }
 
+.status-dot.own {
+  background-color: #ff0000; /* Same as info text color */
+}
+
+.desk-info-tooltip.own {
+  background: #f3e8ff; /* Light purple */
+  color: #7b1dbd;      /* Dark purple from app palette */
+}
+
+.desk-info-tooltip.own::after {
+  border-top-color: #f3e8ff;
+}
+
 .weekly-status-tooltip {
   display: flex;
   gap: 0.5rem;

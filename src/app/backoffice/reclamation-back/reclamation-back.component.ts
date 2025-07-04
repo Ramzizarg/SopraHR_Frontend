@@ -1101,11 +1101,11 @@ export class ReclamationBackComponent implements OnInit, OnDestroy {
             border-color: #2563EB;
           }
           .response-btn-secondary {
-            background-color: #F3F4F6;
+            background-color:rgb(0, 0, 0);
             border-color: #E5E7EB;
           }
           .response-btn-secondary:hover {
-            background-color: #E5E7EB;
+            background-color:rgb(0, 0, 0);
             border-color: #D1D5DB;
           }
         `;

@@ -6,6 +6,7 @@ import { PlanningResponse, TeletravailRequest } from './models/planning.model';
 import { formatDate } from '@angular/common';
 import Swal from 'sweetalert2';
 import { ContactService, ContactRequest } from '../services/contact.service';
+import { NotificationService, Notification } from '../services/notification.service';
 declare var bootstrap: any; // Bootstrap JS declaration
 
 
@@ -40,6 +41,9 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   isContactModalOpen: boolean = false; // For contact modal
   searchEmployeeName: string = ''; // For managers to search employees by name
   filteredEmployees: any[] = []; // Holds the filtered employees based on search
+  notifications: Notification[] = [];
+  unreadCount: number = 0;
+  showNotifications: boolean = false;
 
   @ViewChild('navmenu') navMenu!: ElementRef;
   @ViewChild('mobileNavToggle') mobileNavToggle!: ElementRef;
@@ -51,7 +55,8 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     private planningService: PlanningService,
     private router: Router,
     private renderer: Renderer2,
-    private contactService: ContactService
+    private contactService: ContactService,
+    private notificationService: NotificationService
   ) { 
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -188,6 +193,24 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
         if (this.currentUserId > 0) {
           this.loadPlanning();
         }
+
+        // Fetch notifications
+        this.notificationService.getUserNotifications(user.id).subscribe({
+          next: (notifications) => {
+            this.notifications = notifications;
+          },
+          error: (err) => {
+            console.error('Error fetching notifications:', err);
+          }
+        });
+        this.notificationService.getUnreadNotificationCount(user.id).subscribe({
+          next: (count) => {
+            this.unreadCount = count;
+          },
+          error: (err) => {
+            console.error('Error fetching unread notification count:', err);
+          }
+        });
       }
     });
 
@@ -287,6 +310,7 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
    */
   openContactModal(): void {
     this.isContactModalOpen = true;
+    this.showNotifications = false;
     document.body.classList.add('modal-open');
   }
 
@@ -1667,6 +1691,38 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       entry.userId === userId && 
       new Date(entry.planningDate).toDateString() === date.toDateString()
     );
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+    if (this.showNotifications) {
+      this.isContactModalOpen = false;
+    }
+  }
+
+  handleNotificationClick(notif: Notification) {
+    this.notificationService.markAsRead(notif.id).subscribe({
+      next: (notification) => {
+        const idx = this.notifications.findIndex(n => n.id === notif.id);
+        if (idx !== -1) {
+          this.notifications[idx] = notification;
+        }
+        if (this.unreadCount > 0) {
+          this.unreadCount--;
+        }
+        if (notif.type === 'TELEWORK_REQUEST_CREATED') {
+          this.router.navigate(['/planning']);
+          this.showNotifications = false;
+        }
+      },
+      error: (err) => {
+        console.error('Error marking notification as read:', err);
+      }
+    });
+  }
+
+  onProfilePopupOpened() {
+    this.showNotifications = false;
   }
 
 }
