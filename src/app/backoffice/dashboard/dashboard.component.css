@@ -3937,3 +3937,69 @@ body {
 .chart-info i {
   color: #3b82f6;
 }
+
+.employee-rank-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-width: 28px;
+  margin-right: 8px;
+  font-size: 1.3rem;
+}
+.gold-trophy {
+  color: #FFD700;
+  filter: drop-shadow(0 1px 2px rgba(255, 215, 0, 0.25));
+}
+.silver-trophy {
+  color: #C0C0C0;
+  filter: drop-shadow(0 1px 2px rgba(192, 192, 192, 0.18));
+}
+.bronze-trophy {
+  color: #CD7F32;
+  filter: drop-shadow(0 1px 2px rgba(205, 127, 50, 0.18));
+}
+
+@media (max-width: 600px) {
+  .employee-rank-icon {
+    width: 22px;
+    min-width: 22px;
+    font-size: 1.05rem;
+    margin-right: 5px;
+  }
+}
+
+.sort-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #3b82f6;
+  margin: 0 2px;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sort-btn i {
+  font-size: 1.1rem;
+}
+.sort-btn.active, .sort-btn:focus {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+}
+.sort-btn:hover:not(.active) {
+  background: #dbeafe;
+  color: #2563eb;
+  border-color: #60a5fa;
+}
+@media (max-width: 600px) {
+  .sort-btn {
+    font-size: 0.95rem;
+    padding: 0.18rem 0.35rem;
+  }
+}

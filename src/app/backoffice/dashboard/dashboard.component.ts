@@ -67,6 +67,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   selectedTeamFilter: string = '';
   currentTopOfficePage: number = 1;
   readonly topOfficePageSize: number = 10;
+  topOfficeSortOrder: 'desc' | 'asc' = 'desc';
 
   // Teletravail data
   teletravailRequests: TeletravailRequest[] = [];
@@ -107,6 +108,15 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
         emp.team && emp.team.toUpperCase() === teamFilter.toUpperCase()
       );
     }
+    
+    // Sort by officeDaysThisMonth
+    filtered = filtered.slice().sort((a, b) => {
+      if (this.topOfficeSortOrder === 'desc') {
+        return b.officeDaysThisMonth - a.officeDaysThisMonth;
+      } else {
+        return a.officeDaysThisMonth - b.officeDaysThisMonth;
+      }
+    });
     
     return filtered;
   }
@@ -1341,5 +1351,10 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       points.push(`${this.barCurveWidth},${lastY}`);
     }
     this.barCurvePointsValue = points.join(' ');
+  }
+
+  setTopOfficeSortOrder(order: 'desc' | 'asc') {
+    this.topOfficeSortOrder = order;
+    this.currentTopOfficePage = 1;
   }
 }

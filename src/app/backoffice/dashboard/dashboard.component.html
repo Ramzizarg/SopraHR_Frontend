@@ -419,7 +419,7 @@
                   <div class="total-employees-header">
                     <span class="total-label-header">Total demandes</span>
                     <span class="total-value-header">{{ teletravailStats.total }}</span>
-            </div>
+                </div>
                 </div>
               </div>
             </div>
@@ -531,6 +531,12 @@
                   <option value="OPS">OPS</option>
                   <option value="RH">RH</option>
                 </select>
+                <button class="sort-btn" [class.active]="topOfficeSortOrder === 'asc'" (click)="setTopOfficeSortOrder('asc')" title="Ordre croissant">
+                  <i class="bi bi-sort-up"></i>
+                </button>
+                <button class="sort-btn" [class.active]="topOfficeSortOrder === 'desc'" (click)="setTopOfficeSortOrder('desc')" title="Ordre décroissant">
+                  <i class="bi bi-sort-down"></i>
+                </button>
                 <span class="month-indicator">{{ today | date:'MMMM yyyy' }}</span>
               </div>
             </div>
@@ -538,7 +544,14 @@
             <div class="card-body">
               <div class="top-employees">
                 <ng-container *ngIf="filteredTopOfficeEmployees && filteredTopOfficeEmployees.length; else noEmployees">
-                  <div *ngFor="let employee of paginatedTopOfficeEmployees" class="employee-item upgraded-employee-item">
+                  <div *ngFor="let employee of paginatedTopOfficeEmployees; let idx = index" class="employee-item upgraded-employee-item">
+                    <div class="employee-rank-icon" *ngIf="idx < 3">
+                      <ng-container [ngSwitch]="idx">
+                        <i *ngSwitchCase="0" class="bi bi-gem gold-trophy" title="1er"></i>
+                        <i *ngSwitchCase="1" class="bi bi-star-fill silver-trophy" title="2ème"></i>
+                        <i *ngSwitchCase="2" class="bi bi-award-fill bronze-trophy" title="3ème"></i>
+                      </ng-container>
+                    </div>
                     <div class="employee-avatar">
                       <img *ngIf="getUserProfilePhoto(employee.id)" [src]="getUserProfilePhoto(employee.id)" class="profile-photo" [alt]="employee.firstName + ' ' + employee.lastName" (error)="handleImageError($event)">
                       <div *ngIf="!getUserProfilePhoto(employee.id)" class="avatar-circle" [ngStyle]="{'background-color': employee.team === 'DEV' ? '#2563EB' : employee.team === 'QA' ? '#16A34A' : employee.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
