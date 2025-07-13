@@ -1132,11 +1132,31 @@ export class TeletravailComponent implements OnInit {
         if (idx !== -1) {
           this.notifications[idx] = notification;
         }
-        if (this.unreadCount > 0) {
-          this.unreadCount--;
-        }
+        
+        // Refresh unread count from server to ensure accuracy
+        this.authService.currentUser.subscribe(user => {
+          if (user) {
+            this.notificationService.getUnreadNotificationCount(user.id).subscribe({
+              next: (count) => {
+                this.unreadCount = count;
+              },
+              error: (err) => {
+                console.error('Error fetching unread notification count:', err);
+                // Fallback to local decrement if server call fails
+                if (this.unreadCount > 0) {
+                  this.unreadCount--;
+                }
+              }
+            });
+          }
+        });
+        
         if (notif.type === 'TELEWORK_REQUEST_CREATED') {
           this.router.navigate(['/planning']);
+          this.showNotifications = false;
+        } else if (notif.type === 'TELEWORK_REQUEST_APPROVED' || notif.type === 'TELEWORK_REQUEST_REJECTED') {
+          // Refresh the requests list to show updated status
+          this.loadRequests();
           this.showNotifications = false;
         }
       },

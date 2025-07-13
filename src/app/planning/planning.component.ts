@@ -1407,9 +1407,9 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       if (entry.userId && !employeeMap.has(entry.userId)) {
         employeeMap.set(entry.userId, {
           userId: entry.userId,
-          userName: entry.userName || 'User ' + entry.userId,
-          employeeName: entry.employeeName || entry.userName || 'User ' + entry.userId,
-          team: entry.team
+          userName: entry.employeeName || 'User ' + entry.userId,
+          employeeName: entry.employeeName,
+          role: entry.role || 'EMPLOYEE'
         });
       } else if (entry.userId && employeeMap.has(entry.userId)) {
         // Update employee name if available in this entry and not in the map
@@ -1564,7 +1564,6 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
    * @param entry The planning entry object
    */
   private showApprovalOptions(entry: any) {
-    // Check if the request is from the current user (manager/team leader)
     if (entry.userId === this.currentUserId) {
       Swal.fire({
         title: 'Action non autorisée',
@@ -1575,7 +1574,6 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       return;
     }
 
-    // Translate work type to French and check for exceptional type
     const isExceptional = entry.workType?.toLowerCase() === 'exceptional' || 
                          entry.workType?.toLowerCase() === 'exceptionnelle';
     const workTypeFr = isExceptional ? 'Exceptionnelle' : 'Régulière';
@@ -1625,7 +1623,26 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
       if (result.isConfirmed) {
         this.approveTeletravailRequest(entry.id);
       } else if (result.dismiss === Swal.DismissReason.cancel) {
-        this.rejectTeletravailRequest(entry.id, '');
+        // Always require a reason for refusal
+        Swal.fire({
+          title: 'Raison du refus',
+          input: 'textarea',
+          inputLabel: `Veuillez indiquer la raison du refus pour ${entry.employeeName}`,
+          inputPlaceholder: 'Entrez votre raison ici...',
+          showCancelButton: true,
+          confirmButtonText: 'Confirmer',
+          cancelButtonText: 'Annuler',
+          inputValidator: (value) => {
+            if (!value) {
+              return 'La raison est requise!';
+            }
+            return null;
+          }
+        }).then((reasonResult) => {
+          if (reasonResult.isConfirmed) {
+            this.rejectTeletravailRequest(entry.id, reasonResult.value);
+          }
+        });
       }
     });
   }
@@ -1707,11 +1724,31 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
         if (idx !== -1) {
           this.notifications[idx] = notification;
         }
-        if (this.unreadCount > 0) {
-          this.unreadCount--;
-        }
+        
+        // Refresh unread count from server to ensure accuracy
+        this.authService.currentUser.subscribe(user => {
+          if (user) {
+            this.notificationService.getUnreadNotificationCount(user.id).subscribe({
+              next: (count) => {
+                this.unreadCount = count;
+              },
+              error: (err) => {
+                console.error('Error fetching unread notification count:', err);
+                // Fallback to local decrement if server call fails
+                if (this.unreadCount > 0) {
+                  this.unreadCount--;
+                }
+              }
+            });
+          }
+        });
+        
         if (notif.type === 'TELEWORK_REQUEST_CREATED') {
           this.router.navigate(['/planning']);
+          this.showNotifications = false;
+        } else if (notif.type === 'TELEWORK_REQUEST_APPROVED' || notif.type === 'TELEWORK_REQUEST_REJECTED') {
+          // Refresh the planning data to show updated status
+          this.loadPlanning();
           this.showNotifications = false;
         }
       },

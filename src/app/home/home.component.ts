@@ -1232,10 +1232,24 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (idx !== -1) {
           this.notifications[idx] = notification;
         }
-        // Decrement unread count
-        if (this.unreadCount > 0) {
-          this.unreadCount--;
-        }
+        
+        // Refresh unread count from server to ensure accuracy
+        this.authService.currentUser.subscribe(user => {
+          if (user) {
+            this.notificationService.getUnreadNotificationCount(user.id).subscribe({
+              next: (count) => {
+                this.unreadCount = count;
+              },
+              error: (err) => {
+                console.error('Error fetching unread notification count:', err);
+                // Fallback to local decrement if server call fails
+                if (this.unreadCount > 0) {
+                  this.unreadCount--;
+                }
+              }
+            });
+          }
+        });
       },
       error: (err) => {
         console.error('Error marking notification as read:', err);
@@ -1247,6 +1261,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.markAsRead(notif.id);
     if (notif.type === 'TELEWORK_REQUEST_CREATED') {
       this.router.navigate(['/planning']);
+      this.showNotifications = false;
+    } else if (notif.type === 'TELEWORK_REQUEST_APPROVED' || notif.type === 'TELEWORK_REQUEST_REJECTED') {
+      // Refresh the weekly planning to show updated status
+      this.setupWeeklyPlanning();
       this.showNotifications = false;
     }
   }
