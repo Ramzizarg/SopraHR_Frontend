@@ -27,6 +27,7 @@ import { BFCacheService } from './services/bfcache.service';
 import { GererDemandeComponent } from './gerer-demande/gerer-demande.component';
 import { ReclamationBackComponent } from './backoffice/reclamation-back/reclamation-back.component';
 import { NgApexchartsModule } from 'ng-apexcharts';
+import { AIInsightsComponent } from './backoffice/ai-insights/ai-insights.component';
 
 // Import locale data
 import { registerLocaleData } from '@angular/common';
@@ -59,7 +60,8 @@ registerLocaleData(localeFr, 'fr');
     PlanningBackComponent,
     ReservationBackComponent,
     GererDemandeComponent,
-    ReclamationBackComponent
+    ReclamationBackComponent,
+    AIInsightsComponent
   ],
   imports: [
     BrowserModule,

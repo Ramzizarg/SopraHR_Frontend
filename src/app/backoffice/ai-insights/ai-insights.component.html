@@ -1,0 +1,435 @@
+<!-- Main Layout -->
+<div class="d-flex" [ngClass]="{'sidebar-collapsed-layout': !isSidebarOpen}">
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" (click)="toggleSidebar()"></div>
+    
+    <!-- Sidebar -->
+    <div class="sidebar" [ngClass]="{'sidebar-mini': !isSidebarOpen}">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <img *ngIf="isSidebarOpen" src="assets/img/sopra_hr.png" alt="Sopra HR" class="sopra-logo">
+          <img *ngIf="!isSidebarOpen" src="assets/img/sopraa.png" alt="Sopra" class="sopra-icon">
+        </div>
+      </div>
+      
+      <div class="sidebar-menu">
+        <p class="menu-label">MENU</p>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/dashboard">
+              <i class="bi bi-speedometer2"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/users">
+              <i class="bi bi-people"></i>
+              <span>Utilisateurs</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/reservation-back">
+              <i class="bi bi-calendar-check me-1"></i>
+              <span>Réservation</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/planning-back">
+              <i class="bi bi-calendar3"></i>
+              <span>Planning</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/teletravail-back">
+              <i class="bi bi-laptop"></i>
+              <span>Télétravail</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/reclamation-back">
+              <i class="bi bi-exclamation-circle"></i>
+              <span>Réclamation</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" routerLink="/ai-insights">
+              <i class="bi bi-robot"></i>
+              <span>REVA</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="sidebar-footer">
+        <button class="logout-button" (click)="logout()">
+          <i class="bi bi-power"></i>
+          <span>Déconnexion</span>
+        </button>
+      </div>
+    </div>
+  
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Top Header Bar -->
+      <div class="header-bar">
+        <div class="d-flex align-items-center">
+          <button class="menu-toggle" (click)="toggleSidebar()" aria-label="Toggle sidebar menu" title="Toggle sidebar menu">
+            <i class="bi bi-list" aria-hidden="true"></i>
+            <span class="sr-only">Toggle sidebar menu</span>
+          </button>
+          <div class="search-bar">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="Rechercher...">
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="theme-toggle">
+            <i class="bi bi-moon"></i>
+          </div>
+          <div class="notification-icon">
+            <i class="bi bi-bell"></i>
+            <span class="notification-badge"></span>
+          </div>
+          <div class="user-profile" #profileElement (click)="toggleProfileDropdown()">
+            <img *ngIf="authService.currentUserValue?.profilePhotoUrl" 
+                 [src]="authService.currentUserValue?.profilePhotoUrl" 
+                 class="profile-image" 
+                 alt="Profile photo" 
+                 (error)="handleImageError($event)">
+            <div *ngIf="!authService.currentUserValue?.profilePhotoUrl" 
+                 class="avatar-circle" 
+                 [ngStyle]="{'background-color': authService.currentUserValue?.team === 'DEV' ? '#2563EB' : 
+                            authService.currentUserValue?.team === 'QA' ? '#16A34A' : 
+                            authService.currentUserValue?.team === 'OPS' ? '#0369A1' : '#7E22CE'}">
+              {{ authService.currentUserValue?.firstName?.charAt(0) || '' }}{{ authService.currentUserValue?.lastName?.charAt(0) || '' }}
+            </div>
+            <!-- Profile Dropdown Menu -->
+            <div class="profile-dropdown" *ngIf="isProfileDropdownOpen" [class.show]="isProfileDropdownOpen">
+              <div class="profile-header">
+                <div class="profile-name">{{ authService.currentUserValue?.firstName }} {{ authService.currentUserValue?.lastName }}</div>
+                <div class="profile-email">{{ authService.currentUserValue?.email }}</div>
+              </div>
+              <div class="profile-menu-items">
+                <a class="profile-menu-item" (click)="editProfile()">
+                  <i class="bi bi-person"></i>
+                  <span>Edit profile</span>
+                </a>
+                <a class="profile-menu-item" (click)="openAccountSettings()">
+                  <i class="bi bi-gear"></i>
+                  <span>Account settings</span>
+                </a>
+                <a class="profile-menu-item" (click)="getSupport()">
+                  <i class="bi bi-info-circle"></i>
+                  <span>Support</span>
+                </a>
+              </div>
+              <div class="profile-divider"></div>
+              <div class="profile-menu-items">
+                <a class="profile-menu-item sign-out" (click)="logout()">
+                  <i class="bi bi-box-arrow-left"></i>
+                  <span>Sign out</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- AI Insights Content -->
+      <div class="ai-insights-container">
+        <!-- Header -->
+        <div class="ai-header">
+          <div class="ai-title">
+            <h2>🤖 Reva</h2>
+          </div>
+          <div class="ai-controls-upgraded">
+            <button 
+              class="refresh-btn"
+              (click)="refreshData()" 
+              [disabled]="loading"
+              matTooltip="Rafraîchir l'analyse IA"
+            >
+              <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+              <span *ngIf="!loading">Actualiser</span>
+              <span *ngIf="loading">Chargement...</span>
+            </button>
+            <span class="last-updated" *ngIf="lastUpdated">
+              <i class="fas fa-clock"></i>
+              <span>{{ lastUpdated }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-container" *ngIf="loading">
+          <div class="skeleton-metrics"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-container" *ngIf="error">
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            Erreur lors du chargement des insights IA. Veuillez réessayer.
+          </div>
+        </div>
+
+        <!-- AI Content -->
+        <div class="ai-content" *ngIf="!loading && !error && aiAnalysis">
+          <!-- Priority Actions -->
+          <div class="priority-actions" *ngIf="aiAnalysis.summary.priority_actions && aiAnalysis.summary.priority_actions.length > 0">
+            <div class="priority-action-card" *ngFor="let action of aiAnalysis.summary.priority_actions">
+              <i class="fas fa-bolt text-danger"></i>
+              <span class="priority-label" [style.color]="getPriorityColor(action.priority)">{{ action.priority }}</span>
+              <span class="priority-action">{{ action.action }}</span>
+              <span class="priority-reason">({{ action.reason }})</span>
+            </div>
+          </div>
+
+          <!-- Metrics Row -->
+          <div class="metrics-row">
+            <div class="metric-card metric-occupancy" matTooltip="Taux d'occupation actuel">
+              <div class="metric-icon"><i class="fas fa-desktop"></i></div>
+              <div class="metric-content">
+                <h3>Occupation</h3>
+                <div class="metric-value" [style.color]="getStatusColor(getOccupancyStatus(aiAnalysis.reservation_analysis.current_occupancy))">
+                  {{ aiAnalysis.reservation_analysis.current_occupancy }}%
+                </div>
+                <div class="metric-trend">
+                  <i class="fas" [class]="getTrendIcon(aiAnalysis.reservation_analysis.trend)"></i>
+                  {{ aiAnalysis.reservation_analysis.trend }}
+                </div>
+              </div>
+            </div>
+            <div class="metric-card metric-telework" matTooltip="Pourcentage de télétravail">
+              <div class="metric-icon"><i class="fas fa-home"></i></div>
+              <div class="metric-content">
+                <h3>Télétravail</h3>
+                <div class="metric-value" [style.color]="getStatusColor(getTeleworkStatus(aiAnalysis.telework_analysis.monthly_percentage))">
+                  {{ aiAnalysis.telework_analysis.monthly_percentage }}%
+                </div>
+                <div class="metric-trend">
+                  <i class="fas" [class]="getTrendIcon(aiAnalysis.telework_analysis.trend)"></i>
+                  {{ aiAnalysis.telework_analysis.trend }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Daily telework percentage table -->
+            <!-- Removed old telework-daily-table here -->
+            <div class="metric-card metric-alerts" matTooltip="Nombre d'alertes critiques">
+              <div class="metric-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <div class="metric-content">
+                <h3>Alertes</h3>
+                <div class="metric-value" [style.color]="aiAnalysis.summary.total_alerts > 0 ? '#dc3545' : '#28a745'">
+                  {{ aiAnalysis.summary.total_alerts }}
+                </div>
+                <div class="metric-subtitle">Critiques</div>
+              </div>
+            </div>
+            <div class="metric-card metric-recommendations" matTooltip="Nombre de recommandations IA">
+              <div class="metric-icon"><i class="fas fa-lightbulb"></i></div>
+              <div class="metric-content">
+                <h3>Recommandations</h3>
+                <div class="metric-value" [style.color]="totalRecommendations > 0 ? '#007bff' : '#6c757d'">
+                  {{ totalRecommendations }}
+                </div>
+                <div class="metric-subtitle">Actions suggérées</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Telework Daily Table as Card -->
+          <div class="insights-row" *ngIf="aiAnalysis.telework_analysis.daily_percentages?.length">
+            <div class="insight-card telework-daily-card">
+              <div class="card-header">
+                <h4>📅 Pourcentage journalier de télétravail</h4>
+              </div>
+              <div class="card-body telework-daily-table-body">
+                <div class="telework-daily-table-controls">
+                  <button class="week-nav-btn" (click)="showPrevWeek()" [disabled]="!currentWeekStart">&lt; Semaine précédente</button>
+                  <span class="week-range-label">{{ getWeekRangeLabel() }}</span>
+                  <button class="week-nav-btn" (click)="showNextWeek()" [disabled]="!currentWeekStart">Semaine suivante &gt;</button>
+                </div>
+                <div class="telework-daily-table-scroll">
+                  <table class="telework-daily-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Pourcentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let day of getCurrentWeekDays()" [ngClass]="{'today-row': isToday(day.date)}">
+                        <td>{{ day.date | date:'EEEE dd/MM/yyyy' : undefined : 'fr' }}</td>
+                        <td class="percentage-cell" [ngClass]="{'zero': day.percentage === 0}">{{ day.percentage }}%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div *ngIf="getCurrentWeekDays().length === 0" class="no-data-week">Aucune donnée pour cette semaine.</div>
+                  <div class="scroll-hint" id="telework-scroll-hint" style="display:none;">
+                    <i class="fas fa-arrows-alt-h"></i> Faites défiler horizontalement pour voir toutes les colonnes
+                  </div>
+                </div>
+                <div class="average-info-row">
+                  <div class="week-average-info">
+                    <i class="fas fa-percentage"></i>
+                    Moyenne semaine :
+                    <span class="week-average-value">{{ getCurrentWeekAverage() }}%</span>
+                  </div>
+                  <div class="month-average-info">
+                    <i class="fas fa-percentage"></i>
+                    Moyenne mois :
+                    <span class="month-average-value">{{ aiAnalysis.telework_analysis.monthly_percentage }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alerts and Recommendations -->
+          <div class="insights-row">
+            <!-- Critical Alerts -->
+            <div class="insight-card alert-card" *ngIf="aiAnalysis.reservation_analysis.alerts.length > 0 || aiAnalysis.telework_analysis.alerts.length > 0">
+              <div class="card-header">
+                <h4>🚨 Alertes Critiques</h4>
+              </div>
+              <div class="card-body">
+                <div class="alert-item" *ngFor="let alert of aiAnalysis.reservation_analysis.alerts">
+                  <div class="alert-content">
+                    <div class="alert-message">{{ alert.message }}</div>
+                    <div class="alert-action">{{ alert.action }}</div>
+                  </div>
+                </div>
+                <div class="alert-item" *ngFor="let alert of aiAnalysis.telework_analysis.alerts">
+                  <div class="alert-content">
+                    <div class="alert-message">{{ alert.message }}</div>
+                    <div class="alert-action">{{ alert.action }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Warnings -->
+            <div class="insight-card warning-card" *ngIf="aiAnalysis.reservation_analysis.warnings.length > 0 || aiAnalysis.telework_analysis.warnings.length > 0">
+              <div class="card-header">
+                <h4>⚠️ Avertissements</h4>
+              </div>
+              <div class="card-body">
+                <div class="warning-item" *ngFor="let warning of aiAnalysis.reservation_analysis.warnings">
+                  <div class="warning-content">
+                    <div class="warning-message">{{ warning.message }}</div>
+                    <div class="warning-action">{{ warning.action }}</div>
+                  </div>
+                </div>
+                <div class="warning-item" *ngFor="let warning of aiAnalysis.telework_analysis.warnings">
+                  <div class="warning-content">
+                    <div class="warning-message">{{ warning.message }}</div>
+                    <div class="warning-action">{{ warning.action }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workstation Recommendations -->
+          <div class="insights-row" *ngIf="aiAnalysis.reservation_analysis.workstation_recommendations.length > 0">
+            <div class="insight-card recommendation-card">
+              <div class="card-header">
+                <h4>🔧 Recommandations Postes de Travail</h4>
+              </div>
+              <div class="card-body">
+                <div class="recommendation-item" *ngFor="let rec of aiAnalysis.reservation_analysis.workstation_recommendations">
+                  <div class="recommendation-content">
+                    <div class="recommendation-action">
+                      <i class="fas" [class]="getPriorityIcon(rec.priority)" [style.color]="getPriorityColor(rec.priority)"></i>
+                      {{ getWorkstationRecommendationText(rec) }}
+                    </div>
+                    <div class="recommendation-priority">
+                      Priorité: <span [style.color]="getPriorityColor(rec.priority)">{{ rec.priority }}</span>
+                    </div>
+                    <div class="recommendation-reason">{{ rec.reason }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Predictions -->
+          <div class="insights-row" *ngIf="aiAnalysis.predictions.occupancy && aiAnalysis.predictions.occupancy.predictions.length > 0 || aiAnalysis.predictions.telework && aiAnalysis.predictions.telework.predictions.length > 0">
+            <div class="insight-card prediction-card">
+              <div class="card-header">
+                <i class="fas fa-chart-line text-success"></i>
+                <h4>🔮 Prédictions (30 jours)</h4>
+              </div>
+              <div class="card-body">
+                <div class="prediction-section" *ngIf="aiAnalysis.predictions.occupancy && aiAnalysis.predictions.occupancy.predictions.length > 0">
+                  <h5>Occupation des Postes</h5>
+                  <div class="prediction-confidence">
+                    Confiance: {{ (aiAnalysis.predictions.occupancy.confidence * 100).toFixed(1) }}%
+                  </div>
+                  <div class="prediction-preview">
+                    <div class="prediction-item" *ngFor="let pred of aiAnalysis.predictions.occupancy.predictions.slice(0, 5)">
+                      <span class="prediction-date">{{ pred.date }}</span>
+                      <span class="prediction-value">{{ pred.predicted_value }}%</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="prediction-section" *ngIf="aiAnalysis.predictions.telework && aiAnalysis.predictions.telework.predictions.length > 0">
+                  <h5>Télétravail</h5>
+                  <div class="prediction-confidence">
+                    Confiance: {{ (aiAnalysis.predictions.telework.confidence * 100).toFixed(1) }}%
+                  </div>
+                  <div class="prediction-preview">
+                    <div class="prediction-item" *ngFor="let pred of aiAnalysis.predictions.telework.predictions.slice(0, 5)">
+                      <span class="prediction-date">{{ pred.date }}</span>
+                      <span class="prediction-value">{{ pred.predicted_value }}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Anomalies -->
+          <div class="insights-row" *ngIf="aiAnalysis.anomalies.occupancy && aiAnalysis.anomalies.occupancy.length > 0 || aiAnalysis.anomalies.telework && aiAnalysis.anomalies.telework.length > 0">
+            <div class="insight-card anomaly-card">
+              <div class="card-header">
+                <h4>🔍 Anomalies Détectées</h4>
+              </div>
+              <div class="card-body">
+                <div class="anomaly-section" *ngIf="aiAnalysis.anomalies.occupancy && aiAnalysis.anomalies.occupancy.length > 0">
+                  <h5>Occupation</h5>
+                  <div class="anomaly-dates">
+                    <span class="anomaly-date" *ngFor="let date of aiAnalysis.anomalies.occupancy">{{ date }}</span>
+                  </div>
+                </div>
+                <div class="anomaly-section" *ngIf="aiAnalysis.anomalies.telework && aiAnalysis.anomalies.telework.length > 0">
+                  <h5>Télétravail</h5>
+                  <div class="anomaly-dates">
+                    <span class="anomaly-date" *ngFor="let date of aiAnalysis.anomalies.telework">{{ date }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+(function() {
+  setTimeout(function() {
+    var el = document.querySelector('.telework-daily-table-scroll');
+    var hint = document.getElementById('telework-scroll-hint');
+    if (el && hint && el.scrollWidth > el.clientWidth) {
+      hint.style.display = 'block';
+      el.addEventListener('scroll', function() {
+        hint.style.opacity = '0.3';
+        setTimeout(function() { hint.style.display = 'none'; }, 800);
+      }, { once: true });
+    }
+  }, 800);
+})();
+</script> 

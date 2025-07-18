@@ -48,7 +48,7 @@ export class LoginComponent {
         setTimeout(() => {
           if (this.authService.isAdmin()) {
             console.log('LoginComponent: Admin user detected, navigating to dashboard');
-            this.router.navigate(['/backoffice/dashboard']);
+            this.router.navigate(['/dashboard']);
           } else {
             console.log('LoginComponent: Regular user, navigating to home');
             this.router.navigate(['/home']);

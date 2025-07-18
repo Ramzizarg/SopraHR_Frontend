@@ -14,39 +14,45 @@
       <p class="menu-label">MENU</p>
       <ul class="nav flex-column">
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/dashboard">
+          <a class="nav-link" routerLink="/dashboard">
             <i class="bi bi-speedometer2"></i>
             <span>Dashboard</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/users">
+          <a class="nav-link" routerLink="/users">
             <i class="bi bi-people"></i>
             <span>Utilisateurs</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/reservation-back">
+          <a class="nav-link" routerLink="/reservation-back">
             <i class="bi bi-calendar-check me-1"></i>
             <span>Réservation</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link " routerLink="/backoffice/planning-back">
+          <a class="nav-link " routerLink="/planning-back">
             <i class="bi bi-calendar3"></i>
             <span>Planning</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active" routerLink="/backoffice/teletravail-back">
+          <a class="nav-link active" routerLink="/teletravail-back">
             <i class="bi bi-laptop"></i>
             <span>Télétravail</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/reclamation-back">
+          <a class="nav-link" routerLink="/reclamation-back">
             <i class="bi bi-exclamation-circle"></i>
             <span>Réclamation</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/ai-insights">
+            <i class="bi bi-robot"></i>
+            <span>REVA</span>
           </a>
         </li>
       </ul>
@@ -65,8 +71,9 @@
     <!-- Top Header Bar -->
     <div class="header-bar">
       <div class="d-flex align-items-center">
-        <button class="menu-toggle" (click)="toggleSidebar()">
-          <i class="bi bi-list"></i>
+        <button class="menu-toggle" (click)="toggleSidebar()" aria-label="Toggle sidebar menu" title="Toggle sidebar menu">
+          <i class="bi bi-list" aria-hidden="true"></i>
+          <span class="sr-only">Toggle sidebar menu</span>
         </button>
         <div class="search-bar">
           <i class="bi bi-search"></i>
@@ -201,7 +208,8 @@
                   <!-- Team Filter -->
                   <div class="col-auto">
                     <div class="filter-wrapper">
-                      <select class="filter-select" [(ngModel)]="selectedTeam" (change)="filterRequests()">
+                      <label for="teamFilter" class="sr-only">Filtrer par équipe</label>
+                      <select id="teamFilter" class="filter-select" [(ngModel)]="selectedTeam" (change)="filterRequests()">
                         <option value="">Équipe: Toutes</option>
                         <option *ngFor="let team of teams" [value]="team">{{ team }}</option>
                       </select>
@@ -212,7 +220,8 @@
                   <!-- Work Type Filter -->
                   <div class="col-auto">
                     <div class="filter-wrapper">
-                      <select class="filter-select" [(ngModel)]="selectedWorkType" (change)="filterRequests()">
+                      <label for="workTypeFilter" class="sr-only">Filtrer par type de travail</label>
+                      <select id="workTypeFilter" class="filter-select" [(ngModel)]="selectedWorkType" (change)="filterRequests()">
                         <option value="">Type: Tous</option>
                         <option *ngFor="let type of workTypes" [value]="type">{{ type }}</option>
                       </select>
@@ -223,7 +232,8 @@
                   <!-- Status Filter -->
                   <div class="col-auto">
                     <div class="filter-wrapper">
-                      <select class="filter-select" [(ngModel)]="selectedStatus" (change)="filterRequests()">
+                      <label for="statusFilter" class="sr-only">Filtrer par statut</label>
+                      <select id="statusFilter" class="filter-select" [(ngModel)]="selectedStatus" (change)="filterRequests()">
                         <option value="">Statut: Tous</option>
                         <option *ngFor="let status of statuses" [value]="status">{{ status === 'APPROVED' ? 'Approuvé' : status === 'REJECTED' ? 'Rejeté' : 'En attente' }}</option>
                       </select>

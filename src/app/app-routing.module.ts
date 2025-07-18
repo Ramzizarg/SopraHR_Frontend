@@ -16,6 +16,7 @@ import { PlanningBackComponent } from './backoffice/planning-back/planning-back.
 import { ReservationBackComponent } from './backoffice/reservation-back/reservation-back.component';
 import { ReclamationBackComponent } from './backoffice/reclamation-back/reclamation-back.component';
 import { GererDemandeComponent } from './gerer-demande/gerer-demande.component';
+import { AIInsightsComponent } from './backoffice/ai-insights/ai-insights.component';
 
 const routes: Routes = [
   // Public routes - accessible without login
@@ -32,16 +33,14 @@ const routes: Routes = [
   { path: 'teletravail', component: TeletravailComponent, canActivate: [AuthGuard]},
   { path: 'gestion-demandes', component: GererDemandeComponent, canActivate: [AuthGuard], data: { requiresManagerOrTeamLeader: true }},
   
-  // Backoffice routes
-  { path: 'backoffice', children: [
-    { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
-    { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
-    { path: 'teletravail-back', component: TeletravailBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
-    { path: 'planning-back', component: PlanningBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } }, 
-    { path: 'reservation-back', component: ReservationBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } }, 
-    { path: 'reclamation-back', component: ReclamationBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } }, 
-    { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
-  ]},
+  // Backoffice routes (flattened)
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+  { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+  { path: 'teletravail-back', component: TeletravailBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+  { path: 'planning-back', component: PlanningBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+  { path: 'reservation-back', component: ReservationBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+  { path: 'reclamation-back', component: ReclamationBackComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
+  { path: 'ai-insights', component: AIInsightsComponent, canActivate: [AuthGuard], data: { requiresAdmin: true } },
 
   { path: '**', redirectTo: 'login' },
 ];

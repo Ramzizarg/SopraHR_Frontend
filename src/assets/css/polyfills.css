@@ -1,32 +1,100 @@
 /* Global polyfill to override deprecated -ms-high-contrast with modern standards */
 
+/* Override any existing -ms-high-contrast declarations */
+@media (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  /* This will override any -ms-high-contrast usage */
+}
+
+/* Modern Forced Colors Mode implementation */
 @supports (forced-color-adjust: none) {
-  /* This targets modern browsers that support the new standard */
+  /* Global forced color adjustments */
   * {
-    forced-color-adjust: auto; /* Default to browser handling */
+    forced-color-adjust: auto;
   }
   
-  /* Elements that might use -ms-high-contrast in Bootstrap */
+  /* Bootstrap components that commonly use -ms-high-contrast */
   .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-success,
+  .btn-danger,
+  .btn-warning,
+  .btn-info,
+  .btn-light,
+  .btn-dark,
+  .btn-outline-primary,
+  .btn-outline-secondary,
+  .btn-outline-success,
+  .btn-outline-danger,
+  .btn-outline-warning,
+  .btn-outline-info,
+  .btn-outline-light,
+  .btn-outline-dark,
   .form-control,
+  .form-select,
+  .form-check-input,
+  .form-check-label,
   .nav-link,
   .navbar,
+  .navbar-brand,
+  .navbar-nav,
+  .navbar-toggler,
   .card,
+  .card-header,
+  .card-body,
+  .card-footer,
   .modal,
+  .modal-header,
+  .modal-body,
+  .modal-footer,
   .dropdown-menu,
+  .dropdown-item,
+  .list-group,
+  .list-group-item,
+  .table,
+  .table th,
+  .table td,
+  .alert,
+  .alert-primary,
+  .alert-secondary,
+  .alert-success,
+  .alert-danger,
+  .alert-warning,
+  .alert-info,
+  .badge,
+  .badge-primary,
+  .badge-secondary,
+  .badge-success,
+  .badge-danger,
+  .badge-warning,
+  .badge-info,
+  .progress,
+  .progress-bar,
+  .spinner-border,
+  .spinner-grow,
   input[type="checkbox"],
-  input[type="radio"] {
-    forced-color-adjust: none !important;
-  }
-  
-  /* Common elements that might need high contrast overrides */
-  button,
-  input,
+  input[type="radio"],
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
   select,
+  textarea,
   a,
+  a:hover,
+  a:focus,
+  a:active,
   .password-toggle-btn svg,
   .checkbox-field input[type="checkbox"],
-  .checkbox-field input[type="checkbox"]::before {
+  .checkbox-field input[type="checkbox"]::before,
+  .radio-field input[type="radio"],
+  .radio-field input[type="radio"]::before {
     forced-color-adjust: none !important;
   }
 }
@@ -39,5 +107,67 @@
 @media (forced-colors: active) {
   :root {
     --high-contrast-mode: active;
+  }
+  
+  /* High contrast mode overrides */
+  .btn,
+  .form-control,
+  .nav-link,
+  .card,
+  .modal,
+  .dropdown-menu {
+    border: 1px solid CanvasText !important;
+  }
+  
+  .btn-primary,
+  .btn-success,
+  .btn-info {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  
+  .btn-danger,
+  .btn-warning {
+    background-color: Mark !important;
+    color: CanvasText !important;
+  }
+  
+  .alert-danger {
+    background-color: Mark !important;
+    color: CanvasText !important;
+  }
+  
+  .alert-success {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+}
+
+/* Specific overrides for common problematic elements */
+@media (forced-colors: active) {
+  /* Override any remaining -ms-high-contrast usage */
+  *[style*="-ms-high-contrast"] {
+    -ms-high-contrast: none !important;
+  }
+  
+  /* Ensure proper contrast for text elements */
+  body,
+  p,
+  h1, h2, h3, h4, h5, h6,
+  span,
+  div {
+    color: CanvasText !important;
+  }
+  
+  /* Ensure proper contrast for backgrounds */
+  body,
+  .container,
+  .row,
+  .col,
+  main,
+  section,
+  article,
+  aside {
+    background-color: Canvas !important;
   }
 }

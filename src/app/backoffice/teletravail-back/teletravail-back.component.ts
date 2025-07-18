@@ -88,7 +88,7 @@ export class TeletravailBackComponent implements OnInit, OnDestroy {
               icon: 'error',
               confirmButtonText: 'OK'
             }).then(() => {
-              this.router.navigate(['/backoffice/dashboard']);
+              this.router.navigate(['/dashboard']);
             });
           }
         },

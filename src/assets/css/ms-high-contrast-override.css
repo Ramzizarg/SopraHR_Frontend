@@ -1,0 +1,251 @@
+/* Complete override for deprecated -ms-high-contrast properties */
+
+/* Override any existing -ms-high-contrast declarations */
+@media (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  /* This will override any -ms-high-contrast usage */
+  * {
+    -ms-high-contrast: none !important;
+  }
+}
+
+/* Modern Forced Colors Mode implementation */
+@supports (forced-color-adjust: none) {
+  /* Global forced color adjustments */
+  * {
+    forced-color-adjust: auto;
+  }
+  
+  /* Override any elements that might use -ms-high-contrast */
+  *[style*="-ms-high-contrast"] {
+    -ms-high-contrast: none !important;
+  }
+}
+
+/* Comprehensive forced-colors mode support */
+@media (forced-colors: active) {
+  /* Override any remaining -ms-high-contrast usage */
+  *[style*="-ms-high-contrast"] {
+    -ms-high-contrast: none !important;
+  }
+  
+  /* Ensure all elements use modern forced-colors */
+  * {
+    forced-color-adjust: auto;
+  }
+  
+  /* Specific overrides for common elements */
+  .btn,
+  .form-control,
+  .nav-link,
+  .card,
+  .modal,
+  .dropdown-menu,
+  .table,
+  .alert,
+  .badge,
+  .progress,
+  .spinner-border,
+  .spinner-grow,
+  input,
+  select,
+  textarea,
+  a {
+    forced-color-adjust: none !important;
+  }
+}
+
+/* Additional overrides for Bootstrap and other frameworks */
+@media (forced-colors: active) {
+  /* Bootstrap button variants */
+  .btn-primary,
+  .btn-success,
+  .btn-info {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  .btn-danger,
+  .btn-warning {
+    background-color: Mark !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  .btn-secondary,
+  .btn-light,
+  .btn-dark {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  /* Bootstrap alert variants */
+  .alert-primary,
+  .alert-success,
+  .alert-info {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  .alert-danger,
+  .alert-warning {
+    background-color: Mark !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  .alert-secondary,
+  .alert-light,
+  .alert-dark {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  /* Bootstrap badge variants */
+  .badge-primary,
+  .badge-success,
+  .badge-info {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  
+  .badge-danger,
+  .badge-warning {
+    background-color: Mark !important;
+    color: CanvasText !important;
+  }
+  
+  .badge-secondary,
+  .badge-light,
+  .badge-dark {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+  }
+  
+  /* Form elements */
+  .form-control,
+  .form-select,
+  .form-check-input {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  /* Navigation elements */
+  .nav-link {
+    color: LinkText !important;
+  }
+  
+  .nav-link:hover,
+  .nav-link:focus,
+  .nav-link:active {
+    color: LinkText !important;
+    background-color: Canvas !important;
+  }
+  
+  /* Card elements */
+  .card,
+  .card-header,
+  .card-body,
+  .card-footer {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  /* Modal elements */
+  .modal,
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  /* Dropdown elements */
+  .dropdown-menu,
+  .dropdown-item {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  .dropdown-item:hover,
+  .dropdown-item:focus {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  
+  /* Table elements */
+  .table,
+  .table th,
+  .table td {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  /* Progress elements */
+  .progress {
+    background-color: Canvas !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  .progress-bar {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  
+  /* Spinner elements */
+  .spinner-border,
+  .spinner-grow {
+    color: Highlight !important;
+  }
+  
+  /* Input elements */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: Highlight !important;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    background-color: Canvas !important;
+    color: CanvasText !important;
+    border: 1px solid CanvasText !important;
+  }
+  
+  /* Link elements */
+  a {
+    color: LinkText !important;
+  }
+  
+  a:hover,
+  a:focus,
+  a:active {
+    color: LinkText !important;
+  }
+  
+  /* Custom elements */
+  .password-toggle-btn svg,
+  .checkbox-field input[type="checkbox"],
+  .checkbox-field input[type="checkbox"]::before,
+  .radio-field input[type="radio"],
+  .radio-field input[type="radio"]::before {
+    color: CanvasText !important;
+  }
+} 

@@ -30,6 +30,7 @@
             "styles": [
               "src/styles.css",
               "src/assets/css/polyfills.css",
+              "src/assets/css/ms-high-contrast-override.css",
               "@angular/material/prebuilt-themes/deeppurple-amber.css",
               "src/assets/css/main.css",
               "src/assets/vendor/bootstrap/css/bootstrap.min.css",

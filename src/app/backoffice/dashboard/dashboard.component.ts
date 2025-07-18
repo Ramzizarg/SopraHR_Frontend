@@ -17,6 +17,7 @@ import {
   ApexDataLabels
 } from "ng-apexcharts";
 import { ChangeDetectorRef } from '@angular/core';
+import { AIInsightsComponent } from '../ai-insights/ai-insights.component';
 
 export type ChartOptions = {
   series: ApexNonAxisChartSeries;

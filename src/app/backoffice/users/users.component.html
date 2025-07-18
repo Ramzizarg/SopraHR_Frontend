@@ -15,39 +15,45 @@
       <p class="menu-label">MENU</p>
       <ul class="nav flex-column">
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/dashboard">
+          <a class="nav-link" routerLink="/dashboard">
             <i class="bi bi-speedometer2"></i>
             <span>Dashboard</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active" routerLink="/backoffice/users">
+          <a class="nav-link active" routerLink="/users">
             <i class="bi bi-people"></i>
             <span>Utilisateurs</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/reservation-back">
+          <a class="nav-link" routerLink="/reservation-back">
             <i class="bi bi-calendar-check me-1"></i>
             <span>Réservation</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/planning-back">
+          <a class="nav-link" routerLink="/planning-back">
             <i class="bi bi-calendar3"></i>
             <span>Planning</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/teletravail-back">
+          <a class="nav-link" routerLink="/teletravail-back">
             <i class="bi bi-laptop"></i>
             <span>Télétravail</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/backoffice/reclamation-back">
+          <a class="nav-link" routerLink="/reclamation-back">
             <i class="bi bi-exclamation-circle"></i>
             <span>Réclamation</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/ai-insights">
+            <i class="bi bi-robot"></i>
+            <span>REVA</span>
           </a>
         </li>
       </ul>
@@ -66,8 +72,9 @@
     <!-- Top Header Bar -->
     <div class="header-bar">
       <div class="d-flex align-items-center">
-        <button class="menu-toggle" (click)="toggleSidebar()">
-          <i class="bi bi-list"></i>
+        <button class="menu-toggle" (click)="toggleSidebar()" aria-label="Toggle sidebar menu" title="Toggle sidebar menu">
+          <i class="bi bi-list" aria-hidden="true"></i>
+          <span class="sr-only">Toggle sidebar menu</span>
         </button>
         <div class="search-bar">
           <i class="bi bi-search"></i>
@@ -205,7 +212,8 @@
                 </div>
                 
                 <div class="filter-wrapper">
-                  <select class="filter-select" (change)="onTeamChange($event)">
+                  <label for="teamFilter" class="sr-only">Filtrer par équipe</label>
+                  <select id="teamFilter" class="filter-select" (change)="onTeamChange($event)">
                     <option value="">Équipe: Toutes</option>
                     <option *ngFor="let team of teams" [value]="team">{{ team }}</option>
                   </select>
@@ -213,7 +221,8 @@
                 </div>
                 
                 <div class="filter-wrapper">
-                  <select class="filter-select" (change)="onRoleChange($event)">
+                  <label for="roleFilter" class="sr-only">Filtrer par rôle</label>
+                  <select id="roleFilter" class="filter-select" (change)="onRoleChange($event)">
                     <option value="">Rôle: Tous</option>
                     <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
                   </select>

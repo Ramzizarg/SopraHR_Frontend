@@ -1,6 +1,13 @@
 /* Fix for deprecated -ms-high-contrast media query */
+
+/* Override any existing -ms-high-contrast declarations */
+@media (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  /* This will override any -ms-high-contrast usage */
+}
+
+/* Modern Forced Colors Mode implementation */
 @media (forced-colors: active) {
-  /* Add styles here that should apply in high contrast mode */
+  /* Button overrides */
   .btn-primary, 
   .btn-secondary,
   .btn-success,
@@ -8,7 +15,164 @@
   .btn-warning, 
   .btn-danger {
     forced-color-adjust: none;
+    border: 1px solid CanvasText;
   }
   
-  /* Add more overrides as needed */
+  /* Form elements */
+  .form-control,
+  .form-select,
+  .form-check-input {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+  
+  /* Navigation elements */
+  .nav-link,
+  .navbar,
+  .navbar-brand {
+    forced-color-adjust: none;
+  }
+  
+  /* Card elements */
+  .card,
+  .card-header,
+  .card-body {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+    background-color: Canvas;
+  }
+  
+  /* Modal elements */
+  .modal,
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+  
+  /* Dropdown elements */
+  .dropdown-menu,
+  .dropdown-item {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+    background-color: Canvas;
+  }
+  
+  /* Table elements */
+  .table,
+  .table th,
+  .table td {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+  
+  /* Alert elements */
+  .alert,
+  .alert-primary,
+  .alert-secondary,
+  .alert-success,
+  .alert-danger,
+  .alert-warning,
+  .alert-info {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+  
+  /* Badge elements */
+  .badge,
+  .badge-primary,
+  .badge-secondary,
+  .badge-success,
+  .badge-danger,
+  .badge-warning,
+  .badge-info {
+    forced-color-adjust: none;
+  }
+  
+  /* Progress elements */
+  .progress,
+  .progress-bar {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+  
+  /* Spinner elements */
+  .spinner-border,
+  .spinner-grow {
+    forced-color-adjust: none;
+  }
+  
+  /* Input elements */
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+  
+  /* Link elements */
+  a,
+  a:hover,
+  a:focus,
+  a:active {
+    forced-color-adjust: none;
+    color: LinkText;
+  }
+  
+  /* Custom elements */
+  .password-toggle-btn svg,
+  .checkbox-field input[type="checkbox"],
+  .checkbox-field input[type="checkbox"]::before,
+  .radio-field input[type="radio"],
+  .radio-field input[type="radio"]::before {
+    forced-color-adjust: none;
+  }
+}
+
+/* Additional overrides for specific color schemes */
+@media (forced-colors: active) {
+  /* Primary buttons */
+  .btn-primary {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  
+  /* Success elements */
+  .btn-success,
+  .alert-success {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  
+  /* Danger/Warning elements */
+  .btn-danger,
+  .btn-warning,
+  .alert-danger,
+  .alert-warning {
+    background-color: Mark !important;
+    color: CanvasText !important;
+  }
+  
+  /* Info elements */
+  .btn-info,
+  .alert-info {
+    background-color: Highlight !important;
+    color: HighlightText !important;
+  }
 }
