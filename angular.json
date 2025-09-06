@@ -68,9 +68,9 @@
               "aot": true,
               "budgets": [
                 {
-                  "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "4mb"
+                 "type": "anyComponentStyle",
+                 "maximumWarning": "50kb",
+                 "maximumError": "100kb"
                 },
                 {
                   "type": "anyComponentStyle",
