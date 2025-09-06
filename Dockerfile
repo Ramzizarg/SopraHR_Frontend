@@ -1,7 +1,32 @@
-FROM openjdk:17-jdk-alpine
+# Étape 1 : Build Angular avec Node.js
+FROM node:18-alpine as build
 
+# Définir le répertoire de travail
 WORKDIR /app
 
-COPY target/ramzizargelayoun-devops-5se2.jar /app/ramzizargelayoun-devops-5se2.jar
+# Copier les fichiers de dépendances
+COPY package*.json ./
 
-CMD ["java", "-jar", "/app/ramzizargelayoun-devops-5se2.jar"]
+# Installer les dépendances
+RUN npm install
+
+# Copier le reste du code source
+COPY . .
+
+# Build Angular en production
+RUN npm run build --prod
+
+# Étape 2 : Serveur Nginx pour servir l'application
+FROM nginx:alpine
+
+# Supprimer le contenu par défaut de Nginx
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copier les fichiers buildés depuis l'étape précédente
+COPY --from=build /app/dist/sopra-hr-frontend /usr/share/nginx/html/
+
+# Exposer le port 80
+EXPOSE 80
+
+# Lancer Nginx en mode foreground
+CMD ["nginx", "-g", "daemon off;"]
