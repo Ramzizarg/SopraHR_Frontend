@@ -1,30 +1,229 @@
+
 services:
+  # Base de données MySQL
   mysql:
-    image: mysql:latest
-    container_name: mysql
+    image: mysql:8.0
+    container_name: workstation-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: 123
-      MYSQL_USER: ramzi
-      MYSQL_PASSWORD: 123
-      MYSQL_DATABASE: devops
+      MYSQL_ROOT_PASSWORD: 
+      MYSQL_DATABASE: workstation_db
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+    networks:
+      - workstation-network
 
-  spring-boot:
+  # Eureka Server (Service Discovery)
+  eureka-server:
+    image: ramzizarg/workstation-eureka:latest
+    container_name: eureka-server
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8761
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: false
+      EUREKA_CLIENT_FETCH_REGISTRY: false
+    ports:
+      - "8761:8761"
+    networks:
+      - workstation-network
     depends_on:
       - mysql
-    image: ramzizarg/ramzizargelayoun-devops_project:latest
-    container_name: spring-boot
-    restart : always
+
+  # User Service
+  user-service:
+    image: ramzizarg/workstation-user:latest
+    container_name: user-service
+    restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/devops
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123
+      SERVER_PORT: 9001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/SopraHR
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
     ports:
-      - "8082:8082"
+      - "9001:9001"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # Workstation Service
+  workstation-service:
+    image: ramzizarg/workstation-workstation:latest
+    container_name: workstation-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/workstation_db
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+    ports:
+      - "8080:8080"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # Reservation Service
+  reservation-service:
+    image: ramzizarg/workstation-reservation:latest
+    container_name: reservation-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 6001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/reservationdb
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+    ports:
+      - "6001:6001"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # Teletravail Service
+  teletravail-service:
+    image: ramzizarg/workstation-teletravail:latest
+    container_name: teletravail-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 7001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/teletravaildb
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+    ports:
+      - "7001:7001"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # Planning Service
+  planning-service:
+    image: ramzizarg/workstation-planning:latest
+    container_name: planning-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/planningdb
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+    ports:
+      - "8001:8001"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # Analytics Service
+  analytics-service:
+    image: ramzizarg/workstation-analytics:latest
+    container_name: analytics-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 5001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/analytics_db
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+    ports:
+      - "5001:5001"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # Contact Service
+  contact-service:
+    image: ramzizarg/workstation-contact:latest
+    container_name: contact-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 4001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/contactdb
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+    ports:
+      - "4001:4001"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # Notification Service
+  notification-service:
+    image: ramzizarg/workstation-notification:latest
+    container_name: notification-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 3001
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notification_db
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+    ports:
+      - "3001:3001"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
+      - mysql
+
+  # AI Decision System (Python/FastAPI)
+  ai-decision-system:
+    image: ramzizarg/workstation-ai:latest
+    container_name: ai-decision-system
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: 
+      DB_PASSWORD: 
+      ANALYTICS_DB: analytics_db
+      CONTACT_DB: contactdb
+      NOTIFICATION_DB: notification_db
+      PLANNING_DB: planningdb
+      RESERVATION_DB: reservationdb
+      TELETRAVAIL_DB: teletravaildb
+      USER_DB: SopraHR
+    ports:
+      - "8000:8000"
+      - "8050:8050"
+    networks:
+      - workstation-network
+    depends_on:
+      - mysql
+
+  # Angular Frontend
+  angular-frontend:
+    image: ramzizarg/workstation-angular:latest
+    container_name: angular-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    networks:
+      - workstation-network
+    depends_on:
+      - eureka-server
 
 volumes:
   mysql_data:
+
+networks:
+  workstation-network:
+    driver: bridge
