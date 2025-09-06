@@ -88,6 +88,15 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
   public barCurvePointsValue: string = '';
 
+  // Role counts for total employees and present employees
+  employeeCount: number = 0;
+  teamLeaderCount: number = 0;
+  managerCount: number = 0;
+  presentEmployeeCount: number = 0;
+  presentTeamLeaderCount: number = 0;
+  presentManagerCount: number = 0;
+  adminCount: number = 0;
+
   get filteredTopOfficeEmployees() {
     const term = this.searchTopOfficeTerm.trim().toLowerCase();
     const teamFilter = this.selectedTeamFilter.trim();
@@ -244,6 +253,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadTopOfficeEmployees();
     // Load teletravail data
     this.loadTeletravailData();
+    // Load and count roles
+    this.loadAndCountRoles();
   }
   
   /**
@@ -349,6 +360,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             this.updateBarCurvePoints();
             this.cdr.detectChanges();
           }, 0);
+          // Update present role counts after analytics is loaded
+          this.loadAndCountRoles();
         },
         error: () => {
           // Error already handled in catchError
@@ -1357,5 +1370,39 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   setTopOfficeSortOrder(order: 'desc' | 'asc') {
     this.topOfficeSortOrder = order;
     this.currentTopOfficePage = 1;
+  }
+
+  /**
+   * Load all users and count roles for total and present employees
+   */
+  loadAndCountRoles(): void {
+    this.userService.getAllUsers().subscribe(users => {
+      // Count total by role
+      this.employeeCount = users.filter(u => this.isEmployee(u.role)).length;
+      this.teamLeaderCount = users.filter(u => this.isTeamLeader(u.role)).length;
+      this.managerCount = users.filter(u => this.isManager(u.role)).length;
+      this.adminCount = users.filter(u => this.isAdmin(u.role)).length;
+      // Count present by role (in office today)
+      // Use topOfficeEmployees if available, otherwise fallback to users
+      const presentUsers = this.topOfficeEmployees && this.topOfficeEmployees.length > 0
+        ? this.topOfficeEmployees.filter(u => u.officeDaysThisMonth > 0)
+        : [];
+      this.presentEmployeeCount = presentUsers.filter(u => this.isEmployee(u.role)).length;
+      this.presentTeamLeaderCount = presentUsers.filter(u => this.isTeamLeader(u.role)).length;
+      this.presentManagerCount = presentUsers.filter(u => this.isManager(u.role)).length;
+    });
+  }
+
+  isEmployee(role: string): boolean {
+    return !!role && (role.toUpperCase() === 'EMPLOYEE' || role.toUpperCase() === 'ROLE_EMPLOYEE');
+  }
+  isTeamLeader(role: string): boolean {
+    return !!role && (role.toUpperCase() === 'TEAM_LEADER' || role.toUpperCase() === 'ROLE_TEAM_LEADER');
+  }
+  isManager(role: string): boolean {
+    return !!role && (role.toUpperCase() === 'MANAGER' || role.toUpperCase() === 'ROLE_MANAGER');
+  }
+  isAdmin(role: string): boolean {
+    return !!role && (role.toUpperCase() === 'ADMIN' || role.toUpperCase() === 'ROLE_ADMIN');
   }
 }

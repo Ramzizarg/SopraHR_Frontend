@@ -7,6 +7,7 @@ import { formatDate } from '@angular/common';
 import Swal from 'sweetalert2';
 import { ContactService, ContactRequest } from '../services/contact.service';
 import { NotificationService, Notification } from '../services/notification.service';
+import { PlanningAiService, PlanningEntry } from './services/planning-ai.service';
 declare var bootstrap: any; // Bootstrap JS declaration
 
 
@@ -44,6 +45,29 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
   notifications: Notification[] = [];
   unreadCount: number = 0;
   showNotifications: boolean = false;
+  aiSuggestions: string[] = [];
+  showSmartSuggestions = false;
+  isLoadingSuggestions = false;
+
+  openSmartSuggestions(): void {
+    this.showSmartSuggestions = true;
+    this.isLoadingSuggestions = true;
+    const planning: PlanningEntry[] = this.planningEntries.map(e => ({
+      date: e.planningDate,
+      status: e.planningStatus
+    }));
+    this.aiService.getSmartSuggestions(this.currentUserId, planning).subscribe(res => {
+      this.aiSuggestions = res.suggestions;
+      this.isLoadingSuggestions = false;
+    }, () => {
+      this.aiSuggestions = ["Impossible de générer les suggestions pour le moment."];
+      this.isLoadingSuggestions = false;
+    });
+  }
+
+  closeSmartSuggestions(): void {
+    this.showSmartSuggestions = false;
+  }
 
   @ViewChild('navmenu') navMenu!: ElementRef;
   @ViewChild('mobileNavToggle') mobileNavToggle!: ElementRef;
@@ -56,7 +80,8 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
     private router: Router,
     private renderer: Renderer2,
     private contactService: ContactService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private aiService: PlanningAiService
   ) { 
     // Close mobile menu when clicking outside
     this.renderer.listen('window', 'click', (e: Event) => {
@@ -1760,6 +1785,40 @@ export class PlanningComponent implements OnInit, AfterViewChecked {
 
   onProfilePopupOpened() {
     this.showNotifications = false;
+  }
+
+  exportPlanningToICS(): void {
+    // Generate ICS content from planningEntries
+    let icsContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Sopra HR//Planning//EN';
+    for (const entry of this.planningEntries) {
+      const start = new Date(entry.planningDate);
+      const end = new Date(entry.planningDate);
+      end.setHours(23, 59, 59, 999);
+      const dtStart = start.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z').replace('T', 'T').slice(0, 15) + 'Z';
+      const dtEnd = end.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z').replace('T', 'T').slice(0, 15) + 'Z';
+      const summary = entry.planningStatus === 'TELETRAVAIL' ? 'Télétravail' : 'Présence au bureau';
+      icsContent += `\nBEGIN:VEVENT`;
+      icsContent += `\nUID:${entry.id || entry.planningDate + '-' + (entry.userId || '')}@soprahr`;
+      icsContent += `\nDTSTAMP:${dtStart}`;
+      icsContent += `\nDTSTART:${dtStart}`;
+      icsContent += `\nDTEND:${dtEnd}`;
+      icsContent += `\nSUMMARY:${summary}`;
+      icsContent += `\nDESCRIPTION:Planning généré depuis Sopra HR`;
+      icsContent += `\nEND:VEVENT`;
+    }
+    icsContent += '\nEND:VCALENDAR';
+    // Download as .ics file
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mon-planning.ics';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 0);
   }
 
 }

@@ -52,7 +52,7 @@
         <li class="nav-item">
           <a class="nav-link" routerLink="/ai-insights">
             <i class="bi bi-robot"></i>
-            <span>REVA</span>
+            <span>Reva Ai</span>
           </a>
         </li>
       </ul>
@@ -267,6 +267,27 @@
               <div class="presence-summary">
                 <p>Pas de présence au bureau le week-end.</p>
               </div>
+            </div>
+          </div>
+        </div>
+        <!-- Place venn-circles-row directly under metrics row, left-aligned -->
+        <div class="venn-circles-row venn-circles-row-left">
+          <div class="venn-circles-container">
+            <div class="venn-circle venn-circle-1">
+              <span class="venn-count">{{ employeeCount }}</span>
+              <span class="venn-label">Employé</span>
+            </div>
+            <div class="venn-circle venn-circle-2">
+              <span class="venn-count">{{ teamLeaderCount }}</span>
+              <span class="venn-label">Chef Équipe</span>
+            </div>
+            <div class="venn-circle venn-circle-3">
+              <span class="venn-count">{{ managerCount }}</span>
+              <span class="venn-label">Manager</span>
+            </div>
+            <div class="venn-circle venn-circle-4">
+              <span class="venn-count">{{ adminCount }}</span>
+              <span class="venn-label">Admin</span>
             </div>
           </div>
         </div>

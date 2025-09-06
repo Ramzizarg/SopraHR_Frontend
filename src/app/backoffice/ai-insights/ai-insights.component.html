@@ -9,9 +9,9 @@
         <div class="logo-container">
           <img *ngIf="isSidebarOpen" src="assets/img/sopra_hr.png" alt="Sopra HR" class="sopra-logo">
           <img *ngIf="!isSidebarOpen" src="assets/img/sopraa.png" alt="Sopra" class="sopra-icon">
-        </div>
-      </div>
-      
+    </div>
+  </div>
+
       <div class="sidebar-menu">
         <p class="menu-label">MENU</p>
         <ul class="nav flex-column">
@@ -54,12 +54,12 @@
           <li class="nav-item">
             <a class="nav-link active" routerLink="/ai-insights">
               <i class="bi bi-robot"></i>
-              <span>REVA</span>
+              <span>Reva Ai</span>
             </a>
           </li>
         </ul>
-      </div>
-      
+  </div>
+
       <div class="sidebar-footer">
         <button class="logout-button" (click)="logout()">
           <i class="bi bi-power"></i>
@@ -67,7 +67,7 @@
         </button>
       </div>
     </div>
-  
+
     <!-- Main Content -->
     <div class="main-content">
       <!-- Top Header Bar -->
@@ -134,284 +134,260 @@
           </div>
         </div>
       </div>
-      <!-- AI Insights Content -->
-      <div class="ai-insights-container">
-        <!-- Header -->
-        <div class="ai-header">
-          <div class="ai-title">
-            <h2>🤖 Reva</h2>
+
+      <!-- Loading Spinner (no card/cadre) -->
+      <div *ngIf="loading && !error" class="upgraded-loading">
+        <div class="ai-loader-icon">
+          <i class="bi bi-robot"></i>
+        </div>
+        <div class="modern-spinner">
+          <div class="dot dot1"></div>
+          <div class="dot dot2"></div>
+          <div class="dot dot3"></div>
+          <div class="dot dot4"></div>
+        </div>
+        <div class="loading-text">
+          <span class="main">Chargement intelligent des données IA...</span>
+          <span class="sub">Reva AI optimise votre expérience, un instant !</span>
+        </div>
+      </div>
+
+      <!-- Main Content and Hero Section -->
+      <ng-container *ngIf="!loading && !error">
+        <div class="ai-hero upgraded-hero">
+          <div class="ai-hero-glow"></div>
+          <div class="ai-hero-content">
+            <div class="ai-hero-icon">
+              <i class="bi bi-robot"></i>
+            </div>
+            <h1><span class="glow">Reva <span class="ai-blue">AI</span></span> <span class="ai-black">Insights.</span></h1>
+        <p class="subtitle">Your smart assistant for workspace optimization.</p>
+        <div class="hero-actions">
+              <button mat-raised-button color="primary" class="hero-btn main" (click)="openRevaAiInfo()">C'est qui Reva&nbsp;?</button>
+              <button mat-stroked-button color="primary" class="hero-btn alt" (click)="openContactItPopup()">Contact Team AI</button>
+            </div>
+        </div>
+      </div>
+      <!-- End Hero Section -->
+        <div class="ai-main-card-pro">
+          <div class="ai-section ai-metrics-section">
+            <div class="section-header-pro">
+              <i class="bi bi-lightbulb-fill section-icon-pro section-icon-blue"></i>
+              <span>Résumé intelligent</span>
+            </div>
+            <div class="metrics-row-pro">
+      <div class="metric-card metric-occupancy" matTooltip="Taux d'occupation actuel">
+        <div class="metric-icon"><i class="fas fa-desktop"></i></div>
+        <div class="metric-content">
+          <h3>Occupation</h3>
+                  <div class="metric-value" [style.color]="getStatusColor(getOccupancyStatus(aiAnalysis?.reservation_analysis?.current_occupancy ?? 0))">
+                    <span [countUp]="aiAnalysis?.reservation_analysis?.current_occupancy || 0"></span>%
           </div>
-          <div class="ai-controls-upgraded">
-            <button 
-              class="refresh-btn"
-              (click)="refreshData()" 
-              [disabled]="loading"
-              matTooltip="Rafraîchir l'analyse IA"
-            >
-              <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
-              <span *ngIf="!loading">Actualiser</span>
-              <span *ngIf="loading">Chargement...</span>
+          <div class="metric-trend">
+                    <i class="fas" [class]="getTrendIcon(aiAnalysis?.reservation_analysis?.trend ?? '')"></i>
+                    {{ aiAnalysis?.reservation_analysis?.trend }}
+          </div>
+        </div>
+      </div>
+      <div class="metric-card metric-telework" matTooltip="Pourcentage de télétravail">
+        <div class="metric-icon"><i class="fas fa-home"></i></div>
+        <div class="metric-content">
+          <h3>Télétravail</h3>
+                  <div class="metric-value" [style.color]="getStatusColor(getTeleworkStatus(aiAnalysis?.telework_analysis?.monthly_percentage ?? 0))">
+                    <span [countUp]="aiAnalysis?.telework_analysis?.monthly_percentage || 0"></span>%
+          </div>
+          <div class="metric-trend">
+                    <i class="fas" [class]="getTrendIcon(aiAnalysis?.telework_analysis?.trend ?? '')"></i>
+                    {{ aiAnalysis?.telework_analysis?.trend }}
+          </div>
+        </div>
+      </div>
+
+              <!-- Daily telework percentage table -->
+              <!-- Removed old telework-daily-table here -->
+      <div class="metric-card metric-alerts" matTooltip="Nombre d'alertes critiques">
+        <div class="metric-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="metric-content">
+          <h3>Alertes</h3>
+                  <div class="metric-value" [style.color]="(aiAnalysis?.summary?.total_alerts ?? 0) > 0 ? '#dc3545' : '#28a745'">
+                    <span [countUp]="aiAnalysis?.summary?.total_alerts || 0"></span>
+          </div>
+          <div class="metric-subtitle">Critiques</div>
+        </div>
+      </div>
+      <div class="metric-card metric-recommendations" matTooltip="Nombre de recommandations IA">
+        <div class="metric-icon"><i class="fas fa-lightbulb"></i></div>
+        <div class="metric-content">
+          <h3>Recommandations</h3>
+                  <div class="metric-value" [style.color]="totalRecommendations > 0 ? '#007bff' : '#6c757d'">
+                    <span [countUp]="totalRecommendations"></span>
+          </div>
+          <div class="metric-subtitle">Actions suggérées</div>
+        </div>
+      </div>
+    </div>
+          </div>
+          <div class="ai-section ai-table-section">
+            <div class="section-header-pro">
+              <i class="bi bi-calendar-range section-icon-pro section-icon-blue"></i>
+              <span>Pourcentage journalier de télétravail</span>
+            </div>
+            <!-- Telework daily table here -->
+            <div class="insights-row" *ngIf="(aiAnalysis?.telework_analysis?.daily_percentages?.length ?? 0) > 0">
+              <div class="insight-card telework-daily-card">
+                <div class="card-body telework-daily-table-body">
+                  <div class="telework-daily-table-controls">
+                    <button class="week-nav-btn" (click)="showPrevWeek()" [disabled]="!currentWeekStart">&lt; Semaine précédente</button>
+                    <span class="week-range-label">{{ getWeekRangeLabel() }}</span>
+                    <button class="week-nav-btn" (click)="showNextWeek()" [disabled]="!currentWeekStart">Semaine suivante &gt;</button>
+                  </div>
+                  <div class="telework-daily-table-scroll">
+                    <table class="telework-daily-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Pourcentage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let day of getCurrentWeekDays()" [ngClass]="{'today-row': isToday(day.date)}">
+                          <td>{{ day.date | date:'EEEE dd/MM/yyyy' : undefined : 'fr' }}</td>
+                          <td class="percentage-cell" [ngClass]="{'zero': day.percentage === 0}">{{ day.percentage }}%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div *ngIf="getCurrentWeekDays().length === 0" class="no-data-week">Aucune donnée pour cette semaine.</div>
+                    <div class="scroll-hint" id="telework-scroll-hint" style="display:none;">
+                      <i class="fas fa-arrows-alt-h"></i> Faites défiler horizontalement pour voir toutes les colonnes
+                    </div>
+                  </div>
+                  <div class="average-info-row">
+                    <div class="week-average-info">
+                      <i class="fas fa-percentage"></i>
+                      Moyenne semaine :
+                      <span class="week-average-value">{{ getCurrentWeekAverage() }}%</span>
+                    </div>
+                    <div class="month-average-info">
+                      <i class="fas fa-percentage"></i>
+                      Moyenne mois :
+                      <span class="month-average-value">{{ aiAnalysis?.telework_analysis?.monthly_percentage }}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ai-section ai-alerts-section">
+            <div class="section-header-pro">
+              <i class="bi bi-exclamation-triangle-fill section-icon-pro section-icon-red"></i>
+              <span>Alertes Critiques</span>
+            </div>
+            <!-- Alerts card here -->
+    <div class="insights-row">
+      <!-- Critical Alerts -->
+              <div class="insight-card alert-card" *ngIf="(aiAnalysis?.reservation_analysis?.alerts?.length ?? 0) > 0 || (aiAnalysis?.telework_analysis?.alerts?.length ?? 0) > 0">
+        <div class="card-body">
+                  <div class="alert-item" *ngFor="let alert of aiAnalysis?.reservation_analysis?.alerts || []">
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-action">{{ alert.action }}</div>
+            </div>
+          </div>
+                  <div class="alert-item" *ngFor="let alert of aiAnalysis?.telework_analysis?.alerts || []">
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-action">{{ alert.action }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warnings -->
+              <div class="insight-card warning-card" *ngIf="(aiAnalysis?.reservation_analysis?.warnings?.length ?? 0) > 0 || (aiAnalysis?.telework_analysis?.warnings?.length ?? 0) > 0">
+        <div class="card-header">
+          <h4>⚠️ Avertissements</h4>
+        </div>
+        <div class="card-body">
+                  <div class="warning-item" *ngFor="let warning of aiAnalysis?.reservation_analysis?.warnings || []">
+            <div class="warning-content">
+              <div class="warning-message">{{ warning.message }}</div>
+              <div class="warning-action">{{ warning.action }}</div>
+            </div>
+          </div>
+                  <div class="warning-item" *ngFor="let warning of aiAnalysis?.telework_analysis?.warnings || []">
+            <div class="warning-content">
+              <div class="warning-message">{{ warning.message }}</div>
+              <div class="warning-action">{{ warning.action }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+          </div>
+          <div class="ai-section ai-recommendations-section">
+            <div class="section-header-pro">
+              <i class="bi bi-robot section-icon-pro section-icon-blue"></i>
+              <span>Recommandations IA</span>
+            </div>
+            <!-- Recommendations card here -->
+            <div class="insights-row" *ngIf="(aiAnalysis?.reservation_analysis?.workstation_recommendations?.length ?? 0) > 0">
+      <div class="insight-card recommendation-card">
+        <div class="card-body">
+                  <div class="recommendation-item" *ngFor="let rec of aiAnalysis?.reservation_analysis?.workstation_recommendations || []">
+            <div class="recommendation-content">
+              <div class="recommendation-action">
+                <i class="fas" [class]="getPriorityIcon(rec.priority)" [style.color]="getPriorityColor(rec.priority)"></i>
+                {{ getWorkstationRecommendationText(rec) }}
+              </div>
+              <div class="recommendation-priority">
+                Priorité: <span [style.color]="getPriorityColor(rec.priority)">{{ rec.priority }}</span>
+              </div>
+              <div class="recommendation-reason">{{ rec.reason }}</div>
+            </div>
+          </div>
+        </div>
+              </div>
+            </div>
+          </div>
+          <div class="ai-section ai-anomalies-section">
+            <div class="section-header-pro">
+              <i class="bi bi-lightning-charge section-icon-pro section-icon-yellow"></i>
+              <span>Anomalies Détectées</span>
+            </div>
+            <!-- Anomalies card here -->
+            <div class="insights-row" *ngIf="((aiAnalysis?.anomalies?.occupancy?.length ?? 0) > 0) || ((aiAnalysis?.anomalies?.telework?.length ?? 0) > 0)">
+      <div class="insight-card anomaly-card">
+        <div class="card-body">
+          <div class="anomaly-sections-row">
+                  <div class="anomaly-section" *ngIf="(aiAnalysis?.anomalies?.occupancy?.length ?? 0) > 0">
+            <h5>Occupation</h5>
+            <div class="anomaly-dates">
+                      <span class="anomaly-date" *ngFor="let date of aiAnalysis?.anomalies?.occupancy || []">{{ date }}</span>
+            </div>
+          </div>
+                  <div class="anomaly-section" *ngIf="(aiAnalysis?.anomalies?.telework?.length ?? 0) > 0">
+            <h5>Télétravail</h5>
+            <div class="anomaly-dates">
+                      <span class="anomaly-date" *ngFor="let date of aiAnalysis?.anomalies?.telework || []">{{ date }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
+      </ng-container>
+      <!-- Error State -->
+      <div *ngIf="error && !loading" class="error-center-wrapper">
+        <div class="no-connection-container">
+          <div class="no-connection-card">
+            <img class="no-connection-img" src="assets/img/no-connection-plug.png" alt="No connection" />
+            <div class="no-connection-title">Oh whoops!</div>
+            <div class="no-connection-desc">Reva Ai n'est pas disponible pour le moment.<br>Veuillez vérifier votre connexion ou réessayer.</div>
+            <button class="retry-btn" (click)="refreshData()">
+              <i class="bi bi-arrow-repeat"></i> Réessayer
             </button>
-            <span class="last-updated" *ngIf="lastUpdated">
-              <i class="fas fa-clock"></i>
-              <span>{{ lastUpdated }}</span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Loading State -->
-        <div class="loading-container" *ngIf="loading">
-          <div class="skeleton-metrics"></div>
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-        </div>
-
-        <!-- Error State -->
-        <div class="error-container" *ngIf="error">
-          <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle"></i>
-            Erreur lors du chargement des insights IA. Veuillez réessayer.
-          </div>
-        </div>
-
-        <!-- AI Content -->
-        <div class="ai-content" *ngIf="!loading && !error && aiAnalysis">
-          <!-- Priority Actions -->
-          <div class="priority-actions" *ngIf="aiAnalysis.summary.priority_actions && aiAnalysis.summary.priority_actions.length > 0">
-            <div class="priority-action-card" *ngFor="let action of aiAnalysis.summary.priority_actions">
-              <i class="fas fa-bolt text-danger"></i>
-              <span class="priority-label" [style.color]="getPriorityColor(action.priority)">{{ action.priority }}</span>
-              <span class="priority-action">{{ action.action }}</span>
-              <span class="priority-reason">({{ action.reason }})</span>
-            </div>
-          </div>
-
-          <!-- Metrics Row -->
-          <div class="metrics-row">
-            <div class="metric-card metric-occupancy" matTooltip="Taux d'occupation actuel">
-              <div class="metric-icon"><i class="fas fa-desktop"></i></div>
-              <div class="metric-content">
-                <h3>Occupation</h3>
-                <div class="metric-value" [style.color]="getStatusColor(getOccupancyStatus(aiAnalysis.reservation_analysis.current_occupancy))">
-                  {{ aiAnalysis.reservation_analysis.current_occupancy }}%
-                </div>
-                <div class="metric-trend">
-                  <i class="fas" [class]="getTrendIcon(aiAnalysis.reservation_analysis.trend)"></i>
-                  {{ aiAnalysis.reservation_analysis.trend }}
-                </div>
-              </div>
-            </div>
-            <div class="metric-card metric-telework" matTooltip="Pourcentage de télétravail">
-              <div class="metric-icon"><i class="fas fa-home"></i></div>
-              <div class="metric-content">
-                <h3>Télétravail</h3>
-                <div class="metric-value" [style.color]="getStatusColor(getTeleworkStatus(aiAnalysis.telework_analysis.monthly_percentage))">
-                  {{ aiAnalysis.telework_analysis.monthly_percentage }}%
-                </div>
-                <div class="metric-trend">
-                  <i class="fas" [class]="getTrendIcon(aiAnalysis.telework_analysis.trend)"></i>
-                  {{ aiAnalysis.telework_analysis.trend }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Daily telework percentage table -->
-            <!-- Removed old telework-daily-table here -->
-            <div class="metric-card metric-alerts" matTooltip="Nombre d'alertes critiques">
-              <div class="metric-icon"><i class="fas fa-exclamation-triangle"></i></div>
-              <div class="metric-content">
-                <h3>Alertes</h3>
-                <div class="metric-value" [style.color]="aiAnalysis.summary.total_alerts > 0 ? '#dc3545' : '#28a745'">
-                  {{ aiAnalysis.summary.total_alerts }}
-                </div>
-                <div class="metric-subtitle">Critiques</div>
-              </div>
-            </div>
-            <div class="metric-card metric-recommendations" matTooltip="Nombre de recommandations IA">
-              <div class="metric-icon"><i class="fas fa-lightbulb"></i></div>
-              <div class="metric-content">
-                <h3>Recommandations</h3>
-                <div class="metric-value" [style.color]="totalRecommendations > 0 ? '#007bff' : '#6c757d'">
-                  {{ totalRecommendations }}
-                </div>
-                <div class="metric-subtitle">Actions suggérées</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Telework Daily Table as Card -->
-          <div class="insights-row" *ngIf="aiAnalysis.telework_analysis.daily_percentages?.length">
-            <div class="insight-card telework-daily-card">
-              <div class="card-header">
-                <h4>📅 Pourcentage journalier de télétravail</h4>
-              </div>
-              <div class="card-body telework-daily-table-body">
-                <div class="telework-daily-table-controls">
-                  <button class="week-nav-btn" (click)="showPrevWeek()" [disabled]="!currentWeekStart">&lt; Semaine précédente</button>
-                  <span class="week-range-label">{{ getWeekRangeLabel() }}</span>
-                  <button class="week-nav-btn" (click)="showNextWeek()" [disabled]="!currentWeekStart">Semaine suivante &gt;</button>
-                </div>
-                <div class="telework-daily-table-scroll">
-                  <table class="telework-daily-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Pourcentage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let day of getCurrentWeekDays()" [ngClass]="{'today-row': isToday(day.date)}">
-                        <td>{{ day.date | date:'EEEE dd/MM/yyyy' : undefined : 'fr' }}</td>
-                        <td class="percentage-cell" [ngClass]="{'zero': day.percentage === 0}">{{ day.percentage }}%</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div *ngIf="getCurrentWeekDays().length === 0" class="no-data-week">Aucune donnée pour cette semaine.</div>
-                  <div class="scroll-hint" id="telework-scroll-hint" style="display:none;">
-                    <i class="fas fa-arrows-alt-h"></i> Faites défiler horizontalement pour voir toutes les colonnes
-                  </div>
-                </div>
-                <div class="average-info-row">
-                  <div class="week-average-info">
-                    <i class="fas fa-percentage"></i>
-                    Moyenne semaine :
-                    <span class="week-average-value">{{ getCurrentWeekAverage() }}%</span>
-                  </div>
-                  <div class="month-average-info">
-                    <i class="fas fa-percentage"></i>
-                    Moyenne mois :
-                    <span class="month-average-value">{{ aiAnalysis.telework_analysis.monthly_percentage }}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Alerts and Recommendations -->
-          <div class="insights-row">
-            <!-- Critical Alerts -->
-            <div class="insight-card alert-card" *ngIf="aiAnalysis.reservation_analysis.alerts.length > 0 || aiAnalysis.telework_analysis.alerts.length > 0">
-              <div class="card-header">
-                <h4>🚨 Alertes Critiques</h4>
-              </div>
-              <div class="card-body">
-                <div class="alert-item" *ngFor="let alert of aiAnalysis.reservation_analysis.alerts">
-                  <div class="alert-content">
-                    <div class="alert-message">{{ alert.message }}</div>
-                    <div class="alert-action">{{ alert.action }}</div>
-                  </div>
-                </div>
-                <div class="alert-item" *ngFor="let alert of aiAnalysis.telework_analysis.alerts">
-                  <div class="alert-content">
-                    <div class="alert-message">{{ alert.message }}</div>
-                    <div class="alert-action">{{ alert.action }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Warnings -->
-            <div class="insight-card warning-card" *ngIf="aiAnalysis.reservation_analysis.warnings.length > 0 || aiAnalysis.telework_analysis.warnings.length > 0">
-              <div class="card-header">
-                <h4>⚠️ Avertissements</h4>
-              </div>
-              <div class="card-body">
-                <div class="warning-item" *ngFor="let warning of aiAnalysis.reservation_analysis.warnings">
-                  <div class="warning-content">
-                    <div class="warning-message">{{ warning.message }}</div>
-                    <div class="warning-action">{{ warning.action }}</div>
-                  </div>
-                </div>
-                <div class="warning-item" *ngFor="let warning of aiAnalysis.telework_analysis.warnings">
-                  <div class="warning-content">
-                    <div class="warning-message">{{ warning.message }}</div>
-                    <div class="warning-action">{{ warning.action }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Workstation Recommendations -->
-          <div class="insights-row" *ngIf="aiAnalysis.reservation_analysis.workstation_recommendations.length > 0">
-            <div class="insight-card recommendation-card">
-              <div class="card-header">
-                <h4>🔧 Recommandations Postes de Travail</h4>
-              </div>
-              <div class="card-body">
-                <div class="recommendation-item" *ngFor="let rec of aiAnalysis.reservation_analysis.workstation_recommendations">
-                  <div class="recommendation-content">
-                    <div class="recommendation-action">
-                      <i class="fas" [class]="getPriorityIcon(rec.priority)" [style.color]="getPriorityColor(rec.priority)"></i>
-                      {{ getWorkstationRecommendationText(rec) }}
-                    </div>
-                    <div class="recommendation-priority">
-                      Priorité: <span [style.color]="getPriorityColor(rec.priority)">{{ rec.priority }}</span>
-                    </div>
-                    <div class="recommendation-reason">{{ rec.reason }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Predictions -->
-          <div class="insights-row" *ngIf="aiAnalysis.predictions.occupancy && aiAnalysis.predictions.occupancy.predictions.length > 0 || aiAnalysis.predictions.telework && aiAnalysis.predictions.telework.predictions.length > 0">
-            <div class="insight-card prediction-card">
-              <div class="card-header">
-                <i class="fas fa-chart-line text-success"></i>
-                <h4>🔮 Prédictions (30 jours)</h4>
-              </div>
-              <div class="card-body">
-                <div class="prediction-section" *ngIf="aiAnalysis.predictions.occupancy && aiAnalysis.predictions.occupancy.predictions.length > 0">
-                  <h5>Occupation des Postes</h5>
-                  <div class="prediction-confidence">
-                    Confiance: {{ (aiAnalysis.predictions.occupancy.confidence * 100).toFixed(1) }}%
-                  </div>
-                  <div class="prediction-preview">
-                    <div class="prediction-item" *ngFor="let pred of aiAnalysis.predictions.occupancy.predictions.slice(0, 5)">
-                      <span class="prediction-date">{{ pred.date }}</span>
-                      <span class="prediction-value">{{ pred.predicted_value }}%</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="prediction-section" *ngIf="aiAnalysis.predictions.telework && aiAnalysis.predictions.telework.predictions.length > 0">
-                  <h5>Télétravail</h5>
-                  <div class="prediction-confidence">
-                    Confiance: {{ (aiAnalysis.predictions.telework.confidence * 100).toFixed(1) }}%
-                  </div>
-                  <div class="prediction-preview">
-                    <div class="prediction-item" *ngFor="let pred of aiAnalysis.predictions.telework.predictions.slice(0, 5)">
-                      <span class="prediction-date">{{ pred.date }}</span>
-                      <span class="prediction-value">{{ pred.predicted_value }}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Anomalies -->
-          <div class="insights-row" *ngIf="aiAnalysis.anomalies.occupancy && aiAnalysis.anomalies.occupancy.length > 0 || aiAnalysis.anomalies.telework && aiAnalysis.anomalies.telework.length > 0">
-            <div class="insight-card anomaly-card">
-              <div class="card-header">
-                <h4>🔍 Anomalies Détectées</h4>
-              </div>
-              <div class="card-body">
-                <div class="anomaly-section" *ngIf="aiAnalysis.anomalies.occupancy && aiAnalysis.anomalies.occupancy.length > 0">
-                  <h5>Occupation</h5>
-                  <div class="anomaly-dates">
-                    <span class="anomaly-date" *ngFor="let date of aiAnalysis.anomalies.occupancy">{{ date }}</span>
-                  </div>
-                </div>
-                <div class="anomaly-section" *ngIf="aiAnalysis.anomalies.telework && aiAnalysis.anomalies.telework.length > 0">
-                  <h5>Télétravail</h5>
-                  <div class="anomaly-dates">
-                    <span class="anomaly-date" *ngFor="let date of aiAnalysis.anomalies.telework">{{ date }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

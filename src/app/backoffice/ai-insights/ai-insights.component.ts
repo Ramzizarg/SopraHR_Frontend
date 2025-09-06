@@ -1,10 +1,12 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { AIDecisionService, AIAnalysis, AIRecommendations, RealtimeData } from '../../services/ai-decision.service';
 import { interval, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService } from '../../login/AuthService';
 import { UserService } from '../users/user.service';
 import Swal from 'sweetalert2';
+import { Router } from '@angular/router';
+import { ContactService } from '../../services/contact.service';
 
 function getMonday(d: Date): Date {
   const date = new Date(d);
@@ -18,14 +20,16 @@ function getMonday(d: Date): Date {
   templateUrl: './ai-insights.component.html',
   styleUrls: ['./ai-insights.component.css']
 })
-export class AIInsightsComponent implements OnInit, OnDestroy {
+export class AIInsightsComponent implements OnInit, OnDestroy, AfterViewInit {
   // Sidebar and UI states
   isSidebarOpen: boolean = true;
   isProfileDropdownOpen: boolean = false;
   searchTerm: string = '';
-  userProfilePhotos: Map<number, string | null> = new Map();
+  userProfilePhotos: Map<number, string | null> = new Map(); // Store user profile photos by userId
 
   @ViewChild('profileElement') profileElement!: ElementRef;
+  @ViewChild('occupancySparkline') occupancySparkline!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('teleworkSparkline') teleworkSparkline!: ElementRef<HTMLCanvasElement>;
 
   profile: any = null; // --- Added for user profile ---
   aiAnalysis: AIAnalysis | null = null;
@@ -34,6 +38,9 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
   loading = true;
   error = false;
   lastUpdated: string = '';
+  private loadingTimeout: any = null;
+  private minLoaderTimer: any = null;
+  private minLoaderDone: boolean = false;
 
   private refreshSubscription: Subscription | null = null;
   private realtimeSubscription: Subscription | null = null;
@@ -41,44 +48,90 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
   // --- Telework week navigation state ---
   currentWeekStart: Date | null = null;
 
+  get criticalAlertsCount(): number {
+    const resAlerts = this.aiAnalysis?.reservation_analysis?.alerts || [];
+    const teleworkAlerts = this.aiAnalysis?.telework_analysis?.alerts || [];
+    return [...resAlerts, ...teleworkAlerts].filter((a: any) => {
+      const level = (a.type || a.severity || '').toUpperCase();
+      return level === 'CRITICAL';
+    }).length;
+  }
+
   constructor(
     private aiService: AIDecisionService,
     public authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
+    private router: Router,
+    private cdRef: ChangeDetectorRef,
+    private contactService: ContactService
   ) { }
 
+  ngAfterViewInit(): void {
+    this.drawSparklines();
+  }
+
   ngOnInit(): void {
-    this.loadData();
-    this.startAutoRefresh();
-    this.startRealtimeUpdates();
-    this.fetchProfile(); // --- Fetch user profile on init ---
+    // Initialize dates (if needed for this component)
+    // const today = new Date();
+    // const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    // const diff = currentDay === 0 ? -6 : 1 - currentDay; // Adjust to get Monday
+    // const startOfWeek = new Date(today);
+    // startOfWeek.setDate(today.getDate() + diff);
+    // const endOfWeek = new Date(startOfWeek);
+    // endOfWeek.setDate(startOfWeek.getDate() + 4);
+    // this.startDate = startOfWeek.toISOString().split('T')[0];
+    // this.endDate = endOfWeek.toISOString().split('T')[0];
+
+    // Check if there's a stored profile photo URL in localStorage
     this.loadStoredProfilePhoto();
+    // Fetch the current user's profile photo
     if (this.authService.currentUserValue?.id) {
       this.fetchUserProfilePhoto(this.authService.currentUserValue.id);
     }
+    // Initialize sidebar state
     this.isSidebarOpen = window.innerWidth >= 1024;
     document.body.classList.toggle('sidebar-collapsed-layout', !this.isSidebarOpen);
+    this.loading = true;
+    this.error = false;
+    this.minLoaderDone = false;
+    if (this.minLoaderTimer) {
+      clearTimeout(this.minLoaderTimer);
+    }
+    // Always show loader for at least 5s
+    this.minLoaderTimer = setTimeout(() => {
+      this.minLoaderDone = true;
+      // If data is loaded, hide loader
+      if (!this.loading) {
+        this.loading = false;
+      }
+    }, 5000);
+    this.loadData();
   }
 
-  ngOnDestroy(): void {
-    if (this.refreshSubscription) {
-      this.refreshSubscription.unsubscribe();
-    }
-    if (this.realtimeSubscription) {
-      this.realtimeSubscription.unsubscribe();
-    }
+  // Call drawSparklines when data updates
+  ngOnChanges(): void {
+    this.drawSparklines();
   }
 
   loadData(): void {
     this.loading = true;
     this.error = false;
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+    }
+    // Set a timeout to show error after 5s if still loading
+    this.loadingTimeout = setTimeout(() => {
+      if (this.loading && this.minLoaderDone) {
+        this.error = true;
+        this.loading = false;
+      }
+    }, 5000);
 
     // Load current analysis
     this.aiService.getCurrentAnalysis().subscribe({
       next: (data) => {
         this.aiAnalysis = data.analysis;
         this.lastUpdated = new Date().toLocaleString();
-        this.loading = false;
         // Set current week to this week (Monday), or next week if today is Saturday/Sunday
         if (this.aiAnalysis?.telework_analysis?.daily_percentages?.length) {
           const lastDateStr = this.aiAnalysis.telework_analysis.daily_percentages[this.aiAnalysis.telework_analysis.daily_percentages.length - 1].date;
@@ -97,11 +150,40 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
             this.currentWeekStart = getMonday(lastDate);
           }
         }
+        // Wait for min loader duration
+        if (this.minLoaderDone) {
+          this.loading = false;
+        } else {
+          // Wait for timer to finish
+          const wait = () => {
+            if (this.minLoaderDone) {
+        this.loading = false;
+            } else {
+              setTimeout(wait, 100);
+            }
+          };
+          wait();
+        }
+        if (this.loadingTimeout) {
+          clearTimeout(this.loadingTimeout);
+        }
+        setTimeout(() => this.drawSparklines(), 100);
       },
       error: (err) => {
         console.error('Error loading AI analysis:', err);
+        if (this.loadingTimeout) {
+          clearTimeout(this.loadingTimeout);
+        }
+        // Wait for min loader duration before showing error
+        const showError = () => {
+          if (this.minLoaderDone) {
+            this.loading = false;
         this.error = true;
-        this.loading = false;
+          } else {
+            setTimeout(showError, 100);
+          }
+        };
+        showError();
       }
     });
 
@@ -189,11 +271,44 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
   }
 
   refreshData(): void {
+    this.error = false;
+    this.loading = true;
+    this.minLoaderDone = false;
+    if (this.minLoaderTimer) {
+      clearTimeout(this.minLoaderTimer);
+    }
+    this.minLoaderTimer = setTimeout(() => {
+      this.minLoaderDone = true;
+      if (!this.loading) {
+        this.loading = false;
+      }
+    }, 5000);
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+    }
+    this.loadingTimeout = setTimeout(() => {
+      if (this.loading && this.minLoaderDone) {
+        this.error = true;
+        this.loading = false;
+      }
+    }, 5000);
     this.aiService.refreshAnalysis().subscribe({
       next: () => {
         this.loadData();
       },
       error: (err) => {
+        if (this.loadingTimeout) {
+          clearTimeout(this.loadingTimeout);
+        }
+        const showError = () => {
+          if (this.minLoaderDone) {
+            this.loading = false;
+        this.error = true;
+          } else {
+            setTimeout(showError, 100);
+          }
+        };
+        showError();
         console.error('Error refreshing analysis:', err);
       }
     });
@@ -304,6 +419,9 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Load stored profile photo from localStorage
+   */
   loadStoredProfilePhoto(): void {
     const currentUser = this.authService.currentUserValue;
     if (currentUser) {
@@ -315,16 +433,22 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Fetch profile photo for a specific user and store it in the userProfilePhotos map
+   * @param userId The ID of the user
+   */
   fetchUserProfilePhoto(userId: number): void {
     this.userService.getUserProfilePhoto(userId).subscribe({
       next: (photoUrl) => {
         if (photoUrl) {
           this.userProfilePhotos.set(userId, photoUrl);
-          const currentUser = this.authService.currentUserValue;
-          if (currentUser && currentUser.id === userId) {
-            currentUser.profilePhotoUrl = photoUrl;
+          // If this is the current user, also update their profile in the auth service
+          if (this.authService.currentUserValue?.id === userId) {
+            this.authService.currentUserValue.profilePhotoUrl = photoUrl;
+            // Store in localStorage for persistence
             localStorage.setItem(`profilePhoto_${userId}`, photoUrl);
-            this.authService.updateCurrentUser(currentUser);
+            // Force UI update
+            this.authService.updateCurrentUser(this.authService.currentUserValue);
           }
         }
       },
@@ -334,6 +458,11 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Get profile photo URL for a specific user
+   * @param userId The ID of the user
+   * @returns The profile photo URL or null if not available
+   */
   getUserProfilePhoto(userId: number): string | null {
     return this.userProfilePhotos.get(userId) || null;
   }
@@ -403,8 +532,51 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
         cancelButton: 'btn btn-secondary'
       },
       didOpen: () => {
-        // Add script and style for cropping (see reclamation-back.component.ts for full logic)
-        // ... (omitted for brevity, copy the script and style logic from reclamation-back.component.ts)
+        // Add script to handle image selection, preview, and cropping
+        const script = document.createElement('script');
+        script.textContent = `
+          // Global variables for cropping
+          let originalImage = null;
+          let croppedImage = null;
+          let cropCanvas = null;
+          let cropContext = null;
+          let scale = 1;
+          let rotation = 0;
+          let dragStartX = 0;
+          let dragStartY = 0;
+          let imgX = 0;
+          let imgY = 0;
+          let dragging = false;
+          const cropSize = 200; // Size of the crop area
+          // ... (rest of cropping script from reclamation-back.component.ts)
+        `;
+        document.body.appendChild(script);
+        // Add style for the preview elements and cropping interface
+        const style = document.createElement('style');
+        style.textContent = `
+          .profile-edit-container { padding: 0.5rem 0.5rem 0; }
+          .current-photo-container { display: flex; flex-direction: column; align-items: center; }
+          .current-photo { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all 0.2s ease; }
+          .current-photo:hover { box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); }
+          .current-photo:hover .photo-edit-overlay { opacity: 1; }
+          .current-photo img { width: 100%; height: 100%; object-fit: cover; }
+          .avatar-preview { width: 100%; height: 100%; background-color: #3B82F6; color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 500; }
+          .photo-edit-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease; }
+          .photo-edit-overlay i { color: white; font-size: 1.5rem; }
+          .photo-instructions { font-size: 0.8rem; color: #6B7280; margin-bottom: 1rem; text-align: center; }
+          .crop-container { display: none; flex-direction: column; align-items: center; max-width: 100%; margin: 0 auto; }
+          .crop-header { font-size: 14px; font-weight: 500; color: #4B5563; margin-bottom: 8px; text-align: center; }
+          .crop-area { position: relative; width: 200px; height: 200px; border-radius: 50%; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); margin: 0 auto; }
+          #cropCanvas { width: 100%; height: 100%; display: block; cursor: move; touch-action: none; }
+          .crop-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px dashed rgba(255, 255, 255, 0.8); border-radius: 50%; box-sizing: border-box; pointer-events: none; }
+          .crop-controls { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+          .crop-btn { width: 36px; height: 36px; border-radius: 50%; background-color: #F3F4F6; border: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+          .crop-btn:hover { background-color: #E5E7EB; }
+          .crop-btn i { font-size: 16px; color: #4B5563; }
+          .crop-actions { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+          .crop-actions .btn { font-size: 12px; padding: 4px 12px; }
+        `;
+        document.head.appendChild(style);
       }
     }).then((result) => {
       if (result.isConfirmed) {
@@ -460,5 +632,183 @@ export class AIInsightsComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  openRevaAiInfo(): void {
+    Swal.fire({
+      title: '<span style="color:#2563EB;font-weight:700;">Reva AI</span> – Your Smart Workspace Assistant',
+      html: `
+        <div style="text-align:left;font-size:1.08rem;line-height:1.7;">
+          <b>Reva AI</b> is your intelligent assistant for workspace optimization, telework management, and smart recommendations.<br><br>
+          <ul style="margin-left:1.2em;">
+            <li><b>Real-time Analytics:</b> Get instant insights on workspace occupancy, telework rates, and trends.</li>
+            <li><b>AI Recommendations:</b> Receive actionable suggestions to optimize desk usage and telework planning.</li>
+            <li><b>Critical Alerts:</b> Be notified of anomalies, over-occupancy, or under-utilization.</li>
+            <li><b>Smart Summaries:</b> Understand your workspace at a glance with intelligent summaries and visualizations.</li>
+            <li><b>Seamless Integration:</b> Works with your existing reservation and telework systems.</li>
+          </ul>
+          <br>
+          <b>Why Reva AI?</b><br>
+          <span style="color:#2563EB;">Empower your organization</span> to make data-driven decisions, improve employee satisfaction, and maximize office efficiency.<br><br>
+          <i class="bi bi-robot" style="font-size:2rem;color:#2563EB;"></i>
+        </div>
+      `,
+      confirmButtonText: 'Got it!',
+      customClass: {
+        popup: 'modern-toast-popup',
+        confirmButton: 'hero-btn main',
+      },
+      width: 640,
+      padding: '2.2em 1.5em 1.5em 1.5em',
+      background: '#fff',
+      showCloseButton: true,
+      focusConfirm: false,
+      position: 'center',
+      didOpen: (el) => {
+        if (el.parentElement) {
+          el.parentElement.style.justifyContent = 'flex-end';
+          el.parentElement.style.alignItems = 'center';
+          // Removed marginRight
+        }
+      }
+    });
+  }
+
+  openContactItPopup(): void {
+    Swal.fire({
+      title: `<div style='display:flex;align-items:center;gap:0.7rem;justify-content:center;'>
+        <i class='bi bi-robot' style='font-size:2.2rem;color:#2563EB;filter:drop-shadow(0 0 8px #2563eb55);'></i>
+        <span style='color:#2563EB;font-weight:700;font-size:1.35rem;'>Contact IT Support</span>
+      </div>`,
+      html: `
+        <div style='background:linear-gradient(90deg,#2563EB11 0%,#3B82F622 100%);padding:1.1em 1em 0.7em 1em;border-radius:1.2em 1.2em 0 0;margin:-1.5em -1.5em 1.2em -1.5em;'>
+          <div style='font-size:1.08rem;color:#2563EB;font-weight:600;text-align:center;'>Describe your problem</div>
+        </div>
+        <form id='it-contact-form' style='text-align:left;'>
+          <textarea id='it-message' class='swal2-textarea' rows='5' placeholder='Explain your issue in detail...' style='resize:vertical;border-radius:1em;font-size:1.08rem;box-shadow:0 2px 8px #2563eb11;width:22em;height:10em;'></textarea>
+        </form>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Send',
+      cancelButtonText: 'Cancel',
+      focusConfirm: false,
+      preConfirm: () => {
+        const message = (document.getElementById('it-message') as HTMLTextAreaElement)?.value;
+        if (!message) {
+          Swal.showValidationMessage('Please enter a message.');
+          return false;
+        }
+        return { message };
+      },
+      customClass: {
+        popup: 'modern-toast-popup',
+        confirmButton: 'hero-btn main',
+        cancelButton: 'hero-btn alt',
+      },
+      width: 480,
+      background: '#fff',
+      showCloseButton: true,
+      padding: '0 0 2em 0',
+      didOpen: (el) => {
+        const popup = el.querySelector('.swal2-popup');
+        if (popup && popup instanceof HTMLElement) {
+          popup.style.borderRadius = '1.5em';
+        }
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        const { message } = result.value;
+        this.contactService.createContactRequest({
+          userEmail: 'anonymous@ai-insights.com',
+          employeeName: 'AI Insights User',
+          subject: 'IT Support Request',
+          message,
+          priority: 'HIGH'
+        }).subscribe({
+          next: () => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Message sent!',
+              text: 'Your request has been sent to IT support. They will contact you soon.',
+              confirmButtonText: 'OK',
+              customClass: { confirmButton: 'hero-btn main' },
+              width: 380
+            });
+          },
+          error: () => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'There was a problem sending your request. Please try again later.',
+              confirmButtonText: 'OK',
+              customClass: { confirmButton: 'hero-btn main' },
+              width: 380
+            });
+          }
+        });
+      }
+    });
+  }
+
+  drawSparklines(): void {
+    // Occupancy sparkline
+    if (this.occupancySparkline && this.aiAnalysis?.reservation_analysis) {
+      const ctx = this.occupancySparkline.nativeElement.getContext('2d');
+      if (ctx) {
+        // Use current_occupancy for the last 7 days (since daily occupancy is not available)
+        let data: number[] = [];
+        if (this.aiAnalysis.telework_analysis?.daily_percentages) {
+          data = this.aiAnalysis.telework_analysis.daily_percentages.slice(-7).map(() => this.aiAnalysis?.reservation_analysis?.current_occupancy || 0);
+        }
+        this.drawSparkline(ctx, data, '#2563eb');
+      }
+    }
+    // Telework sparkline
+    if (this.teleworkSparkline && this.aiAnalysis?.telework_analysis) {
+      const ctx = this.teleworkSparkline.nativeElement.getContext('2d');
+      if (ctx) {
+        let data: number[] = [];
+        if (this.aiAnalysis.telework_analysis.daily_percentages) {
+          data = this.aiAnalysis.telework_analysis.daily_percentages.slice(-7).map(d => d.percentage);
+        }
+        this.drawSparkline(ctx, data, '#0284c7');
+      }
+    }
+  }
+
+  drawSparkline(ctx: CanvasRenderingContext2D, data: number[], color: string) {
+    const w = 60, h = 18;
+    ctx.clearRect(0, 0, w, h);
+    ctx.canvas.width = w;
+    ctx.canvas.height = h;
+    if (!data.length) return;
+    const min = Math.min(...data), max = Math.max(...data);
+    ctx.beginPath();
+    data.forEach((val, i) => {
+      const x = (i / (data.length - 1)) * (w - 2) + 1;
+      const y = h - 2 - ((val - min) / (max - min || 1)) * (h - 4);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Optionally, draw a small dot at the last value
+    ctx.beginPath();
+    const lastX = ((data.length - 1) / (data.length - 1)) * (w - 2) + 1;
+    const lastY = h - 2 - ((data[data.length - 1] - min) / (max - min || 1)) * (h - 4);
+    ctx.arc(lastX, lastY, 2.5, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshSubscription) {
+      this.refreshSubscription.unsubscribe();
+    }
+    if (this.realtimeSubscription) {
+      this.realtimeSubscription.unsubscribe();
+    }
   }
 } 

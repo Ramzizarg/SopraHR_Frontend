@@ -4003,3 +4003,184 @@ body {
     padding: 0.18rem 0.35rem;
   }
 }
+
+/* Role Circles Row for Metrics Cards */
+.role-circles-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 1.2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.role-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-count {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.2rem;
+  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.08);
+}
+
+.role-circle:nth-child(1) .role-count {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); /* Employé: blue */
+}
+.role-circle:nth-child(2) .role-count {
+  background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%); /* Chef Équipe: green */
+}
+.role-circle:nth-child(3) .role-count {
+  background: linear-gradient(135deg, #f59e42 0%, #f43f5e 100%); /* Manager: orange/red */
+}
+
+.role-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 0.1rem;
+  text-align: center;
+}
+
+/* Role Circles Metrics Row (outside metric cards) */
+.role-circles-metrics-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 3rem;
+  margin: 1.2rem 0 0.5rem 0;
+}
+
+.role-circles-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 220px;
+}
+
+.role-circles-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6366f1;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.01em;
+}
+
+/* Venn/Cluster Circles Layout for Role Breakdown */
+.venn-circles-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin: 2rem 0 1.5rem 0;
+}
+
+.venn-circles-container {
+  position: relative;
+  width: 320px;
+  height: 220px;
+}
+
+.venn-circle {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 2rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  z-index: 1;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.venn-circle:hover {
+  transform: scale(1.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  cursor: pointer;
+}
+
+/* Positioning for the three circles */
+.venn-circle-1 {
+  left: 0;
+  top: 40px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  z-index: 2;
+}
+.venn-circle-2 {
+  left: 100px;
+  top: -10px;
+  background: linear-gradient(135deg, #f59e42 0%, #f43f5e 100%);
+  z-index: 3;
+}
+.venn-circle-3 {
+  left: 200px;
+  top: 40px;
+  background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);
+  z-index: 2;
+}
+
+.venn-count {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.venn-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  margin-top: 0.3rem;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+
+@media (max-width: 600px) {
+  .venn-circles-container {
+    width: 220px;
+    height: 140px;
+  }
+  .venn-circle {
+    width: 80px;
+    height: 80px;
+    font-size: 1.2rem;
+  }
+  .venn-circle-1 { left: 0; top: 30px; }
+  .venn-circle-2 { left: 60px; top: 0; }
+  .venn-circle-3 { left: 120px; top: 30px; }
+}
+
+.venn-circles-row-left {
+  justify-content: flex-start;
+  margin-top: -18rem;
+  margin-left: 10.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .venn-circles-row-left {
+    margin-left: 0.5rem;
+    justify-content: center;
+  }
+}
+
+.venn-circle-4 {
+  left: 100px;
+  top: 90px;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  z-index: 2;
+}

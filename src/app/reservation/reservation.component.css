@@ -866,10 +866,10 @@ button:hover:not(:disabled) i {
 
 .desk {
   position: absolute;
-  width: 1rem;
+  width: 1.5rem;
   height: 3.5rem;
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   box-shadow: 
     0 2px 4px rgba(0, 0, 0, 0.1),
     inset 0 1px 2px rgba(255, 255, 255, 0.8);
@@ -1028,7 +1028,7 @@ button:hover:not(:disabled) i {
   position: absolute;
   width: 1.25rem;
   height: 1.25rem;
-  background: #1e293b;
+  background: #caced5;
   border: 0.125rem solid #0f172a;
   border-radius: 0.25rem;
   box-shadow: var(--shadow-md);
@@ -3306,4 +3306,13 @@ body.modal-open {
   transition: background 0.2s;
 }
 
-
+  @media (min-width: 768px) {
+    .desk.available::before,
+    .desk.reserved::before {
+      width: 1.1rem;
+      height: 1.1rem;
+      top: 50%;
+      transform: translate(0.75rem, -50%);
+    }
+  }
+  

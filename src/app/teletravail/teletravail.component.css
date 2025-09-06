@@ -306,6 +306,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-shadow: 0 8px 32px rgba(59,130,246,0.10), 0 1.5px 8px rgba(59, 131, 246, 0.503);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: box-shadow 0.22s, border-color 0.22s;
 }
 
 /* Fade In Animation */
@@ -1178,7 +1182,7 @@ textarea.form-control {
 }
   
   .form-container {
-    padding: 2.5rem;
+    padding: 4.5rem;
     margin: 0.5rem;
     width: calc(50% - 1rem);
     border-radius: 1rem;
@@ -1512,4 +1516,33 @@ textarea.form-control {
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   z-index: 10;
   transition: background 0.2s;
+}
+
+.alert.alert-info.mb-4 {
+  background: linear-gradient(90deg, #e0f2fe 0%, #f0f9ff 100%);
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 18px rgba(59,130,246,0.07);
+  border-left: 6px solid #2563eb;
+  color: #2563eb;
+  padding: 1.2rem 1.5rem;
+  font-size: 1.08rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem !important;
+}
+.alert.alert-info.mb-4 i {
+  font-size: 1.5rem;
+  color: #2563eb;
+  margin-right: 0.7rem;
+}
+.alert.alert-info.mb-4 .alert-link {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-left: 0.3em;
+}
+.alert.alert-info.mb-4 .alert-link:hover {
+  color: #0e3a7e;
 }

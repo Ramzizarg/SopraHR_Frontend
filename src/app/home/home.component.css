@@ -2399,3 +2399,67 @@
   display: none !important;
 }
 /* End Notification Dropdown Styles */
+
+.upgraded-services-section {
+  background: linear-gradient(120deg, #f8fafc 0%, #e0e7ff 100%);
+  border-radius: 2rem;
+  padding: 3rem 0;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+}
+
+.service-card.glass-card {
+  background: rgba(255,255,255,0.85);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(59,130,246,0.08);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card.glass-card:hover {
+  box-shadow: 0 16px 48px rgba(59,130,246,0.18);
+  transform: translateY(-6px) scale(1.03);
+}
+
+.service-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem auto;
+  font-size: 2.5rem;
+  color: #2563eb;
+  background: #e0e7ff;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.07);
+}
+
+.service-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+
+.service-desc {
+  font-size: 1.08rem;
+  color: #475569;
+  margin-bottom: 1.2rem;
+}
+
+.service-cta {
+  display: inline-block;
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1.5px solid #2563eb;
+  transition: color 0.18s, border-color 0.18s;
+}
+
+.service-cta:hover {
+  color: #1d4ed8;
+  border-color: #1d4ed8;
+}

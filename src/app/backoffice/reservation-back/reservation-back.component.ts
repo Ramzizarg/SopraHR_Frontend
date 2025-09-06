@@ -1090,7 +1090,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
              left: 10, // Always fixed position
              top: 10,  // Always fixed position
              width: 1135, // Fixed width
-             height: 550, // Fixed height
+             height: 580, // Fixed height
              desks: [],
              walls: []
            };
@@ -1306,7 +1306,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
        const newPlan: ApiPlan = {
          name: 'New Floor Plan',
          width: 1135, // Fixed width
-         height: 550, // Fixed height
+         height: 580, // Fixed height
          left: 10, // Fixed position
          top: 10   // Fixed position
        };
@@ -1321,7 +1321,7 @@ export class ReservationBackComponent implements OnInit, AfterViewInit {
              left: 10, // Always use fixed position
              top: 10,  // Always use fixed position
              width: 1135, // Fixed width
-             height: 550, // Fixed height
+             height: 580, // Fixed height
              desks: [],
              walls: []
            };
