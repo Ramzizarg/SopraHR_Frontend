@@ -1,3 +1,6 @@
+version: '3.8'
+
+services:
   angular-frontend:
     build:
       context: ./frontend
@@ -10,3 +13,7 @@
       - workstation-network
     depends_on:
       - eureka-server
+
+networks:
+  workstation-network:
+    driver: bridge
