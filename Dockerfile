@@ -1,32 +1,31 @@
-# Étape 1 : Build Angular avec Node.js
+# Étape 1 : Build Angular
 FROM node:18-alpine AS build
 
-# Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers de dépendances
+# Copier package.json et package-lock.json
 COPY package*.json ./
 
-# Installer les dépendances
-RUN npm install
+# Upgrade npm and install dependencies
+RUN npm install -g npm@11.6.0
+RUN npm install --legacy-peer-deps
 
-# Copier le reste du code source
+# Copier le reste du code
 COPY . .
 
 # Build Angular en production
-RUN npm run build --prod
+RUN npm run build -- --configuration production
 
-# Étape 2 : Serveur Nginx pour servir l'application
+# Étape 2 : Serveur Nginx
 FROM nginx:alpine
 
-# Supprimer le contenu par défaut de Nginx
+# Supprimer contenu par défaut
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copier les fichiers buildés depuis l'étape précédente
-COPY --from=build /app/dist/sopra-hr-frontend /usr/share/nginx/html/
+# Copier build Angular
+COPY --from=build /app/dist/angular-workstation /usr/share/nginx/html
 
 # Exposer le port 80
 EXPOSE 80
 
-# Lancer Nginx en mode foreground
 CMD ["nginx", "-g", "daemon off;"]
